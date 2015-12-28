@@ -1,0 +1,39 @@
+[
+  { "class": "BasicEventSelection",
+    "configs": {
+      "m_debug": false,
+      "m_truthLevelOnly": false,
+      "m_storeTrigDecisions" : true,
+      "m_applyEventCleaningCut" : false,
+      "m_applyPrimaryVertexCut" : false,
+      "m_applyGRLCut": false,
+      "m_GRLxml": "$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml",
+      "m_doPUreweighting": false
+    }
+  },
+ 
+ {
+   "class": "JetHistsAlgo",
+   "configs": {
+     "m_debug": false,
+     "m_verbose": false,
+     "m_inContainerName": "HLT_xAOD__JetContainer_a4tcemsubjesFS",
+     "m_detailStr": "kinematic",
+     "m_name": "HLT_xAOD__JetContainer_a4tcemsubjesFS"
+   }
+ },
+
+ {
+   "class": "TreeAlgo",
+     "configs": {
+     "m_debug": true,
+     "m_verbose": true,
+     "m_jetContainerName": "AntiKt4EMTopoJets",
+     "m_jetDetailStr": "kinematic",
+     "m_trigJetContainerName": "HLT_xAOD__JetContainer_a4tcemsubjesFS",
+     "m_trigJetDetailStr": "kinematic",
+     "m_name": "BothTrigAndOfflineJets"
+   }
+ }
+
+]

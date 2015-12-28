@@ -1,0 +1,38 @@
+[
+  { "class": "BasicEventSelection",
+    "configs": {
+      "m_debug": false,
+      "m_truthLevelOnly": false,
+      "m_storeTrigDecisions" : true,
+      "m_triggerSelection" : "L1_J[0-9]*|HLT_j[0-9]*|HLT_noalg_J[0-9]*", 
+      "m_applyEventCleaningCut" : false,
+      "m_applyPrimaryVertexCut" : false,
+      "m_applyGRLCut": false,
+      "m_GRLxml": "$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml",
+      "m_doPUreweighting": false
+    }
+  },
+ 
+ {
+   "class": "JetHistsAlgo",
+   "configs": {
+     "m_debug": false,
+     "m_verbose": false,
+     "m_inContainerName": "HLT_xAOD__JetContainer_TrigHLTJetDSSelectorCollection",
+     "m_detailStr": "kinematic",
+     "m_name": "HLT_xAOD__JetContainer_TrigHLTJetDSSelectorCollection"
+   }
+ },
+
+ {
+   "class": "TreeAlgo",
+     "configs": {
+     "m_debug": true,
+     "m_verbose": true,
+     "m_jetContainerName": "HLT_xAOD__JetContainer_TrigHLTJetDSSelectorCollection",
+     "m_jetDetailStr": "kinematic layer energy scales",
+     "m_name": "HLT_xAOD__JetContainer_TrigHLTJetDSSelectorCollection"
+   }
+ }
+
+]

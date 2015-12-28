@@ -1,0 +1,68 @@
+[
+  { "class": "BasicEventSelection",
+    "configs": {
+      "m_debug": false,
+      "m_truthLevelOnly": false,
+      "m_storeTrigDecisions" : true,
+      "m_triggerSelection" : "L1_J[0-9]*|HLT_j[0-9]*|HLT_noalg_J[0-9]*", 
+      "m_applyEventCleaningCut" : false,
+      "m_applyPrimaryVertexCut" : true,
+      "m_applyGRLCut": false,
+      "m_GRLxml": "$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml",
+      "m_doPUreweighting": false
+    }
+  },
+ 
+ {
+   "class": "JetHistsAlgo",
+   "configs": {
+     "m_debug": false,
+     "m_verbose": false,
+     "m_inContainerName": "HLT_xAOD__JetContainer_a4tcemsubjesFS",
+     "m_detailStr": "kinematic",
+     "m_name": "HLT_xAOD__JetContainer_a4tcemsubjesFS"
+   }
+ },
+
+ {
+ "class": "HLTJetGetter",
+   "configs": {
+     "m_debug": true,
+     "m_verbose": true,
+     "m_inContainerName": "HLT_xAOD__JetContainer_a4tcemsubjesFS",
+     "m_outContainerName": "TDTJetContainer_a4tcemsubjesFS"
+     }
+ },
+
+ {
+   "class": "JetCalibrator",
+   "configs": {
+     "m_debug": true,
+     "m_verbose": true,
+     "m_runSysts": false,
+     "m_inContainerName": "AntiKt4EMTopoJets",
+     "m_jetAlgo" : "AntiKt4EMTopo",
+     "m_outputAlgo" : "AntiKt4EMTopoJets_Calib_Algo",
+     "m_doCleaning" : false,
+     "m_jetCleanCutLevel" : "TightBad",
+     "m_saveAllCleanDecisions" : true,
+     "m_outContainerName": "AntiKt4EMTopoJets_Calib"
+   }
+ },
+
+ {
+   "class": "TLATreeAlgo",
+     "configs": {
+     "m_debug": true,
+     "m_verbose": true,
+     "m_evtDetailStr" : "eventCleaning m_pileup",
+     "m_trigDetailStr" : "basic passTriggers",
+     "m_jetContainerName": "AntiKt4EMTopoJets",
+     "m_jetDetailStr": "kinematic layer clean trackPV energy scales",
+     "m_trigJetContainerName": "TDTJetContainer_a4tcemsubjesFS",
+     "m_trigJetDetailStr": "kinematic layer clean energy scales",
+     "m_name": "BothTrigAndOfflineJets"
+   }
+ }
+
+]
