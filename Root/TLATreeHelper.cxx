@@ -20,20 +20,38 @@ TLATreeHelper :: ~TLATreeHelper()
 //////////////////// Connect Defined variables to branches here /////////////////////////////
 void TLATreeHelper::AddEventUser(const std::string detailStr)
 {
+    if(m_debug) Info("AddEventUser()", "Adding event-level variables %s", detailStr.c_str());
 
     // weights
     m_tree->Branch("weight", &m_weight, "weight/F");
     m_tree->Branch("weight_xs", &m_weight_xs, "weight_xs/F");
 //    m_tree->Branch("weight_prescale", &m_weight_prescale, "weight_prescale/F");
 //    m_tree->Branch("weight_resonanceKFactor", &m_weight_resonanceKFactor, "weight_resonanceKFactor/F");
+    
+    //here we need to find out which jet collections we have in this tree
+    
+    AddJetEvent("jet");
+    
 }
+
+void TLATreeHelper::AddJetEvent(const std::string jetName) {
+    
+    if(m_debug) Info("AddJetEvent()", "Adding event-level jet variables %s", jetName.c_str());
+    m_jetEvent[jetName] = new jetEventInfo();
+    jetEventInfo* thisJetEvent = m_jetEvent[jetName];
+    m_tree->Branch((jetName+"_mjj").c_str(),  &thisJetEvent->m_mjj);
+    
+    
+}
+
 
 //%%%%Left for later: variables that can be derived from what we have already
 
 //void TLATreeHelper::AddJetBasedEventUser(const std::string jetName) {
-//
+
 //    // event variables, for each of the possible jet collections
-//    
+//    //they need vectors to be stored in, as the jet-level variables
+    
 //    m_tree->Branch((jetName+"_yStar").c_str(),  &m_yStar,  "yStar/F");
 //    m_tree->Branch((jetName+"_yBoost").c_str(), &m_yBoost, "yBoost/F");
 //    m_tree->Branch((jetName+"_mjj").c_str(),  &m_mjj,  "mjj/F");
@@ -42,17 +60,17 @@ void TLATreeHelper::AddEventUser(const std::string detailStr)
 //    m_tree->Branch((jetName+"_deltaPhi").c_str(), &m_deltaPhi, "deltaPhi/F");
 //    
 //    // punch-through
-//    m_tree->Branch("Insitu_Segs_response_E", &m_Insitu_Segs_response_E, "Insitu_Segs_response_E/F");
-//    m_tree->Branch("Insitu_Segs_response_pT", &m_Insitu_Segs_response_pT, "Insitu_Segs_response_pT/F");
+//    m_tree->Branch((jetName+"Insitu_Segs_response_E", &m_Insitu_Segs_response_E, "Insitu_Segs_response_E/F");
+//    m_tree->Branch((jetName+"Insitu_Segs_response_pT", &m_Insitu_Segs_response_pT, "Insitu_Segs_response_pT/F");
 //    m_tree->Branch("punch_type_segs", &m_punch_type_segs, "punch_type_segs/I");
 //    
 //    // pT balance - for cleaning - these also need the prefix
-//    m_tree->Branch("pTBalance", &m_pTbalance, "pTBalance/F");
-//    m_tree->Branch("MHT",       &m_MHT,       "MHT/F");
-//    m_tree->Branch("MHTPhi",    &m_MHTPhi,    "MHTPhi/F");
-//    m_tree->Branch("MHTJVT",    &m_MHTJVT,    "MHTJVT/F");
-//    m_tree->Branch("MHTJVTPhi", &m_MHTJVTPhi, "MHTJVTPhi/F");
-//    
+//    m_tree->Branch((jetName+"pTBalance", &m_pTbalance, "pTBalance/F");
+//    m_tree->Branch((jetName+"MHT",       &m_MHT,       "MHT/F");
+//    m_tree->Branch((jetName+"MHTPhi",    &m_MHTPhi,    "MHTPhi/F");
+//    m_tree->Branch((jetName+"MHTJVT",    &m_MHTJVT,    "MHTJVT/F");
+//    m_tree->Branch((jetName+"MHTJVTPhi", &m_MHTJVTPhi, "MHTJVTPhi/F");
+    
 //}
 
 //%%%%Left for later: variables that can be derived from what we have already
@@ -94,6 +112,16 @@ void TLATreeHelper::ClearEventUser() {
     m_weight_xs = -999;
 //    m_weight_prescale = -999;
 //    m_weight_resonanceKFactor = -999;
+    
+    //clear jet event variables
+    ClearJetEvent("jet");
+}
+
+void TLATreeHelper::ClearJetEvent(const std::string jetName) {
+    
+    jetEventInfo* thisJetEvent = m_jetEvent[jetName];
+    thisJetEvent->m_mjj = -999;
+
 }
 
 //%%%%Left for later: variables that can be derived from what we have already
@@ -153,8 +181,26 @@ void TLATreeHelper::FillEventUser( const xAOD::EventInfo* eventInfo ) {
 //    m_MHTJVT = eventInfo->auxdecor< float >( "MHTJVT" );
 //    if( eventInfo->isAvailable< float >( "MHTJVTPhi" ) )
 //    m_MHTJVTPhi = eventInfo->auxdecor< float >( "MHTJVTPhi" );
+    FillJetEvent(eventInfo, "jet");
     
 }
+
+void TLATreeHelper::FillJetEvent( const xAOD::EventInfo* eventInfo, const std::string jetName) {
+    
+    if(m_debug) Info("FillJetEvent()", "Filling event-level jet variables %s", jetName.c_str());
+    jetEventInfo* thisJetEvent = m_jetEvent[jetName];
+    
+    if (eventInfo->isAvailable< float > ("mjj"))
+        thisJetEvent->m_mjj = eventInfo->auxdecor< float > ("mjj");
+    else {
+        std::cout << "booo" << std::endl;
+        thisJetEvent->m_mjj = -999;
+    }
+
+    
+    
+}
+
 
 //%%%%Left for later: jet variables
 

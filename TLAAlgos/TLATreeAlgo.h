@@ -35,7 +35,7 @@ public:
   /// @endcond
     
 private :
-  
+    
   bool m_isMC;//!
   float m_xs; //!
   float m_filtEff; //!

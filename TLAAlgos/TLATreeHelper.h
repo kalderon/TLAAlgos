@@ -8,6 +8,19 @@ class TLATreeHelper : public HelpTreeBase
 {
     
 private:
+    
+    //struct to save event-level variables that need to belong to each jet collection
+    //
+    // jetEventInfo
+    //
+    struct jetEventInfo{
+        
+        double m_mjj;
+        jetEventInfo(){ }
+        
+    };
+    std::map<std::string, jetEventInfo*> m_jetEvent;
+
     bool m_firstEvent;
     
 //    float m_yStar;
@@ -76,6 +89,12 @@ public:
     void FillEventUser( const xAOD::EventInfo* eventInfo );
     //void FillJetsUser( const xAOD::Jet* jet, const std::string jetName = "jet" );
     void ClearEventUser();
+    
+    void AddJetEvent( const std::string jetName);
+    void FillJetEvent( const xAOD::EventInfo* eventInfo, const std::string jetName);
+    void ClearJetEvent(const std::string jetName);
+    
+
     //void ClearJetsUser(const std::string jetName = "jet");
     
 //    void AddBtagHighEff();

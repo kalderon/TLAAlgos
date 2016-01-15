@@ -34,6 +34,11 @@ TLATreeAlgo :: TLATreeAlgo (std::string className) :
   m_jetName = "";
   m_trigJetName = "";
   m_truthJetName = "";
+    
+  std::string m_jetContainerName;
+  std::string m_truthJetContainerName;
+  std::string m_trigJetContainerName;
+
 
 }
 
@@ -253,6 +258,59 @@ EL::StatusCode TLATreeAlgo :: execute ()
     eventInfo->auxdecor< float >("weight_xs") = m_xs * m_filtEff;
     eventInfo->auxdecor< float >("weight") = m_mcEventWeight * m_xs * m_filtEff;
     
+    //here, decorate the event with the event-level variables of the jet collections
+    
+    //get the various jets from the store
+    
+    double GeV = 1000.;
+    //offline jets to start with
+    const xAOD::JetContainer* inJets(nullptr);
+    RETURN_CHECK("TLATreeAlgo::execute()", HelperFunctions::retrieve(inJets, m_jetContainerName, m_event, m_store, m_verbose) ,"");
+
+    //this only if 2 or more jets
+    if (inJets->size() >= 2) {
+      const xAOD::Jet* leadJet     = inJets->at(0);
+      const xAOD::Jet* subLeadJet  = inJets->at(1);
+    
+      float mjj = ( leadJet->p4() + subLeadJet->p4() ).M();
+      eventInfo->auxdecor< float >( "mjj" ) = mjj/GeV; //CD: dangerous, is it always in MeV or only when we get it out of the container?
+      /*if(m_applyResNLOKFactor){
+        eventInfo->auxdecor< float >( "weight_resonanceKFactor" ) = 1.-m_ResNLOKFactorHist->GetBinContent( m_ResNLOKFactorHist->FindBin(mjj) );
+      }*/
+    
+      eventInfo->auxdecor< float >( "pTjj" ) = ( leadJet->p4() + subLeadJet->p4() ).Pt() / GeV;
+      eventInfo->auxdecor< float >( "yBoost" ) = ( leadJet->rapidity() + subLeadJet->rapidity() ) / 2.0;
+      eventInfo->auxdecor< float >( "deltaPhi" ) = fabs( TVector2::Phi_mpi_pi( leadJet->phi() - subLeadJet->phi() ) );
+
+      eventInfo->auxdecor< float >( "pTBalance" ) = ( leadJet->pt() - subLeadJet->pt() ) / ( leadJet->pt() + subLeadJet->pt() );
+
+      if(inJets->size() >= 3) {
+        
+        const xAOD::Jet* thirdLeadJet  = inJets->at(2);
+        float m23 = ( thirdLeadJet->p4() + subLeadJet->p4() ).M();
+        eventInfo->auxdecor< float >( "m23" ) = m23/GeV; //CD: dangerous, is it always in MeV or only when we get it out of the container?
+        eventInfo->auxdecor< float >( "m3j" ) = ( inJets->at(0)->p4() + inJets->at(1)->p4() + inJets->at(2)->p4()).M() / GeV;
+        
+      }
+    } // 2 or more jets
+
+    TLorentzVector MHT = TLorentzVector(0.0, 0.0, 0.0, 0.0);
+    TLorentzVector MHTJVT = TLorentzVector(0.0, 0.0, 0.0, 0.0);
+    for( auto iJet : *inJets) {
+      MHT -= iJet->p4();
+      /*if( iJet->pt() < 50e3 &&
+        fabs(iJet->getAttribute<xAOD::JetFourMom_t>("JetEMScaleMomentum").eta()) < 2.4 ) {
+        if( iJet->getAttribute< float >( "Jvt" ) < 0.64 ) {
+          continue;
+        }
+      }
+      MHTJVT -= iJet->p4();*/
+    } // end loop over all jets
+    eventInfo->auxdecor< float >( "MHT"    )    = ( MHT.Pt() / 1000. );
+    eventInfo->auxdecor< float >( "MHTPhi" )    = ( MHT.Phi() );
+    //eventInfo->auxdecor< float >( "MHTJVT" )    = ( MHTJVT.Pt() / GeV );
+    //eventInfo->auxdecor< float >( "MHTJVTPhi" ) = ( MHTJVT.Phi() );
+
     //call the base class's execute method
     TreeAlgo::execute();
 
