@@ -15,9 +15,16 @@ private:
     //
     struct jetEventInfo{
         
-        double m_mjj;
-        jetEventInfo(){ }
+        float m_mjj;
+        float m_pTjj;
+        float m_yStar;
+        float m_yBoost;
+        float m_deltaPhi;
+        float m_pTBalance;
+        float m_m23;
+        float m_m3j;
         
+        jetEventInfo(){ }
     };
     std::map<std::string, jetEventInfo*> m_jetEvent;
 

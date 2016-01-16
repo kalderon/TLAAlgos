@@ -55,6 +55,7 @@ private :
   //CD: not sure why this is here? This function is needed to grab lumi weights from txt files
 #ifndef __CINT__
     EL::StatusCode getLumiWeights(const xAOD::EventInfo* eventInfo);
+    EL::StatusCode getJetVariables(std::string jetName, const xAOD::JetContainer* inJets, const xAOD::EventInfo* eventInfo);
 #endif // not __CINT__
 
 };

@@ -31,6 +31,8 @@ void TLATreeHelper::AddEventUser(const std::string detailStr)
     //here we need to find out which jet collections we have in this tree
     
     AddJetEvent("jet");
+    AddJetEvent("truthjet");
+    AddJetEvent("trigjet");
     
 }
 
@@ -40,6 +42,13 @@ void TLATreeHelper::AddJetEvent(const std::string jetName) {
     m_jetEvent[jetName] = new jetEventInfo();
     jetEventInfo* thisJetEvent = m_jetEvent[jetName];
     m_tree->Branch((jetName+"_mjj").c_str(),  &thisJetEvent->m_mjj);
+    m_tree->Branch((jetName+"_pTjj").c_str(),  &thisJetEvent->m_pTjj);
+    m_tree->Branch((jetName+"_yStar").c_str(),  &thisJetEvent->m_yStar);
+    m_tree->Branch((jetName+"_yBoost").c_str(),  &thisJetEvent->m_yBoost);
+    m_tree->Branch((jetName+"_deltaPhi").c_str(),  &thisJetEvent->m_deltaPhi);
+    m_tree->Branch((jetName+"_pTBalance").c_str(),  &thisJetEvent->m_pTBalance);
+    m_tree->Branch((jetName+"_m23").c_str(),  &thisJetEvent->m_m23);
+    m_tree->Branch((jetName+"_m3j").c_str(),  &thisJetEvent->m_m3j);
     
     
 }
@@ -115,12 +124,22 @@ void TLATreeHelper::ClearEventUser() {
     
     //clear jet event variables
     ClearJetEvent("jet");
+    ClearJetEvent("trigjet");
+    ClearJetEvent("truthjet");
 }
 
 void TLATreeHelper::ClearJetEvent(const std::string jetName) {
     
     jetEventInfo* thisJetEvent = m_jetEvent[jetName];
     thisJetEvent->m_mjj = -999;
+    thisJetEvent->m_pTjj = -999;
+    thisJetEvent->m_yStar = -999;
+    thisJetEvent->m_yBoost = -999;
+    thisJetEvent->m_deltaPhi = -999;
+    thisJetEvent->m_pTBalance = -999;
+    thisJetEvent->m_m23 = -999;
+    thisJetEvent->m_m3j = -999;
+
 
 }
 
@@ -187,18 +206,41 @@ void TLATreeHelper::FillEventUser( const xAOD::EventInfo* eventInfo ) {
 
 void TLATreeHelper::FillJetEvent( const xAOD::EventInfo* eventInfo, const std::string jetName) {
     
-    if(m_debug) Info("FillJetEvent()", "Filling event-level jet variables %s", jetName.c_str());
+    if(m_debug) Info("FillJetEvent()", "Filling event-level jet variables for branch '%s'", jetName.c_str());
     jetEventInfo* thisJetEvent = m_jetEvent[jetName];
     
-    if (eventInfo->isAvailable< float > ("mjj"))
-        thisJetEvent->m_mjj = eventInfo->auxdecor< float > ("mjj");
-    else {
-        std::cout << "booo" << std::endl;
-        thisJetEvent->m_mjj = -999;
-    }
+    if (eventInfo->isAvailable< float > ((jetName+"_mjj").c_str()) )
+        thisJetEvent->m_mjj = eventInfo->auxdecor< float > ((jetName+"_mjj").c_str());
+    else thisJetEvent->m_mjj = -999;
 
-    
-    
+    if (eventInfo->isAvailable< float > ((jetName+"_pTjj").c_str()) )
+        thisJetEvent->m_pTjj = eventInfo->auxdecor< float > ((jetName+"_pTjj").c_str());
+    else thisJetEvent->m_pTjj = -999;
+
+    if (eventInfo->isAvailable< float > ((jetName+"_yStar").c_str()) )
+        thisJetEvent->m_yStar = eventInfo->auxdecor< float > ((jetName+"_yStar").c_str());
+    else thisJetEvent->m_yStar = -999;
+
+    if (eventInfo->isAvailable< float > ((jetName+"_yBoost").c_str()) )
+        thisJetEvent->m_yBoost = eventInfo->auxdecor< float > ((jetName+"_yBoost").c_str());
+    else thisJetEvent->m_yBoost = -999;
+
+    if (eventInfo->isAvailable< float > ((jetName+"_deltaPhi").c_str()) )
+        thisJetEvent->m_deltaPhi = eventInfo->auxdecor< float > ((jetName+"_deltaPhi").c_str());
+    else thisJetEvent->m_deltaPhi = -999;
+
+    if (eventInfo->isAvailable< float > ((jetName+"_pTBalance").c_str()) )
+        thisJetEvent->m_pTBalance = eventInfo->auxdecor< float > ((jetName+"_pTBalance").c_str());
+    else thisJetEvent->m_pTBalance = -999;
+
+    if (eventInfo->isAvailable< float > ((jetName+"_m23").c_str()) )
+        thisJetEvent->m_m23 = eventInfo->auxdecor< float > ((jetName+"_m23").c_str());
+    else thisJetEvent->m_m23 = -999;
+
+    if (eventInfo->isAvailable< float > ((jetName+"_m3j").c_str()) )
+        thisJetEvent->m_m3j = eventInfo->auxdecor< float > ((jetName+"_m3j").c_str());
+    else thisJetEvent->m_m3j = -999;
+
 }
 
 

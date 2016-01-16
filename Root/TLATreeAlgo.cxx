@@ -98,7 +98,8 @@ EL::StatusCode TLATreeAlgo :: treeInitialize ()
 
   // get the file we created already
   TFile* treeFile = wk()->getOutputFile ("tree");
-    
+
+  // CD: should delete this? Also m_units is hardwired in here so maybe not much point in having a getter in HelpTreeBase?
   if (!m_helpTree) {
     m_helpTree = new TLATreeHelper( m_event, outTree, treeFile, 1e3, m_debug, m_DC14 );
   }
@@ -231,10 +232,58 @@ EL::StatusCode TLATreeAlgo::getLumiWeights(const xAOD::EventInfo* eventInfo) {
 //EL::StatusCode TLATreeAlgo :: fileExecute () { return EL::StatusCode::SUCCESS; }
 //EL::StatusCode TLATreeAlgo :: changeInput (bool /*firstFile*/) { return EL::StatusCode::SUCCESS; }
 
+EL::StatusCode TLATreeAlgo::getJetVariables(std::string jetName, const xAOD::JetContainer* inJets, const xAOD::EventInfo* eventInfo) {
+
+    //this only if 2 or more jets
+    if (inJets->size() >= 2) {
+        const xAOD::Jet* leadJet     = inJets->at(0);
+        const xAOD::Jet* subLeadJet  = inJets->at(1);
+        
+        float mjj = ( leadJet->p4() + subLeadJet->p4() ).M();
+        eventInfo->auxdecor< float >( ( jetName+"_mjj" ).c_str() ) = mjj/ m_units;
+        /*if(m_applyResNLOKFactor){
+         eventInfo->auxdecor< float >( "weight_resonanceKFactor" ) = 1.-m_ResNLOKFactorHist->GetBinContent( m_ResNLOKFactorHist->FindBin(mjj) );
+         }*/
+        
+        eventInfo->auxdecor< float >( ( jetName+"_pTjj" ).c_str() ) = ( leadJet->p4() + subLeadJet->p4() ).Pt() / m_units;
+        eventInfo->auxdecor< float >( ( jetName+"_yBoost" ).c_str() ) = ( leadJet->rapidity() + subLeadJet->rapidity() ) / 2.0;
+        eventInfo->auxdecor< float >( ( jetName+"_yStar" ).c_str() ) = ( leadJet->rapidity() - subLeadJet->rapidity() ) / 2.0;
+        eventInfo->auxdecor< float >( ( jetName+"_deltaPhi" ).c_str() ) = fabs( TVector2::Phi_mpi_pi( leadJet->phi() - subLeadJet->phi() ) );
+        
+        eventInfo->auxdecor< float >( ( jetName+"_pTBalance" ).c_str() ) = ( leadJet->pt() - subLeadJet->pt() ) / ( leadJet->pt() + subLeadJet->pt() );
+        
+        if(inJets->size() >= 3) {
+            
+            const xAOD::Jet* thirdLeadJet  = inJets->at(2);
+            float m23 = ( thirdLeadJet->p4() + subLeadJet->p4() ).M();
+            eventInfo->auxdecor< float >( ( jetName+"_m23" ).c_str() ) = m23 / m_units;
+            eventInfo->auxdecor< float >( ( jetName+"_m3j" ).c_str() ) = ( inJets->at(0)->p4() + inJets->at(1)->p4() + inJets->at(2)->p4()).M() / m_units;
+            
+        } // 3 or more jets
+    } // 2 or more jets
+    
+    TLorentzVector MHT = TLorentzVector(0.0, 0.0, 0.0, 0.0);
+    TLorentzVector MHTJVT = TLorentzVector(0.0, 0.0, 0.0, 0.0);
+    for( auto iJet : *inJets) {
+        MHT -= iJet->p4();
+        /*if( iJet->pt() < 50e3 &&
+         fabs(iJet->getAttribute<xAOD::JetFourMom_t>("JetEMScaleMomentum").eta()) < 2.4 ) {
+         if( iJet->getAttribute< float >( "Jvt" ) < 0.64 ) {
+         continue;
+         }
+         }
+         MHTJVT -= iJet->p4();*/
+    } // end loop over all jet
+    eventInfo->auxdecor< float >( ( jetName+"MHT" ).c_str() )    = ( MHT.Pt() / m_units );
+    eventInfo->auxdecor< float >( ( jetName+"MHTPhi").c_str() )    = ( MHT.Phi() );
+    //eventInfo->auxdecor< float >( "MHTJVT" )    = ( MHTJVT.Pt() / GeV );
+    //eventInfo->auxdecor< float >( "MHTJVTPhi" ) = ( MHTJVT.Phi() );
+ 
+    return EL::StatusCode::SUCCESS;
+}
 
 EL::StatusCode TLATreeAlgo :: execute ()
 {
-    //CD: I hope someone deletes this
     const xAOD::EventInfo* eventInfo(nullptr);
     RETURN_CHECK("TLATreeAlgo::execute()", HelperFunctions::retrieve(eventInfo, m_eventInfoContainerName, m_event, m_store, m_verbose) ,"");
 
@@ -262,23 +311,27 @@ EL::StatusCode TLATreeAlgo :: execute ()
     
     //get the various jets from the store
     
-    double GeV = 1000.;
     //offline jets to start with
     const xAOD::JetContainer* inJets(nullptr);
     RETURN_CHECK("TLATreeAlgo::execute()", HelperFunctions::retrieve(inJets, m_jetContainerName, m_event, m_store, m_verbose) ,"");
+    
+    std::string jetName = "jet";
+    getJetVariables(jetName, inJets, eventInfo);
 
+
+/*
     //this only if 2 or more jets
     if (inJets->size() >= 2) {
       const xAOD::Jet* leadJet     = inJets->at(0);
       const xAOD::Jet* subLeadJet  = inJets->at(1);
     
-      float mjj = ( leadJet->p4() + subLeadJet->p4() ).M();
-      eventInfo->auxdecor< float >( "mjj" ) = mjj/GeV; //CD: dangerous, is it always in MeV or only when we get it out of the container?
-      /*if(m_applyResNLOKFactor){
-        eventInfo->auxdecor< float >( "weight_resonanceKFactor" ) = 1.-m_ResNLOKFactorHist->GetBinContent( m_ResNLOKFactorHist->FindBin(mjj) );
-      }*/
+      float mjj = ( leadJet->p4() + subLeadJet->p4() ).M() / m_units;
+      eventInfo->auxdecor< float >( "mjj" ) = mjj;
+    //if(m_applyResNLOKFactor){
+    //    eventInfo->auxdecor< float >( "weight_resonanceKFactor" ) = 1.-m_ResNLOKFactorHist->GetBinContent( m_ResNLOKFactorHist->FindBin(mjj) );
+    //  }
     
-      eventInfo->auxdecor< float >( "pTjj" ) = ( leadJet->p4() + subLeadJet->p4() ).Pt() / GeV;
+      eventInfo->auxdecor< float >( "pTjj" ) = ( leadJet->p4() + subLeadJet->p4() ).Pt() / m_units;
       eventInfo->auxdecor< float >( "yBoost" ) = ( leadJet->rapidity() + subLeadJet->rapidity() ) / 2.0;
       eventInfo->auxdecor< float >( "deltaPhi" ) = fabs( TVector2::Phi_mpi_pi( leadJet->phi() - subLeadJet->phi() ) );
 
@@ -287,30 +340,30 @@ EL::StatusCode TLATreeAlgo :: execute ()
       if(inJets->size() >= 3) {
         
         const xAOD::Jet* thirdLeadJet  = inJets->at(2);
-        float m23 = ( thirdLeadJet->p4() + subLeadJet->p4() ).M();
-        eventInfo->auxdecor< float >( "m23" ) = m23/GeV; //CD: dangerous, is it always in MeV or only when we get it out of the container?
-        eventInfo->auxdecor< float >( "m3j" ) = ( inJets->at(0)->p4() + inJets->at(1)->p4() + inJets->at(2)->p4()).M() / GeV;
+        float m23 = ( thirdLeadJet->p4() + subLeadJet->p4() ).M() / m_units;
+        eventInfo->auxdecor< float >( "m23" ) = m23 / m_units;
+        eventInfo->auxdecor< float >( "m3j" ) = ( inJets->at(0)->p4() + inJets->at(1)->p4() + inJets->at(2)->p4()).M() / m_units;
         
-      }
+      } // 3 or more jets
     } // 2 or more jets
 
     TLorentzVector MHT = TLorentzVector(0.0, 0.0, 0.0, 0.0);
     TLorentzVector MHTJVT = TLorentzVector(0.0, 0.0, 0.0, 0.0);
     for( auto iJet : *inJets) {
       MHT -= iJet->p4();
-      /*if( iJet->pt() < 50e3 &&
-        fabs(iJet->getAttribute<xAOD::JetFourMom_t>("JetEMScaleMomentum").eta()) < 2.4 ) {
-        if( iJet->getAttribute< float >( "Jvt" ) < 0.64 ) {
-          continue;
-        }
-      }
-      MHTJVT -= iJet->p4();*/
+      // if( iJet->pt() < 50e3 &&
+      //  fabs(iJet->getAttribute<xAOD::JetFourMom_t>("JetEMScaleMomentum").eta()) < 2.4 ) {
+      //  if( iJet->getAttribute< float >( "Jvt" ) < 0.64 ) {
+      //    continue;
+      //  }
+      //}
+      //MHTJVT -= iJet->p4();
     } // end loop over all jets
     eventInfo->auxdecor< float >( "MHT"    )    = ( MHT.Pt() / 1000. );
     eventInfo->auxdecor< float >( "MHTPhi" )    = ( MHT.Phi() );
     //eventInfo->auxdecor< float >( "MHTJVT" )    = ( MHTJVT.Pt() / GeV );
     //eventInfo->auxdecor< float >( "MHTJVTPhi" ) = ( MHTJVT.Phi() );
-
+*/
     //call the base class's execute method
     TreeAlgo::execute();
 
