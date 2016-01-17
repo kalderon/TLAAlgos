@@ -14,14 +14,6 @@
 #include "TEnv.h"
 #include "TSystem.h"
 
-using std::string;
-using std::cout;
-using std::endl;
-using std::cerr;
-using std::vector;
-using std::ifstream;
-using std::istringstream;
-
 
 // this is needed to distribute the algorithm to the workers
 ClassImp(TLATreeAlgo)
@@ -59,7 +51,6 @@ EL::StatusCode TLATreeAlgo :: initialize ()
   Info("initialize()", m_name.c_str());
     
   m_eventCounter = -1;
-
 
   m_event = wk()->xaodEvent();
   m_store = wk()->xaodStore();
@@ -100,8 +91,19 @@ EL::StatusCode TLATreeAlgo :: treeInitialize ()
   TFile* treeFile = wk()->getOutputFile ("tree");
 
   // CD: should delete this? Also m_units is hardwired in here so maybe not much point in having a getter in HelpTreeBase?
+  bool doJets = true, doTriggerJets = false, doTruthJets = false;
+    
+  if (!m_jetDetailStr.empty()) doJets = true;
+  if (!m_truthJetDetailStr.empty()) doTruthJets = true;
+  if (!m_trigJetDetailStr.empty()) doTriggerJets = true;
+    
+  if ( doJets == false && doTriggerJets == false && doTruthJets == false) {
+    Error("treeInitialize()", "%s no point in having a TLATreeAlgo with no jet collections. Please configure at least one. Exiting.", m_name.c_str() );
+    return EL::StatusCode::FAILURE;
+  }
+    
   if (!m_helpTree) {
-    m_helpTree = new TLATreeHelper( m_event, outTree, treeFile, 1e3, m_debug, m_DC14 );
+    m_helpTree = new TLATreeHelper( m_event, outTree, treeFile, 1e3, m_debug, m_DC14, nullptr, doJets, doTriggerJets, doTruthJets);
   }
 
   // tell the tree to go into the file
@@ -155,26 +157,26 @@ EL::StatusCode TLATreeAlgo::getLumiWeights(const xAOD::EventInfo* eventInfo) {
     //if mcChannelNumber = 0 need to retrieve from runNumber
     if(eventInfo->mcChannelNumber()==0) m_mcChannelNumber = eventInfo->runNumber();
     //CD: fixme, hardwired
-    ifstream fileIn(  gSystem->ExpandPathName( "$ROOTCOREBIN/data/TLAAlgos/XsAcc_13TeV.txt") );
+    std::ifstream fileIn(  gSystem->ExpandPathName( "$ROOTCOREBIN/data/TLAAlgos/XsAcc_13TeV.txt") );
     std::string runNumStr = std::to_string( m_mcChannelNumber );
     std::string line;
     std::string subStr;
     while (getline(fileIn, line)){
-        istringstream iss(line);
+        std::istringstream iss(line);
         iss >> subStr;
-        if (subStr.find(runNumStr) != string::npos){
+        if (subStr.find(runNumStr) != std::string::npos){
             iss >> subStr;
             sscanf(subStr.c_str(), "%e", &m_xs);
             iss >> subStr;
             sscanf(subStr.c_str(), "%e", &m_filtEff);
             iss >> subStr;
             sscanf(subStr.c_str(), "%i", &m_numAMIEvents);
-            cout << "Setting xs / acceptance / numAMIEvents to " << m_xs << ":" << m_filtEff << ":" << m_numAMIEvents << endl;
+            std::cout << "Setting xs / acceptance / numAMIEvents to " << m_xs << ":" << m_filtEff << ":" << m_numAMIEvents << std::endl;
             continue;
         }
     }
     if( m_numAMIEvents == 0){
-        cerr << "ERROR: Could not find proper file information for file number " << runNumStr << endl;
+        std::cerr << "ERROR: Could not find proper file information for file number " << runNumStr << std::endl;
         return EL::StatusCode::FAILURE;
     }
     return EL::StatusCode::SUCCESS;
@@ -274,10 +276,10 @@ EL::StatusCode TLATreeAlgo::getJetVariables(std::string jetName, const xAOD::Jet
          }
          MHTJVT -= iJet->p4();*/
     } // end loop over all jet
-    eventInfo->auxdecor< float >( ( jetName+"MHT" ).c_str() )    = ( MHT.Pt() / m_units );
-    eventInfo->auxdecor< float >( ( jetName+"MHTPhi").c_str() )    = ( MHT.Phi() );
-    //eventInfo->auxdecor< float >( "MHTJVT" )    = ( MHTJVT.Pt() / GeV );
-    //eventInfo->auxdecor< float >( "MHTJVTPhi" ) = ( MHTJVT.Phi() );
+    eventInfo->auxdecor< float >( ( jetName+"_MHT" ).c_str() )    = ( MHT.Pt() / m_units );
+    eventInfo->auxdecor< float >( ( jetName+"_MHTPhi").c_str() )    = ( MHT.Phi() );
+    eventInfo->auxdecor< float >( ( jetName+"_MHTJVT").c_str() )    = ( MHTJVT.Pt() / m_units );
+    eventInfo->auxdecor< float >( ( jetName+"_MHTJVTPhi").c_str() ) = ( MHTJVT.Phi() );
  
     return EL::StatusCode::SUCCESS;
 }
@@ -311,13 +313,29 @@ EL::StatusCode TLATreeAlgo :: execute ()
     
     //get the various jets from the store
     
-    //offline jets to start with
-    const xAOD::JetContainer* inJets(nullptr);
-    RETURN_CHECK("TLATreeAlgo::execute()", HelperFunctions::retrieve(inJets, m_jetContainerName, m_event, m_store, m_verbose) ,"");
+    if (!m_jetDetailStr.empty()) {
+      const xAOD::JetContainer* inJets(nullptr);
+      RETURN_CHECK("TLATreeAlgo::execute()", HelperFunctions::retrieve(inJets, m_jetContainerName, m_event, m_store, m_verbose) ,"");
     
-    std::string jetName = "jet";
-    getJetVariables(jetName, inJets, eventInfo);
+      std::string jetName = "jet";
+      getJetVariables(jetName, inJets, eventInfo);
+    }
 
+    if (!m_trigJetDetailStr.empty()) {
+        const xAOD::JetContainer* inJets(nullptr);
+        RETURN_CHECK("TLATreeAlgo::execute()", HelperFunctions::retrieve(inJets, m_trigJetContainerName, m_event, m_store, m_verbose) ,"");
+        
+        std::string jetName = "trigjet";
+        getJetVariables(jetName, inJets, eventInfo);
+    }
+
+    if (!m_truthJetDetailStr.empty()) {
+        const xAOD::JetContainer* inJets(nullptr);
+        RETURN_CHECK("TLATreeAlgo::execute()", HelperFunctions::retrieve(inJets, m_truthJetContainerName, m_event, m_store, m_verbose) ,"");
+        
+        std::string jetName = "truthjet";
+        getJetVariables(jetName, inJets, eventInfo);
+    }
 
 /*
     //this only if 2 or more jets

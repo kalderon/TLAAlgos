@@ -6,12 +6,15 @@
 
 #include "TLAAlgos/TLATreeHelper.h"
 
-TLATreeHelper :: TLATreeHelper(xAOD::TEvent * event, TTree* tree, TFile* file, const float units, bool debug, bool DC14, xAOD::TStore* store) :
+TLATreeHelper :: TLATreeHelper(xAOD::TEvent * event, TTree* tree, TFile* file, const float units, bool debug, bool DC14, xAOD::TStore* store, bool doJets, bool doTriggerJets, bool doTruthJets) :
 HelpTreeBase(event, tree, file, units, debug, DC14, store)
 {
     Info("TLATreeHelper", "Creating output TTree");
     m_firstEvent = true;
     m_store = store;
+    m_doJets = doJets;
+    m_doTriggerJets = doTriggerJets;
+    m_doTruthJets = doTruthJets;
 }
 
 TLATreeHelper :: ~TLATreeHelper()
@@ -30,9 +33,9 @@ void TLATreeHelper::AddEventUser(const std::string detailStr)
     
     //here we need to find out which jet collections we have in this tree
     
-    AddJetEvent("jet");
-    AddJetEvent("truthjet");
-    AddJetEvent("trigjet");
+    if (m_doJets) AddJetEvent("jet");
+    if (m_doTruthJets) AddJetEvent("truthjet");
+    if (m_doTriggerJets) AddJetEvent("trigjet");
     
 }
 
@@ -49,38 +52,11 @@ void TLATreeHelper::AddJetEvent(const std::string jetName) {
     m_tree->Branch((jetName+"_pTBalance").c_str(),  &thisJetEvent->m_pTBalance);
     m_tree->Branch((jetName+"_m23").c_str(),  &thisJetEvent->m_m23);
     m_tree->Branch((jetName+"_m3j").c_str(),  &thisJetEvent->m_m3j);
+    m_tree->Branch((jetName+"_MHT").c_str(),  &thisJetEvent->m_MHT);
+    m_tree->Branch((jetName+"_MHTPhi").c_str(),  &thisJetEvent->m_MHTPhi);
     
     
 }
-
-
-//%%%%Left for later: variables that can be derived from what we have already
-
-//void TLATreeHelper::AddJetBasedEventUser(const std::string jetName) {
-
-//    // event variables, for each of the possible jet collections
-//    //they need vectors to be stored in, as the jet-level variables
-    
-//    m_tree->Branch((jetName+"_yStar").c_str(),  &m_yStar,  "yStar/F");
-//    m_tree->Branch((jetName+"_yBoost").c_str(), &m_yBoost, "yBoost/F");
-//    m_tree->Branch((jetName+"_mjj").c_str(),  &m_mjj,  "mjj/F");
-//    m_tree->Branch((jetName+"_pTjj").c_str(), &m_pTjj, "pTjj/F");
-//    m_tree->Branch((jetName+"_m3j").c_str(), &m_m3j, "m3j/F");
-//    m_tree->Branch((jetName+"_deltaPhi").c_str(), &m_deltaPhi, "deltaPhi/F");
-//    
-//    // punch-through
-//    m_tree->Branch((jetName+"Insitu_Segs_response_E", &m_Insitu_Segs_response_E, "Insitu_Segs_response_E/F");
-//    m_tree->Branch((jetName+"Insitu_Segs_response_pT", &m_Insitu_Segs_response_pT, "Insitu_Segs_response_pT/F");
-//    m_tree->Branch("punch_type_segs", &m_punch_type_segs, "punch_type_segs/I");
-//    
-//    // pT balance - for cleaning - these also need the prefix
-//    m_tree->Branch((jetName+"pTBalance", &m_pTbalance, "pTBalance/F");
-//    m_tree->Branch((jetName+"MHT",       &m_MHT,       "MHT/F");
-//    m_tree->Branch((jetName+"MHTPhi",    &m_MHTPhi,    "MHTPhi/F");
-//    m_tree->Branch((jetName+"MHTJVT",    &m_MHTJVT,    "MHTJVT/F");
-//    m_tree->Branch((jetName+"MHTJVTPhi", &m_MHTJVTPhi, "MHTJVTPhi/F");
-    
-//}
 
 //%%%%Left for later: variables that can be derived from what we have already
 //void TLATreeHelper::AddJetsUser(const std::string detailStr, const std::string jetName)
@@ -99,23 +75,6 @@ void TLATreeHelper::AddJetEvent(const std::string jetName) {
 //////////////////// Clear any defined vectors here ////////////////////////////
 void TLATreeHelper::ClearEventUser() {
     
-//%%%%Left for later: variables that can be derived from what we have already
-//    m_yStar    = -999;
-//    m_yBoost   = -999;
-//    m_mjj      = -999;
-//    m_pTjj     = -999;
-//    m_m3j      = -999;
-//    m_deltaPhi = -999;
-//    
-//    m_Insitu_Segs_response_E = -999;
-//    m_Insitu_Segs_response_pT = -999;
-//    m_punch_type_segs = -999;
-//    m_pTbalance = -999;
-//    m_MHT      = -999;
-//    m_MHTJVT   = -999;
-//    m_MHTPhi   = -999;
-//    m_MHTJVTPhi= -999;
-    
 //    m_weight_corr = -999;
     m_weight    = -999;
     m_weight_xs = -999;
@@ -123,9 +82,11 @@ void TLATreeHelper::ClearEventUser() {
 //    m_weight_resonanceKFactor = -999;
     
     //clear jet event variables
-    ClearJetEvent("jet");
-    ClearJetEvent("trigjet");
-    ClearJetEvent("truthjet");
+    
+    if (m_doJets) ClearJetEvent("jet");
+    if (m_doTruthJets) ClearJetEvent("truthjet");
+    if (m_doTriggerJets) ClearJetEvent("trigjet");
+
 }
 
 void TLATreeHelper::ClearJetEvent(const std::string jetName) {
@@ -139,6 +100,8 @@ void TLATreeHelper::ClearJetEvent(const std::string jetName) {
     thisJetEvent->m_pTBalance = -999;
     thisJetEvent->m_m23 = -999;
     thisJetEvent->m_m3j = -999;
+    thisJetEvent->m_MHT = -999;
+    thisJetEvent->m_MHTPhi= -999;
 
 
 }
@@ -158,49 +121,19 @@ void TLATreeHelper::FillEventUser( const xAOD::EventInfo* eventInfo ) {
 
 //%%%%Left for later: variables that can be derived from what we have already
     
-//    if( eventInfo->isAvailable< float >( "yStar" ) )
-//    m_yStar = eventInfo->auxdecor< float >( "yStar" );
-//    if( eventInfo->isAvailable< float >( "yBoost" ) )
-//    m_yBoost = eventInfo->auxdecor< float >( "yBoost" );
-    
-//    if( eventInfo->isAvailable< float >( "mjj" ) )
-//    m_mjj = eventInfo->auxdecor< float >( "mjj" );
-//    if( eventInfo->isAvailable< float >( "pTjj" ) )
-//    m_pTjj = eventInfo->auxdecor< float >( "pTjj" );
-//    if( eventInfo->isAvailable< float >( "m3j" ) )
-//    m_m3j = eventInfo->auxdecor< float >( "m3j" );
-//    if( eventInfo->isAvailable< float >( "deltaPhi" ) )
-//    m_deltaPhi = eventInfo->auxdecor< float >( "deltaPhi" );
-    
     if( eventInfo->isAvailable< float >( "weight" ) )
     m_weight = eventInfo->auxdecor< float >( "weight" );
     if( eventInfo->isAvailable< float >( "weight_xs" ) )
     m_weight_xs = eventInfo->auxdecor< float >( "weight_xs" );
-    
 //    if( eventInfo->isAvailable< float >( "weight_prescale" ) )
 //    m_weight_prescale = eventInfo->auxdecor< float >( "weight_prescale" );
 //    if( eventInfo->isAvailable< float >( "weight_resonanceKFactor" ) )
 //    m_weight_resonanceKFactor = eventInfo->auxdecor< float >( "weight_resonanceKFactor" );
     
-//    if( eventInfo->isAvailable< float >( "Insitu_Segs_response_E" ) )
-//    m_Insitu_Segs_response_E = eventInfo->auxdecor< float >( "Insitu_Segs_response_E" );
-//    if( eventInfo->isAvailable< float >( "Insitu_Segs_response_pT" ) )
-//    m_Insitu_Segs_response_pT = eventInfo->auxdecor< float >( "Insitu_Segs_response_pT" );
-//    if( eventInfo->isAvailable< int >( "punch_type_segs" ) )
-//    m_punch_type_segs = eventInfo->auxdecor< int >( "punch_type_segs" );
-    
-//    if( eventInfo->isAvailable< float >( "pTBalance" ) )
-//    m_pTbalance = eventInfo->auxdecor< float >( "pTBalance" );
-//    
-//    if( eventInfo->isAvailable< float >( "MHT" ) )
-//    m_MHT = eventInfo->auxdecor< float >( "MHT" );
-//    if( eventInfo->isAvailable< float >( "MHTPhi" ) )
-//    m_MHTPhi = eventInfo->auxdecor< float >( "MHTPhi" );
-//    if( eventInfo->isAvailable< float >( "MHTJVT" ) )
-//    m_MHTJVT = eventInfo->auxdecor< float >( "MHTJVT" );
-//    if( eventInfo->isAvailable< float >( "MHTJVTPhi" ) )
-//    m_MHTJVTPhi = eventInfo->auxdecor< float >( "MHTJVTPhi" );
-    FillJetEvent(eventInfo, "jet");
+
+    if (m_doJets) FillJetEvent(eventInfo, "jet");
+    if (m_doTruthJets) FillJetEvent(eventInfo, "truthjet");
+    if (m_doTriggerJets) FillJetEvent(eventInfo, "trigjet");
     
 }
 
@@ -240,6 +173,14 @@ void TLATreeHelper::FillJetEvent( const xAOD::EventInfo* eventInfo, const std::s
     if (eventInfo->isAvailable< float > ((jetName+"_m3j").c_str()) )
         thisJetEvent->m_m3j = eventInfo->auxdecor< float > ((jetName+"_m3j").c_str());
     else thisJetEvent->m_m3j = -999;
+
+    if (eventInfo->isAvailable< float > ((jetName+"_MHT").c_str()) )
+        thisJetEvent->m_MHT = eventInfo->auxdecor< float > ((jetName+"_MHT").c_str());
+    else thisJetEvent->m_MHT = -999;
+    
+    if (eventInfo->isAvailable< float > ((jetName+"_MHTPhi").c_str()) )
+        thisJetEvent->m_MHTPhi = eventInfo->auxdecor< float > ((jetName+"_MHTPhi").c_str());
+    else thisJetEvent->m_MHTPhi = -999;
 
 }
 
