@@ -1,4 +1,5 @@
 [
+
   { "class": "BasicEventSelection",
     "configs": {
       "m_debug": false,
@@ -29,7 +30,7 @@
    "configs": {
      "m_debug": true,
      "m_verbose": true,
-     "m_inContainerName": "HLT_xAOD__JetContainer_a4tcemsubjesFS",
+     "m_inContainerName": "a4tcemsubjesFS",
      "m_outContainerName": "TDTJetContainer_a4tcemsubjesFS"
      }
  },
@@ -55,8 +56,8 @@
      "configs": {
      "m_debug": true,
      "m_verbose": true,
-     "m_evtDetailStr" : "eventCleaning m_pileup",
      "m_trigDetailStr" : "basic passTriggers",
+     "m_evtDetailStr" : "eventCleaning pileup",
      "m_jetContainerName": "AntiKt4EMTopoJets",
      "m_jetDetailStr": "kinematic layer clean trackPV energy scales",
      "m_trigJetContainerName": "TDTJetContainer_a4tcemsubjesFS",

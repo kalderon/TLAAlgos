@@ -34,8 +34,8 @@ void TLATreeHelper::AddEventUser(const std::string detailStr)
     //here we need to find out which jet collections we have in this tree
     
     if (m_doJets) AddJetEvent("jet");
-    if (m_doTruthJets) AddJetEvent("truthjet");
-    if (m_doTriggerJets) AddJetEvent("trigjet");
+    if (m_doTruthJets) AddJetEvent("truthJet");
+    if (m_doTriggerJets) AddJetEvent("trigJet");
     
 }
 
@@ -84,8 +84,8 @@ void TLATreeHelper::ClearEventUser() {
     //clear jet event variables
     
     if (m_doJets) ClearJetEvent("jet");
-    if (m_doTruthJets) ClearJetEvent("truthjet");
-    if (m_doTriggerJets) ClearJetEvent("trigjet");
+    if (m_doTruthJets) ClearJetEvent("truthJet");
+    if (m_doTriggerJets) ClearJetEvent("trigJet");
 
 }
 
@@ -132,8 +132,8 @@ void TLATreeHelper::FillEventUser( const xAOD::EventInfo* eventInfo ) {
     
 
     if (m_doJets) FillJetEvent(eventInfo, "jet");
-    if (m_doTruthJets) FillJetEvent(eventInfo, "truthjet");
-    if (m_doTriggerJets) FillJetEvent(eventInfo, "trigjet");
+    if (m_doTruthJets) FillJetEvent(eventInfo, "truthJet");
+    if (m_doTriggerJets) FillJetEvent(eventInfo, "trigJet");
     
 }
 

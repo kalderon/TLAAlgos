@@ -24,7 +24,7 @@
  },
 
  {
-   "class": "TreeAlgo",
+   "class": "TLATreeAlgo",
      "configs": {
      "m_debug": true,
      "m_verbose": true,

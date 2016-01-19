@@ -156,11 +156,14 @@ EL::StatusCode TLATreeAlgo::getLumiWeights(const xAOD::EventInfo* eventInfo) {
     m_mcChannelNumber = eventInfo->mcChannelNumber();
     //if mcChannelNumber = 0 need to retrieve from runNumber
     if(eventInfo->mcChannelNumber()==0) m_mcChannelNumber = eventInfo->runNumber();
-    //CD: fixme, hardwired
+    //CD: fixme, this is hardwired
     std::ifstream fileIn(  gSystem->ExpandPathName( "$ROOTCOREBIN/data/TLAAlgos/XsAcc_13TeV.txt") );
     std::string runNumStr = std::to_string( m_mcChannelNumber );
     std::string line;
     std::string subStr;
+    m_xs = 1.0;
+    m_filtEff = 1.0;
+    m_numAMIEvents = 1.0;
     while (getline(fileIn, line)){
         std::istringstream iss(line);
         iss >> subStr;
@@ -174,6 +177,7 @@ EL::StatusCode TLATreeAlgo::getLumiWeights(const xAOD::EventInfo* eventInfo) {
             std::cout << "Setting xs / acceptance / numAMIEvents to " << m_xs << ":" << m_filtEff << ":" << m_numAMIEvents << std::endl;
             continue;
         }
+        continue;
     }
     if( m_numAMIEvents == 0){
         std::cerr << "ERROR: Could not find proper file information for file number " << runNumStr << std::endl;
@@ -242,6 +246,8 @@ EL::StatusCode TLATreeAlgo::getJetVariables(std::string jetName, const xAOD::Jet
         const xAOD::Jet* subLeadJet  = inJets->at(1);
         
         float mjj = ( leadJet->p4() + subLeadJet->p4() ).M();
+        //std::cout << "m12:" << mjj << std::endl;
+
         eventInfo->auxdecor< float >( ( jetName+"_mjj" ).c_str() ) = mjj/ m_units;
         /*if(m_applyResNLOKFactor){
          eventInfo->auxdecor< float >( "weight_resonanceKFactor" ) = 1.-m_ResNLOKFactorHist->GetBinContent( m_ResNLOKFactorHist->FindBin(mjj) );
@@ -259,6 +265,7 @@ EL::StatusCode TLATreeAlgo::getJetVariables(std::string jetName, const xAOD::Jet
             const xAOD::Jet* thirdLeadJet  = inJets->at(2);
             float m23 = ( thirdLeadJet->p4() + subLeadJet->p4() ).M();
             eventInfo->auxdecor< float >( ( jetName+"_m23" ).c_str() ) = m23 / m_units;
+            //std::cout << "m23:" << m23 << std::endl;
             eventInfo->auxdecor< float >( ( jetName+"_m3j" ).c_str() ) = ( inJets->at(0)->p4() + inJets->at(1)->p4() + inJets->at(2)->p4()).M() / m_units;
             
         } // 3 or more jets
@@ -302,9 +309,9 @@ EL::StatusCode TLATreeAlgo :: execute ()
     else
       m_mcEventWeight = 1;
     
-    //float weight_pileup = 1.;
-    //if( m_isMC && eventInfo->isAvailable< double >( "PileupWeight") )
-    //weight_pileup = eventInfo->auxdecor< double >("PileupWeight");
+    float weight_pileup = 1.;
+    if( m_isMC && eventInfo->isAvailable< double >( "PileupWeight") )
+    weight_pileup = eventInfo->auxdecor< double >("PileupWeight");
     
     eventInfo->auxdecor< float >("weight_xs") = m_xs * m_filtEff;
     eventInfo->auxdecor< float >("weight") = m_mcEventWeight * m_xs * m_filtEff;
@@ -325,7 +332,7 @@ EL::StatusCode TLATreeAlgo :: execute ()
         const xAOD::JetContainer* inJets(nullptr);
         RETURN_CHECK("TLATreeAlgo::execute()", HelperFunctions::retrieve(inJets, m_trigJetContainerName, m_event, m_store, m_verbose) ,"");
         
-        std::string jetName = "trigjet";
+        std::string jetName = "trigJet";
         getJetVariables(jetName, inJets, eventInfo);
     }
 
@@ -333,7 +340,7 @@ EL::StatusCode TLATreeAlgo :: execute ()
         const xAOD::JetContainer* inJets(nullptr);
         RETURN_CHECK("TLATreeAlgo::execute()", HelperFunctions::retrieve(inJets, m_truthJetContainerName, m_event, m_store, m_verbose) ,"");
         
-        std::string jetName = "truthjet";
+        std::string jetName = "truthJet";
         getJetVariables(jetName, inJets, eventInfo);
     }
 
