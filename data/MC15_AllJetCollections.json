@@ -5,6 +5,9 @@
       "m_truthLevelOnly": false,
       "m_useMetaData" : false,
       "m_doPUreweighting" : false,
+      "m_checkDuplicatesMC" : true,
+      "m_PRWFileNames" : "$ROOTCOREBIN/data/TLAAlgos/PRW/Dijet_PRW.root",
+      "m_lumiCalcFileNames" : "$ROOTCOREBIN/data/TLAAlgos/PRW/ilumicalc_histograms_None_276262-284484.root",
       "m_storeTrigDecisions" : true,
       "m_applyEventCleaningCut" : false,
       "m_applyPrimaryVertexCut" : true,
@@ -12,8 +15,7 @@
       "m_triggerSelection" : "L1_J[0-9]*|HLT_j[0-9]*|HLT_noalg_J[0-9]*", 
       "m_applyTriggerCut" : false,
       "m_applyGRLCut": false,
-      "m_GRLxml": "$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml",
-      "m_doPUreweighting": false
+      "m_GRLxml": "$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml"
     }
   },
 
