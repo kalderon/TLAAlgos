@@ -91,9 +91,9 @@
      "m_jetContainerName": "AntiKt4EMTopoJets_calib_select",
      "m_jetDetailStr": "kinematic layer clean trackPV energy scales rapidity truth",
      "m_trigJetContainerName": "TDTJetContainer_a4tcemsubjesFS_select",
-     "m_trigJetDetailStr": "kinematic layer energy scales rapidity",
+     "m_trigJetDetailStr": "kinematic layer energy scales rapidity clean",
      "m_truthJetContainerName": "AntiKt4TruthJets_select",
-     "m_truthJetDetailStr": "kinematic",
+     "m_truthJetDetailStr": "kinematic truth",
      "m_name": "outTree"
    }
  }
