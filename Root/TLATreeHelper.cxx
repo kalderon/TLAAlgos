@@ -33,6 +33,7 @@ void TLATreeHelper::AddEventUser(const std::string detailStr)
     
     //here we need to find out which jet collections we have in this tree
     
+    
     if (m_doJets) AddJetEvent("jet");
     if (m_doTruthJets) AddJetEvent("truthJet");
     if (m_doTriggerJets) AddJetEvent("trigJet");
@@ -58,19 +59,15 @@ void TLATreeHelper::AddJetEvent(const std::string jetName) {
     
 }
 
-//%%%%Left for later: variables that can be derived from what we have already
-//void TLATreeHelper::AddJetsUser(const std::string detailStr, const std::string jetName)
-//{
-//    
-//    this->AddJetBasedEventUser(jetName);
-//
+/*void TLATreeHelper::AddJetsUser(const std::string detailStr, const std::string jetName)
+{
 //    m_tree->Branch((jetName+"_constitScaleEta").c_str(), &m_jet_constitScaleEta);
 //    m_tree->Branch((jetName+"_emScaleE").c_str(), &m_jet_emScaleE);
 //    m_tree->Branch((jetName+"_emScaleEta").c_str(), &m_jet_emScaleEta);
 //    m_tree->Branch((jetName+"_emScalePhi").c_str(), &m_jet_emScalePhi);
-//    m_tree->Branch((jetName+"_minDeltaR").c_str(), &m_jet_minDeltaR);
-//    m_tree->Branch((jetName+"_numberCloseJets").c_str(), &m_jet_numberCloseJets);
-//}
+    m_tree->Branch((jetName+"_minDeltaR").c_str(), &m_jet_minDeltaR);
+    m_tree->Branch((jetName+"_numberCloseJets").c_str(), &m_jet_numberCloseJets);
+}*/
 
 //////////////////// Clear any defined vectors here ////////////////////////////
 void TLATreeHelper::ClearEventUser() {
@@ -106,15 +103,14 @@ void TLATreeHelper::ClearJetEvent(const std::string jetName) {
 
 }
 
-//%%%%Left for later: variables that can be derived from what we have already
-//void TLATreeHelper::ClearJetsUser(const std::string jetName ) {
+/*void TLATreeHelper::ClearJetsUser(const std::string jetName ) {
 //    m_jet_constitScaleEta.clear();
 //    m_jet_emScaleE.clear();
 //    m_jet_emScaleEta.clear();
 //    m_jet_emScalePhi.clear();
-//    m_jet_minDeltaR.clear();
-//    m_jet_numberCloseJets.clear();
-//}
+    m_jet_minDeltaR.clear();
+    m_jet_numberCloseJets.clear();
+}*/
 
 /////////////////// Assign values to defined event variables here ////////////////////////
 void TLATreeHelper::FillEventUser( const xAOD::EventInfo* eventInfo ) {

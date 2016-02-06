@@ -6,6 +6,9 @@
 #include <fstream>
 
 
+namespace Trig {
+    class WebBunchCrossingTool;
+}
 
 class TLATreeAlgo : public TreeAlgo
 {
@@ -45,7 +48,9 @@ private :
   double m_mcEventWeight; //!
   std::stringstream m_ss; //!
 
-  
+  Trig::WebBunchCrossingTool*        m_trigBXTool;   //!
+  bool m_ownTBXT; //!
+
   //these variables are there to keep track of jet collection index in event-level variables, in case of multiple jet collections
   //kept for later when event-level jet-based quantities are needed
   std::string m_jetName;//!

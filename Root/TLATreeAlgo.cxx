@@ -11,6 +11,8 @@
 #include <xAODAnaHelpers/HelperClasses.h>
 #include <xAODAnaHelpers/tools/ReturnCheck.h>
 
+#include "TrigBunchCrossingTool/WebBunchCrossingTool.h"
+
 #include "TEnv.h"
 #include "TSystem.h"
 
@@ -63,6 +65,30 @@ EL::StatusCode TLATreeAlgo :: initialize ()
   m_isMC = ( eventInfo->eventType( xAOD::EventInfo::IS_SIMULATION ) ) ? true : false;
 
   this->getLumiWeights(eventInfo);
+    
+  //TrigBunchCrossing tool
+//    std::cout << tool.isFilled( 7 ) );
+//    std::cout << tool.isInTrain( 13 ) );
+//    std::cout << tool.distanceFromFront( 146 ) == 0 );
+//    std::cout << tool.distanceFromFront( 238 ) == 300 );
+//    std::cout << tool.gapBeforeTrain( 148 ) == 250 );
+//    std::cout << tool.bunchTrainSpacing() == 50 );
+
+  // Grab the TrigDecTool from the ToolStore
+  if ( asg::ToolStore::contains<Trig::WebBunchCrossingTool>( "WebBunchCrossingTool" ) ) {
+     m_trigBXTool = asg::ToolStore::get<Trig::WebBunchCrossingTool>("WebBunchCrossingTool");
+  } else {
+        Info ("Initialize()", "the Trigger LHC Bunch Crossing Tool is not yet initialized...[%s]. Doing so now.", m_name.c_str());
+        m_ownTBXT = true;
+        
+        m_trigBXTool = new Trig::WebBunchCrossingTool( "WebBunchCrossingTool" );
+        RETURN_CHECK("TLATreeAlgo::initialize()", m_trigBXTool->initialize(), "Failed to properly initialize TrigConf::WebBunchCrossingTool");
+        //ToolHandle< TrigConf::ITrigConfigTool > configHandle( m_trigBXTool );
+ 
+        RETURN_CHECK("TLATreeAlgo::initialize()", m_trigBXTool->setProperty( "OutputLevel", MSG::ERROR), "");
+ 
+        Info("initialize()", "Successfully configured Trig::WebBunchCrossingTool!");
+    }
     
   return EL::StatusCode::SUCCESS;
 }
@@ -188,52 +214,6 @@ EL::StatusCode TLATreeAlgo::getLumiWeights(const xAOD::EventInfo* eventInfo) {
 
 //%%%%%%%%functions coming straight from TreeAlgo
 
-//EL::StatusCode TLATreeAlgo :: configure ()
-//{
-//  if (!getConfig().empty()) {
-//
-//    // the file exists, use TEnv to read it off
-//    TEnv* config = new TEnv(getConfig(true).c_str());
-//    m_evtDetailStr            = config->GetValue("EventDetailStr",       m_evtDetailStr.c_str());
-//    m_trigDetailStr           = config->GetValue("TrigDetailStr",        m_trigDetailStr.c_str());
-//    m_trigJetDetailStr        = config->GetValue("TrigJetDetailStr",     m_trigJetDetailStr.c_str());
-//    m_muDetailStr             = config->GetValue("MuonDetailStr",        m_muDetailStr.c_str());
-//    m_elDetailStr             = config->GetValue("ElectronDetailStr",    m_elDetailStr.c_str());
-//    m_truthJetDetailStr       = config->GetValue("TruthJetDetailStr",    m_truthJetDetailStr.c_str());
-//    m_jetDetailStr            = config->GetValue("JetDetailStr",         m_jetDetailStr.c_str());
-//    m_fatJetDetailStr         = config->GetValue("FatJetDetailStr",      m_fatJetDetailStr.c_str());
-//    m_tauDetailStr            = config->GetValue("TauDetailStr",         m_tauDetailStr.c_str());
-//    m_METDetailStr            = config->GetValue("METDetailStr",         m_METDetailStr.c_str());
-//    m_photonDetailStr         = config->GetValue("PhotonDetailStr",      m_photonDetailStr.c_str());
-//
-//    m_debug                   = config->GetValue("Debug" ,           m_debug);
-//
-//    m_outHistDir              = config->GetValue("SameHistsOutDir",  m_outHistDir);
-//
-//    m_muContainerName         = config->GetValue("MuonContainerName",       m_muContainerName.c_str());
-//    m_elContainerName         = config->GetValue("ElectronContainerName",   m_elContainerName.c_str());
-//    m_jetContainerName        = config->GetValue("JetContainerName",        m_jetContainerName.c_str());
-//    m_truthJetContainerName   = config->GetValue("TruthJetContainerName",   m_truthJetContainerName.c_str());
-//    m_trigJetContainerName    = config->GetValue("TrigJetContainerName",    m_trigJetContainerName.c_str());
-//    m_fatJetContainerName     = config->GetValue("FatJetContainerName",     m_fatJetContainerName.c_str());
-//    m_tauContainerName        = config->GetValue("TauContainerName",        m_tauContainerName.c_str());
-//    m_METContainerName        = config->GetValue("METContainerName",        m_METContainerName.c_str());
-//    m_photonContainerName     = config->GetValue("PhotonContainerName",     m_photonContainerName.c_str());
-//
-//    // DC14 switch for little things that need to happen to run
-//    // for those samples with the corresponding packages
-//    m_DC14                    = config->GetValue("DC14", m_DC14);
-//
-//    Info("configure()", "Loaded in configuration values");
-//
-//    // everything seems preliminarily ok, let's print config and say we were successful
-//    config->Print();
-//
-//    delete config; config = nullptr;
-//  }
-//
-//  return EL::StatusCode::SUCCESS;
-//}
 
 //EL::StatusCode TLATreeAlgo :: fileExecute () { return EL::StatusCode::SUCCESS; }
 //EL::StatusCode TLATreeAlgo :: changeInput (bool /*firstFile*/) { return EL::StatusCode::SUCCESS; }
@@ -288,6 +268,25 @@ EL::StatusCode TLATreeAlgo::getJetVariables(std::string jetName, const xAOD::Jet
     eventInfo->auxdecor< float >( ( jetName+"_MHTJVT").c_str() )    = ( MHTJVT.Pt() / m_units );
     eventInfo->auxdecor< float >( ( jetName+"_MHTJVTPhi").c_str() ) = ( MHTJVT.Phi() );
  
+    //close-byness
+    
+    // add dR to closest jet
+    // and number of jets within some range
+    /*float RIsoR = 0.4 * 1.5; // for AntiKt4 jets ... use 0.6 for AntiKt6
+    for( auto iJet : *inJets ) {
+        float mindR(999);
+        float dR(999);
+        int nClose(0);
+        for( auto jJet : *inJets ) {
+            if( iJet == jJet ) { continue; }
+            dR = iJet->p4().DeltaR( jJet->p4() );
+            if ( dR <  mindR ) { mindR = dR; }
+            if ( dR <= RIsoR && jJet->pt() > 10e3 ) { nClose++; } // don't count junk jets
+        }
+        iJet->auxdecor< float >("minDeltaR") = mindR;
+        iJet->auxdecor< int >("numberCloseJets")   = nClose;
+    }*/
+    
     return EL::StatusCode::SUCCESS;
 }
 
@@ -310,13 +309,23 @@ EL::StatusCode TLATreeAlgo :: execute ()
       m_mcEventWeight = 1;
     
     float weight_pileup = 1.;
+    //CD: this redoes what is already done in HelpTreeBase
     if( m_isMC && eventInfo->isAvailable< double >( "PileupWeight") )
     weight_pileup = eventInfo->auxdecor< double >("PileupWeight");
     
     eventInfo->auxdecor< float >("weight_xs") = m_xs * m_filtEff;
     eventInfo->auxdecor< float >("weight") = m_mcEventWeight * m_xs * m_filtEff;
     
-    //here, decorate the event with the event-level variables of the jet collections
+    
+//    std::cout << m_trigBXTool->isFilled( 7 ) << std::endl;
+//    std::cout << m_trigBXTool->isInTrain( 13 ) << std::endl;
+    std::cout << m_trigBXTool->distanceFromFront( 16 ) << std::endl;
+//    std::cout << m_trigBXTool->distanceFromFront( 238 ) == 300 << std::endl;
+//    std::cout << m_trigBXTool->gapBeforeTrain( 148 ) == 250 << std::endl;
+//    std::cout << m_trigBXTool->bunchTrainSpacing() == 50 << std::endl;
+
+    
+    //from here onwards, decorate the event with the event-level variables of the jet collections
     
     //get the various jets from the store
     
