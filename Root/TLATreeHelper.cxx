@@ -75,6 +75,8 @@ void TLATreeHelper::ClearEventUser() {
 //    m_weight_corr = -999;
     m_weight    = -999;
     m_weight_xs = -999;
+    
+    m_distanceFromFront = -999;
 //    m_weight_prescale = -999;
 //    m_weight_resonanceKFactor = -999;
     
@@ -118,9 +120,11 @@ void TLATreeHelper::FillEventUser( const xAOD::EventInfo* eventInfo ) {
 //%%%%Left for later: variables that can be derived from what we have already
     
     if( eventInfo->isAvailable< float >( "weight" ) )
-    m_weight = eventInfo->auxdecor< float >( "weight" );
+      m_weight = eventInfo->auxdecor< float >( "weight" );
     if( eventInfo->isAvailable< float >( "weight_xs" ) )
-    m_weight_xs = eventInfo->auxdecor< float >( "weight_xs" );
+      m_weight_xs = eventInfo->auxdecor< float >( "weight_xs" );
+    if( eventInfo->isAvailable< int >( "distanceFromFront" ) )
+      m_distanceFromFront = eventInfo->auxdecor< int >( "distanceFromFront" );
 //    if( eventInfo->isAvailable< float >( "weight_prescale" ) )
 //    m_weight_prescale = eventInfo->auxdecor< float >( "weight_prescale" );
 //    if( eventInfo->isAvailable< float >( "weight_resonanceKFactor" ) )

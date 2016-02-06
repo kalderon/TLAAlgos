@@ -316,11 +316,11 @@ EL::StatusCode TLATreeAlgo :: execute ()
     eventInfo->auxdecor< float >("weight_xs") = m_xs * m_filtEff;
     eventInfo->auxdecor< float >("weight") = m_mcEventWeight * m_xs * m_filtEff;
     
-    
 //    std::cout << m_trigBXTool->isFilled( 7 ) << std::endl;
 //    std::cout << m_trigBXTool->isInTrain( 13 ) << std::endl;
-    std::cout << m_trigBXTool->distanceFromFront( 16 ) << std::endl;
-//    std::cout << m_trigBXTool->distanceFromFront( 238 ) == 300 << std::endl;
+    eventInfo->auxdecor< int >("distanceFromFront") = m_trigBXTool->distanceFromFront( eventInfo->bcid() );
+
+    //    std::cout << m_trigBXTool->distanceFromFront( 238 ) == 300 << std::endl;
 //    std::cout << m_trigBXTool->gapBeforeTrain( 148 ) == 250 << std::endl;
 //    std::cout << m_trigBXTool->bunchTrainSpacing() == 50 << std::endl;
 

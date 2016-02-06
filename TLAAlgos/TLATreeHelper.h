@@ -39,6 +39,7 @@ private:
     float m_weight;
 //    float m_weight_corr;
     float m_weight_xs;
+    int m_distanceFromFront;
 //    float m_weight_prescale;
 //    float m_weight_resonanceKFactor;
     
