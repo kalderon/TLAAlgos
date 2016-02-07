@@ -67,15 +67,9 @@ EL::StatusCode TLATreeAlgo :: initialize ()
   this->getLumiWeights(eventInfo);
     
   //TrigBunchCrossing tool
-//    std::cout << tool.isFilled( 7 ) );
-//    std::cout << tool.isInTrain( 13 ) );
-//    std::cout << tool.distanceFromFront( 146 ) == 0 );
-//    std::cout << tool.distanceFromFront( 238 ) == 300 );
-//    std::cout << tool.gapBeforeTrain( 148 ) == 250 );
-//    std::cout << tool.bunchTrainSpacing() == 50 );
 
   // Grab the TrigDecTool from the ToolStore
-  if ( asg::ToolStore::contains<Trig::WebBunchCrossingTool>( "WebBunchCrossingTool" ) ) {
+  /*if ( asg::ToolStore::contains<Trig::WebBunchCrossingTool>( "WebBunchCrossingTool" ) ) {
      m_trigBXTool = asg::ToolStore::get<Trig::WebBunchCrossingTool>("WebBunchCrossingTool");
   } else {
         Info ("Initialize()", "the Trigger LHC Bunch Crossing Tool is not yet initialized...[%s]. Doing so now.", m_name.c_str());
@@ -88,7 +82,7 @@ EL::StatusCode TLATreeAlgo :: initialize ()
         RETURN_CHECK("TLATreeAlgo::initialize()", m_trigBXTool->setProperty( "OutputLevel", MSG::ERROR), "");
  
         Info("initialize()", "Successfully configured Trig::WebBunchCrossingTool!");
-    }
+    }*/
     
   return EL::StatusCode::SUCCESS;
 }
@@ -316,13 +310,7 @@ EL::StatusCode TLATreeAlgo :: execute ()
     eventInfo->auxdecor< float >("weight_xs") = m_xs * m_filtEff;
     eventInfo->auxdecor< float >("weight") = m_mcEventWeight * m_xs * m_filtEff;
     
-//    std::cout << m_trigBXTool->isFilled( 7 ) << std::endl;
-//    std::cout << m_trigBXTool->isInTrain( 13 ) << std::endl;
-    eventInfo->auxdecor< int >("distanceFromFront") = m_trigBXTool->distanceFromFront( eventInfo->bcid() );
-
-    //    std::cout << m_trigBXTool->distanceFromFront( 238 ) == 300 << std::endl;
-//    std::cout << m_trigBXTool->gapBeforeTrain( 148 ) == 250 << std::endl;
-//    std::cout << m_trigBXTool->bunchTrainSpacing() == 50 << std::endl;
+    //eventInfo->auxdecor< int >("distanceFromFront") = m_trigBXTool->distanceFromFront( eventInfo->bcid() );
 
     
     //from here onwards, decorate the event with the event-level variables of the jet collections
