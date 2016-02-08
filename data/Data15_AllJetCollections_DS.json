@@ -1,0 +1,65 @@
+[
+  { "class": "BasicEventSelection",
+    "configs": {
+      "m_debug": false,
+      "m_truthLevelOnly": false,
+      "m_useMetaData" : false,
+      "m_doPUreweighting" : false,
+      "m_checkDuplicatesData" : true,
+      "m_PRWFileNames" : "$ROOTCOREBIN/data/TLAAlgos/PRW/Dijet_PRW.root",
+      "m_lumiCalcFileNames" : "$ROOTCOREBIN/data/TLAAlgos/PRW/ilumicalc_histograms_None_276262-284484.root",
+      "m_storeTrigDecisions" : true,
+      "m_applyEventCleaningCut" : false,
+      "m_applyPrimaryVertexCut" : false,
+      "m_storeTrigDecisions" : false,
+      "m_applyTriggerCut" : false,
+      "m_triggerSelection" : ".+",
+      "m_applyGRLCut": false,
+      "m_GRLxml": "$ROOTCOREBIN/data/TLAAlgos/data15_13TeV.periodAllYear_DetStatus-v73-pro19-08_DQDefects-00-01-02_PHYS_StandardGRL_All_Good_25ns_tolerable_IBLSTANDBY-DISABLE.xml"
+    }
+  },
+
+ { "class": "JetCalibrator",
+   "configs": {
+     "m_debug": false,
+     "m_verbose": false,
+     "m_runSysts": false,
+     "m_inContainerName": "HLT_xAOD__JetContainer_TrigHLTJetDSSelectorCollection",
+     "m_jetAlgo" : "AntiKt4EMTopo",
+     "m_calibConfigData" : "JES_MC15Prerecommendation_April2015_Trigger.config",
+		 "m_calibSequence" : "EtaJES",
+     "m_doCleaning" : true,
+     "m_jetCleanCutLevel" : "LooseBad",
+     "m_saveAllCleanDecisions" : true,
+     "m_outContainerName": "TDTJetContainer_a4tcemsubjesFS_calib",
+     "m_isTrigger" : true
+    }
+ },
+
+ { "class": "JetSelector",
+   "configs": {
+     "m_debug": false,
+     "m_verbose": false,
+     "m_decorateSelectedObjects": false,
+     "m_pT_min" : 10000,
+     "m_cleanJets" : false,
+     "m_createSelectedContainer" : true,
+     "m_inContainerName": "TDTJetContainer_a4tcemsubjesFS_calib",
+     "m_outContainerName": "TDTJetContainer_a4tcemsubjesFS_calib_select"
+     }
+ },
+ 
+ {   "class": "TLATreeAlgo",
+     "configs": {
+     "m_debug": false,
+     "m_verbose": false,
+     "m_evtDetailStr" : "eventCleaning pileup",
+     "m_trigJetContainerName": "TDTJetContainer_a4tcemsubjesFS_calib_select",
+     "m_trigJetDetailStr": "kinematic layer energy scales rapidity clean",
+     "m_name": "outTree"
+   }
+ }
+ 
+
+]
+
