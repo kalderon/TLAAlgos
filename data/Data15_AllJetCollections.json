@@ -5,7 +5,7 @@
       "m_truthLevelOnly": false,
       "m_useMetaData" : false,
       "m_doPUreweighting" : false,
-      "m_checkDuplicatesMC" : true,
+      "m_checkDuplicatesData" : true,
       "m_PRWFileNames" : "$ROOTCOREBIN/data/TLAAlgos/PRW/Dijet_PRW.root",
       "m_lumiCalcFileNames" : "$ROOTCOREBIN/data/TLAAlgos/PRW/ilumicalc_histograms_None_276262-284484.root",
       "m_storeTrigDecisions" : true,
@@ -35,9 +35,10 @@
      "m_verbose": false,
      "m_runSysts": false,
      "m_inContainerName": "AntiKt4EMTopoJets",
+     "m_calibConfigData" : "JES_MC15Prerecommendation_April2015_noInsitu.config",
      "m_jetAlgo" : "AntiKt4EMTopo",
      "m_outputAlgo" : "AntiKt4EMTopoJets_Calib_Algo",
-     "m_calibSequence" : "JetArea_Residual_Origin_EtaJES_GSC",
+     "m_calibSequence" : "JetArea_Residual_Origin_EtaJES_GSC_Insitu_DEV",
      "m_doCleaning" : true,
      "m_jetCleanCutLevel" : "LooseBad",
      "m_saveAllCleanDecisions" : true,
@@ -51,9 +52,9 @@
      "m_verbose": false,
      "m_runSysts": false,
      "m_inContainerName": "TDTJetContainer_a4tcemsubjesFS",
-     "m_jetAlgo" : "AntiKt4EMTopo",
-     "m_calibSequence" : "JetArea_EtaJES",
-     "m_calibConfigFullSim" : "JES_MC15Prerecommendation_April2015_Trigger.config",
+     "m_jetAlgo" : "AntiKt4EMTopoTrig",
+     "m_calibConfigData" : "JES_MC15Prerecommendation_Jan2016_trigger_intercalibration.config",
+     "m_calibSequence" : "EtaJES_Insitu_DEV",
      "m_doCleaning" : true,
      "m_jetCleanCutLevel" : "LooseBad",
      "m_saveAllCleanDecisions" : true,
@@ -74,6 +75,7 @@
      "m_outContainerName": "AntiKt4EMTopoJets_calib_select"
      }
  },
+
 
  { "class": "JetSelector",
    "configs": {

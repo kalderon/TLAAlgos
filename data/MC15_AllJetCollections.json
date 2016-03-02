@@ -44,6 +44,23 @@
    }
  },
 
+ { "class": "JetCalibrator",
+   "configs": {
+     "m_debug": false,
+     "m_verbose": false,
+     "m_runSysts": false,
+     "m_inContainerName": "TDTJetContainer_a4tcemsubjesFS",
+     "m_jetAlgo" : "AntiKt4EMTopo",
+     "m_calibConfigFullSim" : "JES_MC15Prerecommendation_April2015.config",
+		 "m_calibSequence" : "EtaJES",
+     "m_doCleaning" : true,
+     "m_jetCleanCutLevel" : "LooseBad",
+     "m_saveAllCleanDecisions" : true,
+     "m_outContainerName": "TDTJetContainer_a4tcemsubjesFS_calib",
+     "m_isTrigger" : true
+    }
+ },
+
  { "class": "JetSelector",
    "configs": {
      "m_debug": false,
@@ -78,8 +95,8 @@
      "m_pT_min" : 10000,
      "m_cleanJets" : false,
      "m_createSelectedContainer" : true,
-     "m_inContainerName": "TDTJetContainer_a4tcemsubjesFS",
-     "m_outContainerName": "TDTJetContainer_a4tcemsubjesFS_select"
+     "m_inContainerName": "TDTJetContainer_a4tcemsubjesFS_calib",
+     "m_outContainerName": "TDTJetContainer_a4tcemsubjesFS_calib_select"
      }
  },
 
@@ -90,14 +107,12 @@
      "m_evtDetailStr" : "eventCleaning",
      "m_jetContainerName": "AntiKt4EMTopoJets_calib_select",
      "m_jetDetailStr": "kinematic layer clean trackPV energy scales rapidity truth",
-     "m_trigJetContainerName": "TDTJetContainer_a4tcemsubjesFS_select",
+     "m_trigJetContainerName": "TDTJetContainer_a4tcemsubjesFS_calib_select",
      "m_trigJetDetailStr": "kinematic layer energy scales rapidity clean",
      "m_truthJetContainerName": "AntiKt4TruthJets_select",
      "m_truthJetDetailStr": "kinematic truth",
      "m_name": "outTree"
    }
  }
-
-
 ]
 

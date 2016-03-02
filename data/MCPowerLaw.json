@@ -1,0 +1,47 @@
+[
+{ "class": "BasicEventSelection",
+  "configs": {
+    "m_debug": false,
+    "m_truthLevelOnly": false,
+    "m_useMetaData" : false,
+    "m_doPUreweighting" : false,
+    "m_checkDuplicatesMC" : false,
+    "m_PRWFileNames" : "$ROOTCOREBIN/data/TLAAlgos/PRW/Dijet_PRW.root",
+    "m_lumiCalcFileNames" : "$ROOTCOREBIN/data/TLAAlgos/PRW/ilumicalc_histograms_None_276262-284484.root",
+    "m_storeTrigDecisions" : false,
+    "m_applyEventCleaningCut" : false,
+    "m_applyPrimaryVertexCut" : false,
+    "m_storeTrigDecisions" : false,
+    "m_applyTriggerCut" : false,
+    "m_applyGRLCut": false,
+    "m_GRLxml": "$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml"
+  }
+},
+
+
+{ "class": "JetSelector",
+  "configs": {
+    "m_debug": false,
+    "m_verbose": false,
+    "m_decorateSelectedObjects": false,
+    "m_pT_min" : 20000,
+    "m_cleanJets" : false,
+    "m_createSelectedContainer" : true,
+    "m_inContainerName": "AntiKt4TruthJets",
+    "m_outContainerName": "AntiKt4TruthJets_select"
+  }
+},
+
+{   "class": "TLATreeAlgo",
+  "configs": {
+    "m_debug": false,
+    "m_verbose": false,
+    "m_truthJetContainerName": "AntiKt4TruthJets_select",
+    "m_truthJetDetailStr": "kinematic",
+    "m_name": "outTree"
+  }
+}
+
+
+]
+
