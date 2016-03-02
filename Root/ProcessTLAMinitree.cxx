@@ -223,7 +223,7 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
     tree->SetBranchAddress ("truthJet_E", &m_jet_E);
   }
 
-  else { 
+  if (m_isDijetNtupleTruth) {
     tree->SetBranchStatus  ("jet_pt", 1);
     tree->SetBranchAddress ("jet_pt", &m_jet_pt);
 
@@ -236,6 +236,22 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
     tree->SetBranchStatus  ("jet_E", 1);
     tree->SetBranchAddress ("jet_E", &m_jet_E);
   }
+    
+  else {
+      
+      tree->SetBranchStatus  ("jet_pt", 1);
+      tree->SetBranchAddress ("jet_pt", &m_jet_pt);
+      
+      tree->SetBranchStatus  ("jet_eta", 1);
+      tree->SetBranchAddress ("jet_eta", &m_jet_eta);
+      
+      tree->SetBranchStatus  ("jet_phi", 1);
+      tree->SetBranchAddress ("jet_phi", &m_jet_phi);
+      
+      tree->SetBranchStatus  ("jet_E", 1);
+      tree->SetBranchAddress ("jet_E", &m_jet_E);
+  }
+
 
   return EL::StatusCode::SUCCESS;
 }
