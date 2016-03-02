@@ -223,7 +223,7 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
     tree->SetBranchAddress ("truthJet_E", &m_jet_E);
   }
 
-  if (m_isDijetNtupleTruth) {
+  else if (m_isDijetNtupleTruth) {
     tree->SetBranchStatus  ("jet_pt", 1);
     tree->SetBranchAddress ("jet_pt", &m_jet_pt);
 
@@ -328,6 +328,16 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     return EL::StatusCode::SUCCESS;
   }
 
+  if(fabs(m_jet_eta->at(0)) > m_etaCut) {
+    if(m_debug) cout << " Fail LeadJetEta " << endl;
+    return EL::StatusCode::SUCCESS;
+  }
+
+
+  if(fabs(m_jet_eta->at(1)) > m_etaCut) {
+    if(m_debug) cout << " Fail subLeadJetEta " << endl;
+    return EL::StatusCode::SUCCESS;
+  }
 
   TLorentzVector jet1 = TLorentzVector();
   jet1.SetPtEtaPhiE(m_jet_pt->at(0),m_jet_eta->at(0),m_jet_phi->at(0),m_jet_E->at(0));
