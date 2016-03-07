@@ -402,13 +402,12 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     return EL::StatusCode::SUCCESS;
   }
   
-  if(m_debug) cout << " Make EventData " << endl;
+  if(m_debug) cout << " Make EventData struct" << endl;
   eventData thisEvent = eventData(m_runNumber, m_eventNumber, 
 				  m_jet_pt, m_jet_eta, m_jet_phi, m_jet_E, eventWeight);
-  if(m_debug) cout << " Made EventData " << endl;
+  if(m_debug) cout << " Made EventData struct" << endl;
   if(m_debug) cout << " Weight: " << eventWeight << endl;
   
-
   hIncl->Fill(thisEvent);
 
   if(m_doTrigger){
