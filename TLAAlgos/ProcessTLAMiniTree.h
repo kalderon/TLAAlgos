@@ -83,6 +83,12 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
 		vector<string>* m_passedTriggers; //!
 
+		//§§§§§§§§§ for scale factors §§§§§§§§§§§§§§§§
+		TH2D* m_hcalibration;
+		double m_pt_freez;
+		double m_eta_freez;
+
+		//§§§§§§§§§§§§§§§§§§§§§§§§§§§
 		//
 		// Jet Data
 		//

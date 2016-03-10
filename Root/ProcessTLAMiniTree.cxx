@@ -49,6 +49,12 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_jet_E(0),
   m_jet_clean_passLooseBad(0),
   m_passedTriggers(nullptr),
+
+
+  m_hcalibration(nullptr),
+  m_pt_freez(2500),
+  m_eta_freez(4.5),
+
   hIncl(nullptr)
 //  hOffline(nullptr),
 //  hTrigger(nullptr),
@@ -321,6 +327,28 @@ EL::StatusCode ProcessTLAMiniTree :: initialize ()
   }
 
   Info("initialize()", "Succesfully initialized! \n");
+
+
+
+
+//§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
+	TFile* caliFile = TFile::Open("/data/tractor/home/users/nbludau/TLASoftware/TLARun/smoothedCalibrationHisto.root");
+	m_hcalibration = (TH2D*) caliFile->Get("70_750/2.8/hsmoothed_0.1_0.08");
+	m_hcalibration->SetDirectory(0);
+	caliFile->Close();
+	delete caliFile;
+
+	m_pt_freez = m_hcalibration->GetXaxis()->GetXmax();
+	m_eta_freez = m_hcalibration->GetYaxis()->GetXmax();
+	cout<<m_hcalibration->GetXaxis()->GetXmax()<<endl;
+	cout<<m_hcalibration->GetYaxis()->GetXmax()<<endl;
+//§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
+
+
+
+
+
+
   return EL::StatusCode::SUCCESS;
 }
 
@@ -356,6 +384,68 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     if(m_debug) cout << " Fail NJets " << endl;
     return EL::StatusCode::SUCCESS;
   }
+
+
+//§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
+//apply scale factors:
+
+ TLorentzVector jet1_t = TLorentzVector();
+  jet1_t.SetPtEtaPhiE(m_jet_pt->at(0),m_jet_eta->at(0),m_jet_phi->at(0),m_jet_E->at(0));
+  TLorentzVector jet2_t = TLorentzVector();
+  jet2_t.SetPtEtaPhiE(m_jet_pt->at(1),m_jet_eta->at(1),m_jet_phi->at(1),m_jet_E->at(1));
+
+  int EtaBin = m_hcalibration->GetYaxis()->FindBin(jet1_t.Eta());
+  int PTBin = m_hcalibration->GetXaxis()->FindBin(jet1_t.Pt());
+
+  if (jet1_t.Pt() >m_pt_freez)
+	PTBin = m_hcalibration->GetXaxis()->FindBin(m_pt_freez - 1e-5);
+  if (fabs(jet1_t.Eta()) >m_eta_freez){
+	if(jet1_t.Eta() < 0)
+		EtaBin = m_hcalibration->GetYaxis()->FindBin(-m_eta_freez +1e-5);    
+	if(jet1_t.Eta() > 0)
+		EtaBin = m_hcalibration->GetYaxis()->FindBin(m_eta_freez - 1e-5);    
+  }
+  double scale = m_hcalibration->GetBinContent( PTBin, EtaBin);
+  if (scale == 0 ){
+    cout<<"scale is "<<scale<<"!!!!!! "<<endl;
+  }
+  jet1_t = jet1_t * scale;
+
+ EtaBin = m_hcalibration->GetYaxis()->FindBin(jet2_t.Eta());
+ PTBin = m_hcalibration->GetXaxis()->FindBin(jet2_t.Pt());
+  if (jet2_t.Pt() >m_pt_freez)
+	PTBin = m_hcalibration->GetXaxis()->FindBin(m_pt_freez - 1e-5);    
+  if (fabs(jet2_t.Eta()) > m_eta_freez){
+	if(jet2_t.Eta() < 0)
+		EtaBin = m_hcalibration->GetYaxis()->FindBin(-m_eta_freez+1e-5);    
+	if(jet2_t.Eta() > 0)
+		EtaBin = m_hcalibration->GetYaxis()->FindBin(m_eta_freez-1.e-5);    
+  }
+  scale = m_hcalibration->GetBinContent( PTBin, EtaBin);
+  if (scale == 0){
+    cout<<"scale is "<<scale<<"!!!!!!   "<<endl;
+  }
+  jet2_t = jet2_t * scale;
+
+
+  m_jet_pt->at(0) = jet1_t.Pt();
+  m_jet_pt->at(1) = jet2_t.Pt();
+
+  m_jet_eta->at(0) = jet1_t.Eta();
+  m_jet_eta->at(1) = jet2_t.Eta();
+
+  m_jet_phi->at(0) = jet1_t.Phi();
+  m_jet_phi->at(1) = jet2_t.Phi();
+
+  m_jet_E->at(0) = jet1_t.E();
+  m_jet_E->at(1) = jet2_t.E();
+
+//§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§
+
+
+
+
+
 
   if(m_jet_pt->at(0) < m_leadJetPtCut) {
     if(m_debug) cout << " Fail LeadJetPt " << endl;
