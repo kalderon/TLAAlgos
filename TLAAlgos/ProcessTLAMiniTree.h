@@ -146,43 +146,66 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		struct eventHists{
 
 			//
-			// jj
+			//
 			//
 
-			TH1F*     h_mjj;
-			TH1F*     h_mjj_uniform;
-			TH1F*     h_ptjj;
-			TH1F*     h_etajj;
-			TH1F*     h_phijj;
+			TH1D*     h_mjj;
+			TH1D*     h_mjj_uniform;
+            TH1D*     h_yStar;
+            TH1D*     h_pt_lead;
+            TH1D*     h_pt_sublead;
+            TH1D*     h_eta_lead;
+            TH1D*     h_eta_sublead;
+            TH1D*     h_phi_lead;
+            TH1D*     h_phi_sublead;
 
 			eventHists(std::string name, EL::Worker* wk){
 
 				//
-				// jj hists
+				// hists
 				//
 
-				Float_t bins[] = {203, 216, 229, 243, 257, 272, 287, 303, 319, 335, 352, 369, 387, 405, 424, 443, 462, 482, 502, 523, 544, 566, 588, 611, 634, 657, 681, 705, 730, 755, 781, 807, 834, 861, 889, 917, 946, 976, 1006, 1037, 1068, 1100, 1133, 1166, 1200, 1234, 1269, 1305, 1341, 1378, 1416, 1454, 1493, 1533, 1573, 1614, 1656, 1698, 1741, 1785, 1830, 1875, 1921, 1968, 2016, 2065, 2114, 2164, 2215, 2267, 2320, 2374, 2429, 2485, 2542, 2600, 2659, 2719, 2780, 2842, 2905, 2969, 3034, 3100, 3167, 3235, 3305, 3376, 3448, 3521, 3596, 3672, 3749, 3827, 3907, 3988, 4070, 4154, 4239, 4326, 4414, 4504, 4595, 4688, 4782, 4878, 4975, 5074, 5175, 5277, 5381, 5487, 5595, 5705, 5817, 5931, 6047, 6165, 6285, 6407, 6531, 6658, 6787, 6918, 7052, 7188, 7326, 7467, 7610, 7756, 7904, 8055, 8208, 8364, 8523, 8685, 8850, 9019, 9191, 9366, 9544, 9726, 9911, 10100, 10292, 10488, 10688, 10892, 11100, 11312, 11528, 11748, 11972, 12200, 12432, 12669, 12910, 13156};
+               //earlier bins:
+               //Float_t bins[] = {203, 216, 229, 243, 257, 272, 287, 303, 319, 335, 352, 369, 387, 405, 424, 443, 462, 482, 502, 523, 544, 566, 588, 611, 634, 657, 681, 705, 730, 755, 781, 807, 834, 861, 889, 917, 946, 976, 1006, 1037, 1068, 1100, 1133, 1166, 1200, 1234, 1269, 1305, 1341, 1378, 1416, 1454, 1493, 1533, 1573, 1614, 1656, 1698, 1741, 1785, 1830, 1875, 1921, 1968, 2016, 2065, 2114, 2164, 2215, 2267, 2320, 2374, 2429, 2485, 2542, 2600, 2659, 2719, 2780, 2842, 2905, 2969, 3034, 3100, 3167, 3235, 3305, 3376, 3448, 3521, 3596, 3672, 3749, 3827, 3907, 3988, 4070, 4154, 4239, 4326, 4414, 4504, 4595, 4688, 4782, 4878, 4975, 5074, 5175, 5277, 5381, 5487, 5595, 5705, 5817, 5931, 6047, 6165, 6285, 6407, 6531, 6658, 6787, 6918, 7052, 7188, 7326, 7467, 7610, 7756, 7904, 8055, 8208, 8364, 8523, 8685, 8850, 9019, 9191, 9366, 9544, 9726, 9911, 10100, 10292, 10488, 10688, 10892, 11100, 11312, 11528, 11748, 11972, 12200, 12432, 12669, 12910, 13156};
 
-				Int_t  binnum = sizeof(bins)/sizeof(Float_t) - 1; 
+                //Latest bins by Edgar, after JES calibration
+                Float_t mjjbins[] = { 310, 323, 336, 350, 364, 379, 394, 410, 426, 443, 460, 478, 496, 515, 534, 554, 574, 595, 617, 639, 662, 685, 709, 733, 758, 783, 809, 836, 863, 891, 919, 948, 978, 1008, 1039, 1070, 1102, 1135, 1168, 1202, 1236, 1271, 1307, 1343, 1380, 1418, 1456, 1495, 1535, 1575, 1616, 1658, 1700, 1743, 1787, 1832, 1877, 1923, 1970, 2018, 2067, 2116, 2166, 2217, 2269, 2322, 2376, 2431, 2487, 2544, 2602, 2661, 2721, 2782, 2844, 2907, 2971, 3036, 3102, 3169, 3238, 3308, 3379, 3451, 3524, 3599, 3675, 3752, 3830, 3910, 3991, 4073, 4157, 4242, 4329, 4417, 4507, 4598, 4691, 4785, 4881, 4978, 5077, 5178, 5281, 5385, 5491, 5599, 5709, 5821, 5935, 6051, 6169, 6289, 6411, 6536, 6663, 6792, 6923, 7057, 7193, 7331, 7472, 7615, 7761, 7909, 8060, 8214, 8371, 8531, 8694, 8860, 9029, 9201, 9376, 9555, 9737, 9923, 10112, 10305, 10501, 10701, 10905, 11113, 11325, 11541, 11761, 11985, 12213, 12446, 12683, 12925, 13171 };
 
-				h_mjj          = book_variable(wk, name, "mjj"        ,       "mjj"        ,        binnum,   bins         );
-				h_mjj_uniform  = book(wk, name, "mjj_uniform",       "mjj_uniform",        100,      0,    5000   );
-				h_ptjj         = book(wk, name, "ptjj"       ,       "ptjj"       ,        100,      0,     500   );
-				h_etajj        = book(wk, name, "etajj"      ,       "etajj"      ,        100,     -4,       4   );
-				h_phijj        = book(wk, name, "phijj"      ,       "phijj"      ,        100,     -3.2,     3.2 );
+                
+                Float_t ptbins[] =  {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,172. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1250.,1310.,1420.,1530.,1750.,1992.,2250.,2500.,2850.,3200.,3600.,4000.,4600.};
+
+                
+                /*## Get an array which defines the eta bin boundaries for high pT jet checks
+                def getJetEtaBinsFine():
+                binLowE = [-4.8+0.08*x for x in range(0,121)]
+                return binLowE*/
+
+
+				Int_t  mjjbinnum = sizeof(mjjbins)/sizeof(Float_t) - 1;
+                Int_t  ptbinnum = sizeof(ptbins)/sizeof(Float_t) - 1;
+
+				h_mjj           = book_variable(wk, name, "mjj"           ,       "mjj"            ,        mjjbinnum    ,      mjjbins    );
+                h_yStar         = book         (wk, name, "yStar"         ,       "yStar"          ,        100          ,      -2,    2    );
+				h_mjj_uniform   = book         (wk, name, "mjj_uniform"   ,       "mjj_uniform"    ,        100          ,      0,    5000   );
+                h_pt_lead       = book_variable(wk, name, "pt_lead"       ,       "pt_lead"        ,        ptbinnum     ,      ptbins   );
+                h_pt_sublead    = book_variable(wk, name, "pt_sublead"    ,       "pt_sublead"     ,        ptbinnum     ,      ptbins   );
+                h_eta_lead      = book         (wk, name, "eta_lead"      ,       "eta_lead"       ,        100          ,      -4.5, 4.5   );
+                h_eta_sublead   = book         (wk, name, "eta_sublead"   ,       "eta_sublead"    ,        100          ,      -4.5, 4.5   );
+                h_phi_lead      = book         (wk, name, "phi_lead"      ,       "phi_lead"       ,        100          ,      -3.14, 3.14   );
+                h_phi_sublead   = book         (wk, name, "phi_sublead"   ,       "phi_sublead"    ,        100          ,      -3.14, 3.14  );
 
 
 			}
 
-			TH1F* book(EL::Worker* wk, std::string name, std::string hname, std::string title, int nBins, float xmin, float xmax){
-				TH1F* h_tmp = new TH1F((name+"/"+hname).c_str(),(hname+";"+title+";Entries").c_str(), nBins, xmin,   xmax);
+			TH1D* book(EL::Worker* wk, std::string name, std::string hname, std::string title, int nBins, float xmin, float xmax){
+				TH1D* h_tmp = new TH1D((name+"/"+hname).c_str(),(hname+";"+title+";Entries").c_str(), nBins, xmin,   xmax);
 				wk->addOutput(h_tmp);
 				return h_tmp;
 			}
 
 
-			TH1F* book_variable(EL::Worker* wk, std::string name, std::string hname, std::string title, int nBins, const Float_t *xBins){
-				TH1F* h_tmp = new TH1F((name+"/"+hname).c_str(),(hname+";"+title+";Entries").c_str(), nBins, xBins);
+			TH1D* book_variable(EL::Worker* wk, std::string name, std::string hname, std::string title, int nBins, const Float_t *xBins){
+				TH1D* h_tmp = new TH1D((name+"/"+hname).c_str(),(hname+";"+title+";Entries").c_str(), nBins, xBins);
 				wk->addOutput(h_tmp);
 				return h_tmp;
 			}
@@ -196,24 +219,32 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
 				TLorentzVector jet1 = leadJet.vec();
 				TLorentzVector jet2 = sublJet.vec();
-
+                
+                float yStar = ( jet1.Rapidity() - jet2.Rapidity() ) / 2.0;
 
 				//
-				//  jj kiniematics
+				//  simple kinematics
 				//
 				TLorentzVector jjSystem = (jet1 + jet2);
-				h_mjj          ->Fill(jjSystem.M(), weight);
-				h_mjj_uniform  ->Fill(jjSystem.M(), weight);
-				h_ptjj         ->Fill(jjSystem.Pt(), weight);
-				h_etajj        ->Fill(jjSystem.Eta(), weight);
-				h_phijj        ->Fill(jjSystem.Phi(), weight);
+				h_mjj             ->Fill(jjSystem.M(), weight);
+                h_yStar           ->Fill(yStar, weight);
+				h_mjj_uniform     ->Fill(jjSystem.M(), weight);
+                h_pt_lead         ->Fill(jet1.Pt(), weight);
+                h_pt_sublead      ->Fill(jet2.Pt(), weight);
+                h_eta_lead         ->Fill(jet1.Eta(), weight);
+                h_eta_sublead      ->Fill(jet2.Eta(), weight);
+                h_phi_lead         ->Fill(jet1.Phi(), weight);
+                h_phi_sublead      ->Fill(jet2.Phi(), weight);
 
 			}
 
 		};
 
 
-		eventHists*   hIncl; //!
+//		eventHists*   hOffline; //!
+        eventHists*   hIncl; //!
+//        eventHists*   hTrigger; //!
+//        eventHists*   hTruth; //!
 
 		// variables that don't get filled at submission time should be
 		// protected from being send from the submission node to the worker

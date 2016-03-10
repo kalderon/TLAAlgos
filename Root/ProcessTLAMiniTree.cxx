@@ -50,6 +50,9 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_jet_clean_passLooseBad(0),
   m_passedTriggers(nullptr),
   hIncl(nullptr)
+//  hOffline(nullptr),
+//  hTrigger(nullptr),
+//  hTruth(nullptr),
 {
   Info("ProcessTLAMiniTree()", "Calling constructor");
   m_applyGRL      = true; m_GRLxml   = "$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml";  //https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/GoodRunListsForAnalysis
@@ -78,7 +81,16 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
 //  m_applyGRL                 = config->GetValue("ApplyGRL",        m_applyGRL);
 //  m_GRLxml                   = config->GetValue("GRL",             m_GRLxml.c_str());
 
-  hIncl          = new eventHists("Incl"  ,       wk());
+  //histograms that are always there, defaulting to what is in the 'jet' branch
+  //this is the distribution we cut on
+    
+  if (m_isTLANtupleTrig) hIncl = new eventHists("TriggerJets"  ,       wk());
+  else if (m_isTLANtupleOffline) hIncl = new eventHists("OfflineJets"  ,       wk());
+  else hIncl = new eventHists("Incl"  ,       wk());
+  //histograms that are there for comparisons...for later
+  /*if (m_isTLANtupleOffline) hOffline = new eventHists("Offline"  ,       wk());
+  if (m_isTLANtupleTrig) hTrigger = new eventHists("Trigger"  ,       wk());
+  if (m_isTLANtupleTruth || m_isDijetNtupleTruth) hTruth = new eventHists("Truth"  ,       wk());*/
   
   return EL::StatusCode::SUCCESS;
 }
@@ -184,6 +196,7 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
   TTree *tree = wk()->tree();
   tree->SetBranchStatus ("*", 0);
 
+  //event-level variables
   tree->SetBranchStatus  ("runNumber",    1);
   tree->SetBranchAddress ("runNumber",    &m_runNumber);
 
@@ -193,9 +206,6 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
   if(!m_doTruthOnly){
     tree->SetBranchStatus  ("lumiBlock",    1);
     tree->SetBranchAddress ("lumiBlock",    &m_lumiBlock);
-
-    tree->SetBranchStatus  ("jet_clean_passLooseBad", 1);
-    tree->SetBranchAddress ("jet_clean_passLooseBad", &m_jet_clean_passLooseBad);
 
     if(m_doTrigger){
       tree->SetBranchStatus  ("passedTriggers", 1);
@@ -209,6 +219,7 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
   tree->SetBranchStatus  ("weight_xs", 1);
   tree->SetBranchAddress ("weight_xs", &m_weight_xs);
 
+  //truth-level variables
   if (m_isTLANtupleTruth) {
     tree->SetBranchStatus  ("truthJet_pt", 1);
     tree->SetBranchAddress ("truthJet_pt", &m_jet_pt);
@@ -236,8 +247,31 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
     tree->SetBranchStatus  ("jet_E", 1);
     tree->SetBranchAddress ("jet_E", &m_jet_E);
   }
+
+  //trigger-level variables
+  else if (m_isTLANtupleTrig) {
+      tree->SetBranchStatus  ("trigJet_pt", 1);
+      tree->SetBranchAddress ("trigJet_pt", &m_jet_pt);
+      
+      tree->SetBranchStatus  ("trigJet_eta", 1);
+      tree->SetBranchAddress ("trigJet_eta", &m_jet_eta);
+      
+      tree->SetBranchStatus  ("trigJet_phi", 1);
+      tree->SetBranchAddress ("trigJet_phi", &m_jet_phi);
+      
+      tree->SetBranchStatus  ("trigJet_E", 1);
+      tree->SetBranchAddress ("trigJet_E", &m_jet_E);
+
+      if(!m_doTruthOnly){
+          tree->SetBranchStatus  ("trigJet_clean_passLooseBad", 1);
+          tree->SetBranchAddress ("trigJet_clean_passLooseBad", &m_jet_clean_passLooseBad);
+      }
+
+  
+  }
     
-  else {
+  //reco-level variables
+  else if (m_isTLANtupleOffline) {
       
       tree->SetBranchStatus  ("jet_pt", 1);
       tree->SetBranchAddress ("jet_pt", &m_jet_pt);
@@ -250,6 +284,12 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
       
       tree->SetBranchStatus  ("jet_E", 1);
       tree->SetBranchAddress ("jet_E", &m_jet_E);
+      
+      if(!m_doTruthOnly){
+          tree->SetBranchStatus  ("jet_clean_passLooseBad", 1);
+          tree->SetBranchAddress ("jet_clean_passLooseBad", &m_jet_clean_passLooseBad);
+      }
+
   }
 
 
@@ -357,7 +397,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   }
 
   //
-  // doing cleaning
+  // doing cleaning on all jets above 50 GeV
   //
   bool  passCleaning   = true;
   if(!m_doTruthOnly){
@@ -397,8 +437,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   //  Jet Cleaning 
   //
   if(m_doCleaning && !passCleaning){
-    //if(!passCleaning){
-    cout << "Fail Cleaning " << endl;
+    if (m_debug) cout << "Fail Cleaning " << endl;
     return EL::StatusCode::SUCCESS;
   }
   
@@ -409,6 +448,8 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   if(m_debug) cout << " Weight: " << eventWeight << endl;
   
   hIncl->Fill(thisEvent);
+  //hOffline->Fill(thisEvent_offline);
+  //hTrigger->Fill(thisEvent_trigger);
 
   if(m_doTrigger){
     if(m_debug) Info("execute()", "Doing Trigger ");
