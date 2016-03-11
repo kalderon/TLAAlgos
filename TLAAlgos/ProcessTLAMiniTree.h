@@ -53,7 +53,10 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		float m_leadJetPtCut;          
 		float m_subleadJetPtCut;          
 		float m_lumi;                   // Lumi we are scaling to
-
+        /*bool m_applySF;
+        TString m_scaleFactorLocation;
+        TString m_scaleFactorHistoName;*/
+    
 		float m_sampleEvents;           //! MC Events in the sample we are processing
 
 
@@ -83,12 +86,11 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
 		vector<string>* m_passedTriggers; //!
 
-		//§§§§§§§§§ for scale factors §§§§§§§§§§§§§§§§
-		TH2D* m_hcalibration;
-		double m_pt_freez;
-		double m_eta_freez;
+		// for scale factors
+		/*TH2D* m_hcalibration;//!
+		double m_pt_freeze;//!
+		double m_eta_freeze;//!*/
 
-		//§§§§§§§§§§§§§§§§§§§§§§§§§§§
 		//
 		// Jet Data
 		//
