@@ -14,6 +14,7 @@
 // ROOT include(s):
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TH3D.h"
 #include "TProfile.h"
 #include "TLorentzVector.h"
 
@@ -81,10 +82,12 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		vector<float>* m_jet_eta; //!
 		vector<float>* m_jet_phi; //!
 		vector<float>* m_jet_E; //!
+        vector<float>* m_jet_muonSegments; //!
 
 		vector<int>*   m_jet_clean_passLooseBad; //!
 
 		vector<string>* m_passedTriggers; //!
+        vector<float>* m_triggerPrescales; //!
 
 		// for scale factors
 		/*TH2D* m_hcalibration;//!
@@ -99,13 +102,15 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 			float eta;
 			float phi;
 			float E;
+            float muonSegments;
 
-			jetData(float m_pt, float m_eta, float m_phi, float m_E){ 
+			jetData(float m_pt, float m_eta, float m_phi, float m_E, float m_muonSegments=0){
 
 				pt     = m_pt;
 				eta    = m_eta;
 				phi    = m_phi;
 				E      = m_E;
+                muonSegments      = m_muonSegments;
 
 			}
 
@@ -126,23 +131,27 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 			int             eventNumber;
 			vector<jetData> jets;
 			float           weight;
+            float prescaleWeight = 1;
 
 			eventData(unsigned int m_runNumber, unsigned int m_eventNumber, 
-					vector<float>* m_jet_pt, vector<float>* m_jet_eta, vector<float>* m_jet_phi, vector<float>* m_jet_E, float& m_weight){
+					vector<float>* m_jet_pt, vector<float>* m_jet_eta, vector<float>* m_jet_phi, vector<float>* m_jet_E, vector<float>* m_jet_muonSegments, float& m_weight, float& m_prescaleWeight){
 
 				runNumber = m_runNumber;
 				eventNumber = m_eventNumber;
+                prescaleWeight = m_prescaleWeight;
 
 				for(unsigned int i =0; i < m_jet_pt->size(); ++i){
-					jetData thisJet = jetData(m_jet_pt->at(i), m_jet_eta->at(i), m_jet_phi->at(i), m_jet_E->at(i));
+					jetData thisJet = jetData(m_jet_pt->at(i), m_jet_eta->at(i), m_jet_phi->at(i), m_jet_E->at(i), m_jet_muonSegments->at(i));
 					jets.push_back(thisJet);
 				}
 
-				weight   = m_weight;
+				weight   = m_weight * m_prescaleWeight;
 			}
 
 			void dump() const{
 				cout << "EventDump: run: " << runNumber << " event: " << eventNumber << endl;
+                cout << "Prescale weight for this event:" << prescaleWeight << endl;
+
 				for(auto& jet : jets){
 					cout << "jet:  pt:" << jet.pt << " eta: " << jet.eta << " phi: " << jet.phi << " E:"<< jet.E <<endl;
 				}
@@ -166,6 +175,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
             TH1D*     h_eta_sublead;
             TH1D*     h_phi_lead;
             TH1D*     h_phi_sublead;
+            TH3D*     h_pt_eta_muon;
 
 			eventHists(std::string name, EL::Worker* wk){
 
@@ -181,8 +191,11 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
                 
                 Float_t ptbins[] =  {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,172. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1250.,1310.,1420.,1530.,1750.,1992.,2250.,2500.,2850.,3200.,3600.,4000.,4600.};
-
                 
+                Float_t muonsegmentbins[] =  {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360, 370, 380, 390, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500};
+                
+                Float_t etabins[] =  {0,0.8,1.2,1.3,1.6,2.1,2.8,3.1,4.9};
+
                 /*## Get an array which defines the eta bin boundaries for high pT jet checks
                 def getJetEtaBinsFine():
                 binLowE = [-4.8+0.08*x for x in range(0,121)]
@@ -191,6 +204,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
 				Int_t  mjjbinnum = sizeof(mjjbins)/sizeof(Float_t) - 1;
                 Int_t  ptbinnum = sizeof(ptbins)/sizeof(Float_t) - 1;
+                Int_t  etabinnum = sizeof(etabins)/sizeof(Float_t) - 1;
+                Int_t  muonbinnum = sizeof(muonsegmentbins)/sizeof(Float_t) - 1;
 
 				h_mjj           = book_variable(wk, name, "mjj"           ,       "mjj"            ,        mjjbinnum    ,      mjjbins    );
                 h_yStar         = book         (wk, name, "yStar"         ,       "yStar"          ,        100          ,      -2,    2    );
@@ -201,6 +216,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
                 h_eta_sublead   = book         (wk, name, "eta_sublead"   ,       "eta_sublead"    ,        100          ,      -4.5, 4.5   );
                 h_phi_lead      = book         (wk, name, "phi_lead"      ,       "phi_lead"       ,        100          ,      -3.14, 3.14   );
                 h_phi_sublead   = book         (wk, name, "phi_sublead"   ,       "phi_sublead"    ,        100          ,      -3.14, 3.14  );
+                h_pt_eta_muon   = book         (wk, name, "pt_eta_muon"   ,       "pt_eta_muon"    ,        ptbinnum          ,      ptbins, etabinnum, etabins, muonbinnum, muonsegmentbins );
 
 
 			}
@@ -218,12 +234,20 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 				return h_tmp;
 			}
 
+            TH3D* book(EL::Worker* wk, std::string name, std::string hname, std::string title, int nBinsX, const Float_t *xBins, int nBinsY, const Float_t *yBins, int nBinsZ, const Float_t *zBins){
+                TH3D* h_tmp = new TH3D((name+"/"+hname).c_str(),(hname+";"+title+";Entries").c_str(), nBinsX, xBins, nBinsY, yBins, nBinsZ, zBins);
+                wk->addOutput(h_tmp);
+                return h_tmp;
+            }
+
 			void Fill(const eventData& thisEvent){
 
 				float weight = thisEvent.weight;
 
 				jetData leadJet = thisEvent.jets.at(0);
 				jetData sublJet = thisEvent.jets.at(1);
+                float leadJetMuonSegments = leadJet.muonSegments;
+                float sublJetMuonSegments = sublJet.muonSegments;
 
 				TLorentzVector jet1 = leadJet.vec();
 				TLorentzVector jet2 = sublJet.vec();
@@ -243,6 +267,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
                 h_eta_sublead      ->Fill(jet2.Eta(), weight);
                 h_phi_lead         ->Fill(jet1.Phi(), weight);
                 h_phi_sublead      ->Fill(jet2.Phi(), weight);
+                h_pt_eta_muon      ->Fill(jet1.Pt(), jet1.Eta(), leadJetMuonSegments, weight);
+                h_pt_eta_muon      ->Fill(jet2.Pt(), jet2.Eta(), sublJetMuonSegments, weight);
 
 			}
 

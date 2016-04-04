@@ -47,8 +47,10 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_jet_eta(0),
   m_jet_phi(0),
   m_jet_E(0),
+  m_jet_muonSegments(0),
   m_jet_clean_passLooseBad(0),
   m_passedTriggers(nullptr),
+  m_triggerPrescales(nullptr),
 
   /*m_applySF(false),
   m_hcalibration(nullptr),
@@ -219,6 +221,9 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
     if(m_doTrigger){
       tree->SetBranchStatus  ("passedTriggers", 1);
       tree->SetBranchAddress ("passedTriggers", &m_passedTriggers);
+      
+      tree->SetBranchStatus  ("triggerPrescales", 1);
+      tree->SetBranchAddress ("triggerPrescales", &m_triggerPrescales);
     }
   }
 
@@ -270,7 +275,11 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
       
       tree->SetBranchStatus  ("trigJet_E", 1);
       tree->SetBranchAddress ("trigJet_E", &m_jet_E);
+      
+      tree->SetBranchStatus  ("trigJet_GhostMuonSegmentCount", 1);
+      tree->SetBranchAddress ("trigJet_GhostMuonSegmentCount", &m_jet_muonSegments);
 
+      
       if(!m_doTruthOnly){
           tree->SetBranchStatus  ("trigJet_clean_passLooseBad", 1);
           tree->SetBranchAddress ("trigJet_clean_passLooseBad", &m_jet_clean_passLooseBad);
@@ -293,6 +302,9 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
       
       tree->SetBranchStatus  ("jet_E", 1);
       tree->SetBranchAddress ("jet_E", &m_jet_E);
+      
+      tree->SetBranchStatus  ("jet_GhostMuonSegmentCount", 1);
+      tree->SetBranchAddress ("jet_GhostMuonSegmentCount", &m_jet_muonSegments);
       
       if(!m_doTruthOnly){
           tree->SetBranchStatus  ("jet_clean_passLooseBad", 1);
@@ -371,7 +383,8 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
   wk()->tree()->GetEntry (wk()->treeEntry());
   unsigned njets       = m_jet_pt->size();
-
+  float prescaleWeight = 1.0;
+    
   if(m_doData){
    
     if ( m_applyGRL ) {
@@ -382,7 +395,8 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 	//if(m_debug) cout << "GRL:: Pass Event " << endl;
       }
     }
-  }
+
+  }//end of do data
 
   //
   // Minimun selection is a dijet 
@@ -452,6 +466,36 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     return EL::StatusCode::SUCCESS;
   }
 
+  if(m_doTrigger){
+    if(m_debug) Info("execute()", "Doing Trigger ");
+        
+    bool m_dumpTrig = false ;
+    if(m_dumpTrig){
+      cout << " --------" << endl;
+      for(std::string& thisTrig: *m_passedTriggers)
+        cout << thisTrig << endl;
+        
+      }
+      
+    std::string trig;
+    if (m_jet_pt->at(0) < 85) return EL::StatusCode::SUCCESS;
+    if (m_jet_pt->at(0) < 116) { trig = "HLT_j60"; }
+    else if (m_jet_pt->at(0) < 172) { trig = "HLT_j85"; }
+    else if (m_jet_pt->at(0) < 240) { trig = "HLT_j110"; }
+    else if (m_jet_pt->at(0) < 318) { trig = "HLT_j200"; }
+    else if (m_jet_pt->at(0) < 516) { trig = "HLT_j260"; }
+    else trig = "HLT_j360";
+      std::vector<string>::iterator trigIt = std::find(m_passedTriggers->begin(), m_passedTriggers->end(), trig);
+    if (trigIt == m_passedTriggers->end()) return EL::StatusCode::SUCCESS;
+    else {
+      prescaleWeight = m_triggerPrescales->at(std::distance(m_passedTriggers->begin(), trigIt));
+      //std::cout << "trig: " << trig << ", distance from front of vector" << (std::distance(m_passedTriggers->begin(), trigIt)) << std::endl;
+      //std::cout << "prescale: " << prescaleWeight << std::endl;
+    }
+ 
+    //bool passHLT_j360 = (find(m_passedTriggers->begin(), m_passedTriggers->end(), "HLT_j360" ) != m_passedTriggers->end());
+        
+  }// end of do trigger
 
   if(m_jet_pt->at(1) < m_subleadJetPtCut) {
     if(m_debug) cout << " Fail subLeadJetPt " << endl;
@@ -515,7 +559,6 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   if(m_debug) cout << " weight: " << m_weight << endl;
   if(m_debug) cout << " sampleEvents: " << m_sampleEvents << endl;
 
- 
   if(m_doData) eventWeight = 1.0;
 
   //if(m_useWeighted && (eventWeight > 1000)){
@@ -533,29 +576,13 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   
   if(m_debug) cout << " Make EventData " << endl;
   eventData thisEvent = eventData(m_runNumber, m_eventNumber, 
-				  m_jet_pt, m_jet_eta, m_jet_phi, m_jet_E, eventWeight);
+				  m_jet_pt, m_jet_eta, m_jet_phi, m_jet_E, m_jet_muonSegments, eventWeight, prescaleWeight);
   if(m_debug) cout << " Made EventData " << endl;
   if(m_debug) cout << " Weight: " << eventWeight << endl;
   
   hIncl->Fill(thisEvent);
   //hOffline->Fill(thisEvent_offline);
   //hTrigger->Fill(thisEvent_trigger);
-
-  if(m_doTrigger){
-    if(m_debug) Info("execute()", "Doing Trigger ");
-
-    bool m_dumpTrig = false ;
-    if(m_dumpTrig){
-      cout << " --------" << endl;
-      for(std::string& thisTrig: *m_passedTriggers)
-	cout << thisTrig << endl;
-    }
-
-    //bool passHLT_j360 = (find(m_passedTriggers->begin(), m_passedTriggers->end(), "HLT_j360" ) != m_passedTriggers->end());
-
-  }// do trigger
-
-
 
   return EL::StatusCode::SUCCESS;
 }
