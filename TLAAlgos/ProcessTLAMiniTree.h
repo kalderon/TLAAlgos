@@ -194,7 +194,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
                 
                 Float_t muonsegmentbins[] =  {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360, 370, 380, 390, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500};
                 
-                Float_t etabins[] =  {0,0.8,1.2,1.3,1.6,2.1,2.8,3.1,4.9};
+                Float_t etabins[] =  {0,0.8,1.2,1.6,2.1,2.8,3.1,4.9};
 
                 /*## Get an array which defines the eta bin boundaries for high pT jet checks
                 def getJetEtaBinsFine():
