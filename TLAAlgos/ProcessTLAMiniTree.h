@@ -11,6 +11,8 @@
 //algorithm wrapper
 #include "xAODAnaHelpers/Algorithm.h"
 
+#include "TLAEventCleaning/TLALArEventVetoData.h"
+
 // ROOT include(s):
 #include "TH1D.h"
 #include "TH2D.h"
@@ -33,7 +35,13 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
 		// GRL
 		bool m_applyGRL;
-		std::string m_GRLxml;
+		std::string m_GRLxml; //!
+    
+    
+        //LArEventVetoData
+        bool m_applyTLALArEventVetoData;
+        TLALArEventVetoData * m_dataForLArEventVeto; //!
+        std::string m_TLALArEventVetoFiles; //!
 
 		//configuration variables
 		bool m_debug;                     
@@ -71,9 +79,13 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
 		GoodRunsListSelectionTool*   m_grl;       //!
 
-		long int m_runNumber; //!
-		int m_eventNumber; //!
+		Int_t m_runNumber; //!
+		Long64_t m_eventNumber; //!
 		int m_lumiBlock; //!
+        bool m_LArError; //!
+        uint32_t  m_timeStamp; //!
+        uint32_t  m_timeStampNSOffset; //!
+        int m_NPV; //!
 
 		float m_weight; //!
 		float m_weight_xs; //!
@@ -94,6 +106,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		double m_pt_freeze;//!
 		double m_eta_freeze;//!*/
 
+        TH2D* m_h2_LArError;//!
 		//
 		// Jet Data
 		//

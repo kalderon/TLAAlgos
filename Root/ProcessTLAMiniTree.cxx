@@ -22,8 +22,10 @@ using namespace std;
 ClassImp(ProcessTLAMiniTree)
 
 ProcessTLAMiniTree :: ProcessTLAMiniTree () :
-  m_applyGRL(true),
+  m_applyGRL(false),
   m_GRLxml("$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml"),
+  m_applyTLALArEventVetoData(false),
+  m_TLALArEventVetoFiles("$ROOTCOREBIN/data/TLAEventCleaning/event-veto-data/"),
   m_debug(false),
   m_doTrigger(false),
   m_isDijetNtupleTruth(false),
@@ -65,8 +67,10 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
 //  hTruth(nullptr),
 {
   Info("ProcessTLAMiniTree()", "Calling constructor");
-  m_applyGRL      = true; m_GRLxml   = "$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml";  //https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/GoodRunListsForAnalysis
+    
+  /*m_applyGRL      = true;
   m_GRLxml   = "$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml";  //https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/GoodRunListsForAnalysis
+  m_GRLxml   = "$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml";  //https://twiki.cern.ch/twiki/bin/viewauth/AtlasProtected/GoodRunListsForAnalysis*/
 }
 
 
@@ -129,6 +133,11 @@ EL::StatusCode ProcessTLAMiniTree :: histInitialize ()
   // connected.
   Info("histInitialize()", "Calling histInitialize \n");
 
+    //make the test histogram
+    
+  m_h2_LArError = new TH2D("h2_LArError", "h2_LArError", 2, 0, 2, 2, 0, 2);
+  wk()->addOutput(m_h2_LArError);
+    
   return EL::StatusCode::SUCCESS;
 }
 
@@ -208,15 +217,29 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
   tree->SetBranchStatus ("*", 0);
 
   //event-level variables
+    
   tree->SetBranchStatus  ("runNumber",    1);
   tree->SetBranchAddress ("runNumber",    &m_runNumber);
 
   tree->SetBranchStatus  ("eventNumber",    1);
   tree->SetBranchAddress ("eventNumber",    &m_eventNumber);
 
+
   if(!m_doTruthOnly){
     tree->SetBranchStatus  ("lumiBlock",    1);
     tree->SetBranchAddress ("lumiBlock",    &m_lumiBlock);
+
+    tree->SetBranchStatus  ("LArError",    1);
+    tree->SetBranchAddress ("LArError",    &m_LArError);
+      
+    tree->SetBranchStatus  ("timeStampNSOffset",    1);
+    tree->SetBranchAddress ("timeStampNSOffset",    &m_timeStampNSOffset);
+      
+    tree->SetBranchStatus  ("timeStamp",    1);
+    tree->SetBranchAddress ("timeStamp",    &m_timeStamp);
+      
+    tree->SetBranchStatus  ("NPV",    1);
+    tree->SetBranchAddress ("NPV",    &m_NPV);
 
     if(m_doTrigger){
       tree->SetBranchStatus  ("passedTriggers", 1);
@@ -340,7 +363,15 @@ EL::StatusCode ProcessTLAMiniTree :: initialize ()
     RETURN_CHECK("BasicEventSelection::initialize()", m_grl->setProperty("PassThrough", false), "");
     RETURN_CHECK("BasicEventSelection::initialize()", m_grl->initialize(), "");
   }
+    
+  if(m_applyTLALArEventVetoData){
 
+    m_dataForLArEventVeto = new TLALArEventVetoData();
+    std::string LArEventVetoExpandedPath = gSystem->ExpandPathName( m_TLALArEventVetoFiles.c_str() );
+    // replace this path with the path to your event veto data directory
+    m_dataForLArEventVeto->loadFromDirectory(LArEventVetoExpandedPath);
+  }
+    
   Info("initialize()", "Succesfully initialized! \n");
 
 
@@ -399,13 +430,51 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   }//end of do data
 
   //
-  // Minimun selection is a dijet 
+  // Minimum selection is a dijet
   //
   if(njets < 2){
     if(m_debug) cout << " Fail NJets " << endl;
     return EL::StatusCode::SUCCESS;
   }
+    
+  //minimal NPV selection
+  if(m_NPV < 1 && m_isTLANtupleOffline){
+      if(m_debug) cout << " Fail NPV " << endl;
+      return EL::StatusCode::SUCCESS;
+  }
+  bool failLArError = false;
+  bool failToolError = false;
+    
+  //minimal LAr/event cleaning selection
+  if (m_LArError && m_isTLANtupleOffline) {
+      //if(m_debug) cout << " Fail LArError " << endl;
+      //cout << "eventNumber: " << m_eventNumber << " Fail LArError " << endl;
+      //return EL::StatusCode::SUCCESS;
+      failLArError=true;
+  }
 
+
+  if (m_applyTLALArEventVetoData && !m_isTLANtupleTruth && !m_isDijetNtupleTruth) {
+        //if(m_debug) cout << " Fail LArError " << endl;
+        // run, lbn, timestamp (seconds), timestamp_ns_offset
+        bool veto = m_dataForLArEventVeto->shouldVeto(m_runNumber,m_lumiBlock,m_timeStamp,m_timeStampNSOffset);
+        failToolError=veto;
+        //if (veto) cout << "eventNumber: " << m_eventNumber << " Fail LArError, event veto " << endl;
+        //return EL::StatusCode::SUCCESS;
+    }
+    
+  if (m_applyTLALArEventVetoData) {
+    if (failToolError && failLArError) m_h2_LArError->Fill(1.5,1.5);
+    if (!failToolError && failLArError) m_h2_LArError->Fill(1.5,0.5);
+    if (failToolError && !failLArError) m_h2_LArError->Fill(0.5,1.5);
+    if (!failToolError && !failLArError) m_h2_LArError->Fill(0.5,0.5);
+  }
+    
+  if (m_isTLANtupleOffline)
+    if (failLArError) return EL::StatusCode::SUCCESS;
+
+  if (m_isTLANtupleTrig && m_applyTLALArEventVetoData)
+    if (failToolError) return EL::StatusCode::SUCCESS;
 
   /*if (m_applySF) {
 
@@ -474,8 +543,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       cout << " --------" << endl;
       for(std::string& thisTrig: *m_passedTriggers)
         cout << thisTrig << endl;
-        
-      }
+      }//end dump trigger
       
     std::string trig;
     if (m_jet_pt->at(0) < 85) return EL::StatusCode::SUCCESS;
@@ -491,7 +559,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       prescaleWeight = m_triggerPrescales->at(std::distance(m_passedTriggers->begin(), trigIt));
       //std::cout << "trig: " << trig << ", distance from front of vector" << (std::distance(m_passedTriggers->begin(), trigIt)) << std::endl;
       //std::cout << "prescale: " << prescaleWeight << std::endl;
-    }
+    }//end do trigger with prescales
  
     //bool passHLT_j360 = (find(m_passedTriggers->begin(), m_passedTriggers->end(), "HLT_j360" ) != m_passedTriggers->end());
         
@@ -615,6 +683,9 @@ EL::StatusCode ProcessTLAMiniTree :: finalize ()
   // merged.  This is different from histFinalize() in that it only
   // gets called on worker nodes that processed input events.
 
+  //this makes ROOT angry
+  //delete m_dataForLArEventVeto;
+    
   return EL::StatusCode::SUCCESS;
 }
 
