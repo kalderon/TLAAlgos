@@ -95,6 +95,10 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		vector<float>* m_jet_phi; //!
 		vector<float>* m_jet_E; //!
         vector<float>* m_jet_muonSegments; //!
+        vector<float>* m_jet_EMFrac; //!
+        vector<float>* m_jet_HECFrac; //!
+        float m_MHT; //!
+        float m_mjj; //!
 
 		vector<int>*   m_jet_clean_passLooseBad; //!
 
@@ -116,14 +120,18 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 			float phi;
 			float E;
             float muonSegments;
+            float EMFrac;
+            float HECFrac;
 
-			jetData(float m_pt, float m_eta, float m_phi, float m_E, float m_muonSegments=0){
+			jetData(float m_pt, float m_eta, float m_phi, float m_E, float m_muonSegments=0, float m_EMFrac = 0, float m_HECFrac = 0){
 
 				pt     = m_pt;
 				eta    = m_eta;
 				phi    = m_phi;
 				E      = m_E;
                 muonSegments      = m_muonSegments;
+                EMFrac      = m_EMFrac;
+                HECFrac      = m_HECFrac;
 
 			}
 
@@ -143,18 +151,38 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 			int             runNumber;
 			int             eventNumber;
 			vector<jetData> jets;
+            float           yStar;
+            float           MHT;
 			float           weight;
             float prescaleWeight = 1;
 
-			eventData(unsigned int m_runNumber, unsigned int m_eventNumber, 
-					vector<float>* m_jet_pt, vector<float>* m_jet_eta, vector<float>* m_jet_phi, vector<float>* m_jet_E, vector<float>* m_jet_muonSegments, float& m_weight, float& m_prescaleWeight){
+			eventData(unsigned int m_runNumber,
+                      unsigned int m_eventNumber,
+                      vector<float>* m_jet_pt,
+                      vector<float>* m_jet_eta,
+                      vector<float>* m_jet_phi,
+                      vector<float>* m_jet_E,
+                      vector<float>* m_jet_muonSegments,
+                      vector<float>* m_jet_EMFrac,
+                      vector<float>* m_jet_HECFrac,
+                      float& m_MHT,
+                      float& m_weight,
+                      float& m_prescaleWeight){
 
 				runNumber = m_runNumber;
 				eventNumber = m_eventNumber;
                 prescaleWeight = m_prescaleWeight;
+                MHT = m_MHT;//just because too lazy to recalculate
 
 				for(unsigned int i =0; i < m_jet_pt->size(); ++i){
-					jetData thisJet = jetData(m_jet_pt->at(i), m_jet_eta->at(i), m_jet_phi->at(i), m_jet_E->at(i), m_jet_muonSegments->at(i));
+					jetData thisJet = jetData(m_jet_pt->at(i),
+                                              m_jet_eta->at(i),
+                                              m_jet_phi->at(i),
+                                              m_jet_E->at(i),
+                                              m_jet_muonSegments->at(i),
+                                              m_jet_EMFrac->at(i),
+                                              m_jet_HECFrac->at(i)
+                                              );
 					jets.push_back(thisJet);
 				}
 
@@ -182,12 +210,17 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 			TH1D*     h_mjj;
 			TH1D*     h_mjj_uniform;
             TH1D*     h_yStar;
+            TH1D*     h_MHT;
             TH1D*     h_pt_lead;
             TH1D*     h_pt_sublead;
             TH1D*     h_eta_lead;
             TH1D*     h_eta_sublead;
             TH1D*     h_phi_lead;
             TH1D*     h_phi_sublead;
+            TH1D*     h_EMFrac_lead;
+            TH1D*     h_EMFrac_sublead;
+            TH1D*     h_HECFrac_lead;
+            TH1D*     h_HECFrac_sublead;
             TH3D*     h_pt_eta_muon;
 
 			eventHists(std::string name, EL::Worker* wk){
@@ -203,7 +236,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
                 Float_t mjjbins[] = { 310, 323, 336, 350, 364, 379, 394, 410, 426, 443, 460, 478, 496, 515, 534, 554, 574, 595, 617, 639, 662, 685, 709, 733, 758, 783, 809, 836, 863, 891, 919, 948, 978, 1008, 1039, 1070, 1102, 1135, 1168, 1202, 1236, 1271, 1307, 1343, 1380, 1418, 1456, 1495, 1535, 1575, 1616, 1658, 1700, 1743, 1787, 1832, 1877, 1923, 1970, 2018, 2067, 2116, 2166, 2217, 2269, 2322, 2376, 2431, 2487, 2544, 2602, 2661, 2721, 2782, 2844, 2907, 2971, 3036, 3102, 3169, 3238, 3308, 3379, 3451, 3524, 3599, 3675, 3752, 3830, 3910, 3991, 4073, 4157, 4242, 4329, 4417, 4507, 4598, 4691, 4785, 4881, 4978, 5077, 5178, 5281, 5385, 5491, 5599, 5709, 5821, 5935, 6051, 6169, 6289, 6411, 6536, 6663, 6792, 6923, 7057, 7193, 7331, 7472, 7615, 7761, 7909, 8060, 8214, 8371, 8531, 8694, 8860, 9029, 9201, 9376, 9555, 9737, 9923, 10112, 10305, 10501, 10701, 10905, 11113, 11325, 11541, 11761, 11985, 12213, 12446, 12683, 12925, 13171 };
 
                 
-                Float_t ptbins[] =  {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,172. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1250.,1310.,1420.,1530.,1750.,1992.,2250.,2500.,2850.,3200.,3600.,4000.,4600.};
+                Float_t ptbins[] =  {15. ,20. ,25. ,35. ,45. ,55. ,70. ,85. ,100. ,116. ,134. ,152. ,185. ,194. ,216. ,240. ,264. ,290. ,318. ,346.,376.,408.,442.,478.,516.,556.,598.,642.,688.,736.,786.,838.,894.,952.,1012.,1076.,1162.,1250.,1310.,1420.,1530.,1750.,1992.,2250.,2500.,2850.,3200.,3600.,4000.,4600.};
                 
                 Float_t muonsegmentbins[] =  {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360, 370, 380, 390, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500};
                 
@@ -223,14 +256,18 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 				h_mjj           = book_variable(wk, name, "mjj"           ,       "mjj"            ,        mjjbinnum    ,      mjjbins    );
                 h_yStar         = book         (wk, name, "yStar"         ,       "yStar"          ,        100          ,      -2,    2    );
 				h_mjj_uniform   = book         (wk, name, "mjj_uniform"   ,       "mjj_uniform"    ,        100          ,      0,    5000   );
+                h_MHT           = book_variable(wk, name, "MHT"           ,       "MHT"            ,        ptbinnum     ,      ptbins   );
                 h_pt_lead       = book_variable(wk, name, "pt_lead"       ,       "pt_lead"        ,        ptbinnum     ,      ptbins   );
                 h_pt_sublead    = book_variable(wk, name, "pt_sublead"    ,       "pt_sublead"     ,        ptbinnum     ,      ptbins   );
                 h_eta_lead      = book         (wk, name, "eta_lead"      ,       "eta_lead"       ,        100          ,      -4.5, 4.5   );
                 h_eta_sublead   = book         (wk, name, "eta_sublead"   ,       "eta_sublead"    ,        100          ,      -4.5, 4.5   );
                 h_phi_lead      = book         (wk, name, "phi_lead"      ,       "phi_lead"       ,        100          ,      -3.14, 3.14   );
                 h_phi_sublead   = book         (wk, name, "phi_sublead"   ,       "phi_sublead"    ,        100          ,      -3.14, 3.14  );
+                h_EMFrac_lead       = book     (wk, name, "EMFrac_lead"   ,       "EMFrac_lead"    ,        150          ,      0, 1.5   );
+                h_EMFrac_sublead    = book     (wk, name, "EMFrac_sublead",       "EMFrac_sublead" ,        150          ,      0, 1.5   );
+                h_HECFrac_lead       = book     (wk, name, "HECFrac_lead"   ,       "HECFrac_lead"    ,        150          ,      0, 1.5   );
+                h_HECFrac_sublead    = book     (wk, name, "HECFrac_sublead",       "HECFrac_sublead" ,        150          ,      0, 1.5   );
                 h_pt_eta_muon   = book         (wk, name, "pt_eta_muon"   ,       "pt_eta_muon"    ,        ptbinnum          ,      ptbins, etabinnum, etabins, muonbinnum, muonsegmentbins );
-
 
 			}
 
@@ -261,6 +298,12 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 				jetData sublJet = thisEvent.jets.at(1);
                 float leadJetMuonSegments = leadJet.muonSegments;
                 float sublJetMuonSegments = sublJet.muonSegments;
+                //some cleaning quantities
+                float leadJetEMFrac = leadJet.EMFrac;
+                float sublJetEMFrac = sublJet.EMFrac;
+                float leadJetHECFrac = leadJet.HECFrac;
+                float sublJetHECFrac = sublJet.HECFrac;
+                float MHT = thisEvent.MHT;
 
 				TLorentzVector jet1 = leadJet.vec();
 				TLorentzVector jet2 = sublJet.vec();
@@ -270,9 +313,12 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 				//
 				//  simple kinematics
 				//
+                
+
 				TLorentzVector jjSystem = (jet1 + jet2);
 				h_mjj             ->Fill(jjSystem.M(), weight);
                 h_yStar           ->Fill(yStar, weight);
+                h_MHT             ->Fill(MHT, weight);
 				h_mjj_uniform     ->Fill(jjSystem.M(), weight);
                 h_pt_lead         ->Fill(jet1.Pt(), weight);
                 h_pt_sublead      ->Fill(jet2.Pt(), weight);
@@ -280,6 +326,10 @@ class ProcessTLAMiniTree : public xAH::Algorithm
                 h_eta_sublead      ->Fill(jet2.Eta(), weight);
                 h_phi_lead         ->Fill(jet1.Phi(), weight);
                 h_phi_sublead      ->Fill(jet2.Phi(), weight);
+                h_EMFrac_lead         ->Fill(leadJetEMFrac, weight);
+                h_EMFrac_sublead      ->Fill(sublJetEMFrac, weight);
+                h_HECFrac_lead         ->Fill(leadJetHECFrac, weight);
+                h_HECFrac_sublead      ->Fill(sublJetHECFrac, weight);
                 h_pt_eta_muon      ->Fill(jet1.Pt(), jet1.Eta(), leadJetMuonSegments, weight);
                 h_pt_eta_muon      ->Fill(jet2.Pt(), jet2.Eta(), sublJetMuonSegments, weight);
 
@@ -290,6 +340,13 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
 //		eventHists*   hOffline; //!
         eventHists*   hIncl; //!
+        eventHists*   hCentral; //!
+        eventHists*   hCrack; //!
+        eventHists*   hEndcap; //!
+        eventHists*   hIncl_mjjWindow; //!
+        eventHists*   hCentral_mjjWindow; //!
+        eventHists*   hCrack_mjjWindow; //!
+        eventHists*   hEndcap_mjjWindow; //!
 //        eventHists*   hTrigger; //!
 //        eventHists*   hTruth; //!
 

@@ -50,18 +50,28 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_jet_phi(0),
   m_jet_E(0),
   m_jet_muonSegments(0),
+  m_jet_EMFrac(0),
+  m_jet_HECFrac(0),
+  m_LArError(false),
+  m_MHT(0),
+  m_mjj(0),
   m_jet_clean_passLooseBad(0),
   m_passedTriggers(nullptr),
   m_triggerPrescales(nullptr),
-
   /*m_applySF(false),
   m_hcalibration(nullptr),
   m_scaleFactorLocation(""),
   m_scaleFactorHistoName(""),
   m_pt_freeze(2500),
   m_eta_freeze(4.5),*/
-
-  hIncl(nullptr)
+  hIncl(nullptr),
+  hCentral(nullptr),
+  hCrack(nullptr),
+  hEndcap(nullptr),
+  hIncl_mjjWindow(nullptr),
+  hCentral_mjjWindow(nullptr),
+  hCrack_mjjWindow(nullptr),
+  hEndcap_mjjWindow(nullptr)
 //  hOffline(nullptr),
 //  hTrigger(nullptr),
 //  hTruth(nullptr),
@@ -98,8 +108,30 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
   //histograms that are always there, defaulting to what is in the 'jet' branch
   //this is the distribution we cut on
     
-  if (m_isTLANtupleTrig) hIncl = new eventHists("TriggerJets"  ,       wk());
-  else if (m_isTLANtupleOffline) hIncl = new eventHists("OfflineJets"  ,       wk());
+  if (m_isTLANtupleTrig) {
+    hIncl = new eventHists("TriggerJets"  ,       wk());
+    hCentral = new eventHists("TriggerJets_0-12"  ,       wk());
+    hCrack = new eventHists("TriggerJets_12-16"  ,       wk());
+    hEndcap = new eventHists("TriggerJets_16-28"  ,       wk());
+      
+    hIncl_mjjWindow = new eventHists("TriggerJets_mjjWindow"  ,       wk());
+    hCentral_mjjWindow = new eventHists("TriggerJets_0-12_mjjWindow"  ,       wk());
+    hCrack_mjjWindow = new eventHists("TriggerJets_12-16_mjjWindow"  ,       wk());
+    hEndcap_mjjWindow = new eventHists("TriggerJets_16-28_mjjWindow"  ,       wk());
+      
+  }
+  else if (m_isTLANtupleOffline) {
+   hIncl = new eventHists("OfflineJets"  ,       wk());
+   hCentral = new eventHists("OfflineJets_0-12"  ,       wk());
+   hCrack = new eventHists("OfflineJets_12-16"  ,       wk());
+   hEndcap = new eventHists("OfflineJets_16-28"  ,       wk());
+      
+   hIncl_mjjWindow = new eventHists("OfflineJets_mjjWindow"  ,       wk());
+   hCentral_mjjWindow = new eventHists("OfflineJets_0-12_mjjWindow"  ,       wk());
+   hCrack_mjjWindow = new eventHists("OfflineJets_12-16_mjjWindow"  ,       wk());
+   hEndcap_mjjWindow = new eventHists("OfflineJets_16-28_mjjWindow"  ,       wk());
+
+  }
   else hIncl = new eventHists("Incl"  ,       wk());
   //histograms that are there for comparisons...for later
   /*if (m_isTLANtupleOffline) hOffline = new eventHists("Offline"  ,       wk());
@@ -298,11 +330,22 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
       
       tree->SetBranchStatus  ("trigJet_E", 1);
       tree->SetBranchAddress ("trigJet_E", &m_jet_E);
-      
+
       tree->SetBranchStatus  ("trigJet_GhostMuonSegmentCount", 1);
       tree->SetBranchAddress ("trigJet_GhostMuonSegmentCount", &m_jet_muonSegments);
 
+      tree->SetBranchStatus  ("trigJet_EMFrac", 1);
+      tree->SetBranchAddress ("trigJet_EMFrac", &m_jet_EMFrac);
       
+      tree->SetBranchStatus  ("trigJet_HECFrac", 1);
+      tree->SetBranchAddress ("trigJet_HECFrac", &m_jet_HECFrac);
+
+      tree->SetBranchStatus  ("trigJet_MHT", 1);
+      tree->SetBranchAddress ("trigJet_MHT", &m_MHT);
+      
+      tree->SetBranchStatus  ("trigJet_mjj", 1);
+      tree->SetBranchAddress ("trigJet_mjj", &m_mjj);
+
       if(!m_doTruthOnly){
           tree->SetBranchStatus  ("trigJet_clean_passLooseBad", 1);
           tree->SetBranchAddress ("trigJet_clean_passLooseBad", &m_jet_clean_passLooseBad);
@@ -328,6 +371,18 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
       
       tree->SetBranchStatus  ("jet_GhostMuonSegmentCount", 1);
       tree->SetBranchAddress ("jet_GhostMuonSegmentCount", &m_jet_muonSegments);
+      
+      tree->SetBranchStatus  ("jet_EMFrac", 1);
+      tree->SetBranchAddress ("jet_EMFrac", &m_jet_EMFrac);
+      
+      tree->SetBranchStatus  ("jet_HECFrac", 1);
+      tree->SetBranchAddress ("jet_HECFrac", &m_jet_HECFrac);
+      
+      tree->SetBranchStatus  ("jet_MHT", 1);
+      tree->SetBranchAddress ("jet_MHT", &m_MHT);
+
+      tree->SetBranchStatus  ("jet_mjj", 1);
+      tree->SetBranchAddress ("jet_mjj", &m_mjj);
       
       if(!m_doTruthOnly){
           tree->SetBranchStatus  ("jet_clean_passLooseBad", 1);
@@ -446,7 +501,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   bool failToolError = false;
     
   //minimal LAr/event cleaning selection
-  if (m_LArError && m_isTLANtupleOffline) {
+  if (m_LArError && (m_isTLANtupleOffline || m_isTLANtupleTrig)) {
       //if(m_debug) cout << " Fail LArError " << endl;
       //cout << "eventNumber: " << m_eventNumber << " Fail LArError " << endl;
       //return EL::StatusCode::SUCCESS;
@@ -551,7 +606,8 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     else if (m_jet_pt->at(0) < 172) { trig = "HLT_j85"; }
     else if (m_jet_pt->at(0) < 240) { trig = "HLT_j110"; }
     else if (m_jet_pt->at(0) < 318) { trig = "HLT_j200"; }
-    else if (m_jet_pt->at(0) < 516) { trig = "HLT_j260"; }
+    else if (m_jet_pt->at(0) < 350) { trig = "HLT_j260"; }
+    else if (m_jet_pt->at(0) < 410) { trig = "HLT_j320"; }
     else trig = "HLT_j360";
       std::vector<string>::iterator trigIt = std::find(m_passedTriggers->begin(), m_passedTriggers->end(), trig);
     if (trigIt == m_passedTriggers->end()) return EL::StatusCode::SUCCESS;
@@ -641,14 +697,41 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     if (m_debug) cout << "Fail Cleaning " << endl;
     return EL::StatusCode::SUCCESS;
   }
-  
+
+  //inclusive histograms
   if(m_debug) cout << " Make EventData " << endl;
-  eventData thisEvent = eventData(m_runNumber, m_eventNumber, 
-				  m_jet_pt, m_jet_eta, m_jet_phi, m_jet_E, m_jet_muonSegments, eventWeight, prescaleWeight);
+  eventData thisEvent = eventData(m_runNumber,
+                                  m_eventNumber,
+                                  m_jet_pt,
+                                  m_jet_eta,
+                                  m_jet_phi,
+                                  m_jet_E,
+                                  m_jet_muonSegments,
+                                  m_jet_EMFrac,
+                                  m_jet_HECFrac,
+                                  m_MHT,
+                                  eventWeight,
+                                  prescaleWeight);
   if(m_debug) cout << " Made EventData " << endl;
   if(m_debug) cout << " Weight: " << eventWeight << endl;
   
   hIncl->Fill(thisEvent);
+  //central: leading jet within 1.2
+    if (fabs(m_jet_eta->at(0))<1.2) hCentral->Fill(thisEvent);
+  //crack: leading jet within 1.2-1.6
+      else if (fabs(m_jet_eta->at(0))>=1.2 && fabs(m_jet_eta->at(0))<1.6) hCrack->Fill(thisEvent);
+  //endcap: leading jet within 1.6-2.8
+      else if (fabs(m_jet_eta->at(0))>=1.6 && fabs(m_jet_eta->at(0))<2.8) hEndcap->Fill(thisEvent);
+
+  if ( m_mjj>394 && m_mjj<1236 ) {
+    hIncl_mjjWindow->Fill(thisEvent);
+    //central: leading jet within 1.2
+    if (fabs(m_jet_eta->at(0))<1.2) hCentral_mjjWindow->Fill(thisEvent);
+    //crack: leading jet within 1.2-1.6
+    else if (fabs(m_jet_eta->at(0))>=1.2 && fabs(m_jet_eta->at(0))<1.6) hCrack_mjjWindow->Fill(thisEvent);
+    //endcap: leading jet within 1.6-2.8
+    else if (fabs(m_jet_eta->at(0))>=1.6 && fabs(m_jet_eta->at(0))<2.8) hEndcap_mjjWindow->Fill(thisEvent);
+  }
   //hOffline->Fill(thisEvent_offline);
   //hTrigger->Fill(thisEvent_trigger);
 
