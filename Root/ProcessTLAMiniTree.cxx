@@ -23,7 +23,8 @@ ClassImp(ProcessTLAMiniTree)
 
 ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_applyGRL(false),
-  m_GRLxml("$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml"),
+  // m_GRLxml("$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml"),
+  m_GRLxml("$ROOTCOREBIN/data/TLAAlgos/data16_13TeV.periodAllYear_DetStatus-v82-pro20-13_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"),
   m_applyTLALArEventVetoData(false),
   m_TLALArEventVetoFiles("$ROOTCOREBIN/data/TLAEventCleaning/event-veto-data/"),
   m_debug(false),
@@ -33,6 +34,10 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_isTLANtupleTrig(false),
   m_isTLANtupleOffline(false),
   m_doTruthOnly(false),
+
+  m_doSecondaryJets(false),
+  m_secondaryJetName(""),
+
   m_YStarCut(99),
   m_YBoostCut(99),
   m_doBlind(false),
@@ -71,7 +76,26 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   hIncl_mjjWindow(nullptr),
   hCentral_mjjWindow(nullptr),
   hCrack_mjjWindow(nullptr),
-  hEndcap_mjjWindow(nullptr)
+  hEndcap_mjjWindow(nullptr),
+
+  hSecIncl(nullptr),
+  hSecCentral(nullptr),
+  hSecCrack(nullptr),
+  hSecEndcap(nullptr),
+  hSecIncl_mjjWindow(nullptr),
+  hSecCentral_mjjWindow(nullptr),
+  hSecCrack_mjjWindow(nullptr),
+  hSecEndcap_mjjWindow(nullptr),
+
+
+  m_secJet_pt(0),
+  m_secJet_eta(0),
+  m_secJet_phi(0),
+  m_secJet_E(0),
+  m_secJet_muonSegments(0),
+  m_secJet_EMFrac(0),
+  m_secJet_HECFrac(0)
+
 //  hOffline(nullptr),
 //  hTrigger(nullptr),
 //  hTruth(nullptr),
@@ -132,6 +156,30 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
    hEndcap_mjjWindow = new eventHists("OfflineJets_16-28_mjjWindow"  ,       wk());
 
   }
+  else if (m_isDijetNtuple) {
+   hIncl    = new eventHists("TriggerJets"        ,       wk());
+   hCentral = new eventHists("TriggerJets_0-12"   ,       wk());
+   hCrack   = new eventHists("TriggerJets_12-16"  ,       wk());
+   hEndcap  = new eventHists("TriggerJets_16-28"  ,       wk());
+      
+   hIncl_mjjWindow    = new eventHists("TriggerJets_mjjWindow"        ,       wk());
+   hCentral_mjjWindow = new eventHists("TriggerJets_0-12_mjjWindow"   ,       wk());
+   hCrack_mjjWindow   = new eventHists("TriggerJets_12-16_mjjWindow"  ,       wk());
+   hEndcap_mjjWindow  = new eventHists("TriggerJets_16-28_mjjWindow"  ,       wk());
+
+   if(m_doSecondaryJets) {
+     hSecIncl    = new eventHists("TriggerJetsSec"        ,       wk());
+     hSecCentral = new eventHists("TriggerJetsSec_0-12"   ,       wk());
+     hSecCrack   = new eventHists("TriggerJetsSec_12-16"  ,       wk());
+     hSecEndcap  = new eventHists("TriggerJetsSec_16-28"  ,       wk());
+     
+     hSecIncl_mjjWindow    = new eventHists("TriggerJetsSec_mjjWindow"        ,       wk());
+     hSecCentral_mjjWindow = new eventHists("TriggerJetsSec_0-12_mjjWindow"   ,       wk());
+     hSecCrack_mjjWindow   = new eventHists("TriggerJetsSec_12-16_mjjWindow"  ,       wk());
+     hSecEndcap_mjjWindow  = new eventHists("TriggerJetsSec_16-28_mjjWindow"  ,       wk());
+   }
+  }
+
   else hIncl = new eventHists("Incl"  ,       wk());
   //histograms that are there for comparisons...for later
   /*if (m_isTLANtupleOffline) hOffline = new eventHists("Offline"  ,       wk());
@@ -179,6 +227,11 @@ EL::StatusCode ProcessTLAMiniTree :: fileExecute ()
 {
   // Here you do everything that needs to be done exactly once for every
   // single file, e.g. collect a list of all lumi-blocks processed
+  Info("fileExecute()", "Calling fileExecute"); // CWK debugging  
+
+  TFile* inputFile = wk()->inputFile();
+  cout << inputFile << ", " << inputFile->GetName() << endl;
+
   return EL::StatusCode::SUCCESS;
 }
 
@@ -190,6 +243,9 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
   // Here you do everything you need to do when we change input files,
   // e.g. resetting branch addresses on trees.  If you are using
   // D3PDReader or a similar service this method is not needed.
+
+  Info("changeInput()", "calling changeInput() \n"); // CWK debugging  
+
   if(firstFile){
     if ( this->configure() == EL::StatusCode::FAILURE ) {
       Error("initialize()", "Failed to properly configure. Exiting." );
@@ -391,6 +447,76 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
 
   }
 
+  //truth-level variables
+  else if (m_isDijetNtuple) {
+    
+      tree->SetBranchStatus  ("jet_pt", 1);
+      tree->SetBranchAddress ("jet_pt", &m_jet_pt);
+      
+      tree->SetBranchStatus  ("jet_eta", 1);
+      tree->SetBranchAddress ("jet_eta", &m_jet_eta);
+      
+      tree->SetBranchStatus  ("jet_phi", 1);
+      tree->SetBranchAddress ("jet_phi", &m_jet_phi);
+      
+      tree->SetBranchStatus  ("jet_E", 1);
+      tree->SetBranchAddress ("jet_E", &m_jet_E);
+
+      if(!m_doTruthOnly) {
+	// old NTUPs- prior to Oct 2016
+	// tree->SetBranchStatus  ("jet__EMFrac", 1);
+	// tree->SetBranchAddress ("jet__EMFrac", &m_jet_EMFrac);
+	
+	// tree->SetBranchStatus  ("jet__HECFrac", 1);
+	// tree->SetBranchAddress ("jet__HECFrac", &m_jet_HECFrac);
+	
+	// tree->SetBranchStatus  ("jet__GhostMuonSegmentCount", 1);
+	// tree->SetBranchAddress ("jet__GhostMuonSegmentCount", &m_jet_muonSegments);
+
+	// new NTUPs - from 15.10.16
+	tree->SetBranchStatus  ("jet_EMFrac", 1);
+	tree->SetBranchAddress ("jet_EMFrac", &m_jet_EMFrac);
+	
+	tree->SetBranchStatus  ("jet_HECFrac", 1);
+	tree->SetBranchAddress ("jet_HECFrac", &m_jet_HECFrac);
+	
+	tree->SetBranchStatus  ("jet_GhostMuonSegmentCount", 1);
+	tree->SetBranchAddress ("jet_GhostMuonSegmentCount", &m_jet_muonSegments);
+
+	tree->SetBranchStatus  ("jet_clean_passLooseBad", 1);
+	tree->SetBranchAddress ("jet_clean_passLooseBad", &m_jet_clean_passLooseBad);	
+      }
+
+      if(m_doSecondaryJets) {
+	tree->SetBranchStatus  ((m_secondaryJetName+"_pt").c_str(), 1);
+	tree->SetBranchAddress ((m_secondaryJetName+"_pt").c_str(), &m_secJet_pt);
+	
+	tree->SetBranchStatus  ((m_secondaryJetName+"_eta").c_str(), 1);
+	tree->SetBranchAddress ((m_secondaryJetName+"_eta").c_str(), &m_secJet_eta);
+	
+	tree->SetBranchStatus  ((m_secondaryJetName+"_phi").c_str(), 1);
+	tree->SetBranchAddress ((m_secondaryJetName+"_phi").c_str(), &m_secJet_phi);
+	
+	tree->SetBranchStatus  ((m_secondaryJetName+"_E").c_str(), 1);
+	tree->SetBranchAddress ((m_secondaryJetName+"_E").c_str(), &m_secJet_E);
+	
+	if(!m_doTruthOnly) {
+	  // new NTUPs - from 15.10.16
+	  tree->SetBranchStatus  ((m_secondaryJetName+"_EMFrac").c_str(), 1);
+	  tree->SetBranchAddress ((m_secondaryJetName+"_EMFrac").c_str(), &m_secJet_EMFrac);
+	  
+	  tree->SetBranchStatus  ((m_secondaryJetName+"_HECFrac").c_str(), 1);
+	  tree->SetBranchAddress ((m_secondaryJetName+"_HECFrac").c_str(), &m_secJet_HECFrac);
+	  
+	  tree->SetBranchStatus  ((m_secondaryJetName+"_GhostMuonSegmentCount").c_str(), 1);
+	  tree->SetBranchAddress ((m_secondaryJetName+"_GhostMuonSegmentCount").c_str(), &m_secJet_muonSegments);
+	  // cleaning done from primary
+	}
+      }
+
+  }
+
+
 
   return EL::StatusCode::SUCCESS;
 }
@@ -408,8 +534,10 @@ EL::StatusCode ProcessTLAMiniTree :: initialize ()
   // you create here won't be available in the output if you have no
   // input events.
   m_eventCounter = -1;
-
+  Info("initialize()", "Calling initialize \n"); // CWK debugging  
   if(m_applyGRL){
+    std::cout<<"I am about to initialise with m_GRLxml = "<<m_GRLxml<<std::endl; // CWK debugging
+    Warning("initialize()", "I have hard-coded in the GRL, it doesn't seem to be picked up from the config \n");
     m_grl = new GoodRunsListSelectionTool("GoodRunsListSelectionTool");
     std::vector<std::string> vecStringGRL;
     m_GRLxml = gSystem->ExpandPathName( m_GRLxml.c_str() );
@@ -469,8 +597,13 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
   wk()->tree()->GetEntry (wk()->treeEntry());
   unsigned njets       = m_jet_pt->size();
+  unsigned nsecJets    = 0;
+  if(m_doSecondaryJets) nsecJets = m_secJet_pt->size();
   float prescaleWeight = 1.0;
     
+  if(m_eventCounter % 10000 == 0) cout << "executing event " << m_eventCounter << endl;
+  else if(m_debug) cout << "executing event " << m_eventCounter << endl;
+
   if(m_doData){
    
     if ( m_applyGRL ) {
@@ -487,7 +620,8 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   //
   // Minimum selection is a dijet
   //
-  if(njets < 2){
+    
+  if(njets < 2 && nsecJets < 2){
     if(m_debug) cout << " Fail NJets " << endl;
     return EL::StatusCode::SUCCESS;
   }
@@ -585,155 +719,255 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   }*/
 
 
-  if(m_jet_pt->at(0) < m_leadJetPtCut) {
-    if(m_debug) cout << " Fail LeadJetPt " << endl;
-    return EL::StatusCode::SUCCESS;
-  }
-
-  if(m_doTrigger){
-    if(m_debug) Info("execute()", "Doing Trigger ");
-        
-    bool m_dumpTrig = false ;
-    if(m_dumpTrig){
-      cout << " --------" << endl;
-      for(std::string& thisTrig: *m_passedTriggers)
-        cout << thisTrig << endl;
-      }//end dump trigger
-      
-    std::string trig;
-    if (m_jet_pt->at(0) < 85) return EL::StatusCode::SUCCESS;
-    if (m_jet_pt->at(0) < 116) { trig = "HLT_j60"; }
-    else if (m_jet_pt->at(0) < 172) { trig = "HLT_j85"; }
-    else if (m_jet_pt->at(0) < 240) { trig = "HLT_j110"; }
-    else if (m_jet_pt->at(0) < 318) { trig = "HLT_j200"; }
-    else if (m_jet_pt->at(0) < 350) { trig = "HLT_j260"; }
-    else if (m_jet_pt->at(0) < 410) { trig = "HLT_j320"; }
-    else trig = "HLT_j360";
-      std::vector<string>::iterator trigIt = std::find(m_passedTriggers->begin(), m_passedTriggers->end(), trig);
-    if (trigIt == m_passedTriggers->end()) return EL::StatusCode::SUCCESS;
-    else {
-      prescaleWeight = m_triggerPrescales->at(std::distance(m_passedTriggers->begin(), trigIt));
-      //std::cout << "trig: " << trig << ", distance from front of vector" << (std::distance(m_passedTriggers->begin(), trigIt)) << std::endl;
-      //std::cout << "prescale: " << prescaleWeight << std::endl;
-    }//end do trigger with prescales
- 
-    //bool passHLT_j360 = (find(m_passedTriggers->begin(), m_passedTriggers->end(), "HLT_j360" ) != m_passedTriggers->end());
-        
-  }// end of do trigger
-
-  if(m_jet_pt->at(1) < m_subleadJetPtCut) {
-    if(m_debug) cout << " Fail subLeadJetPt " << endl;
-    return EL::StatusCode::SUCCESS;
-  }
-
-  if(fabs(m_jet_eta->at(0)) > m_etaCut) {
-    if(m_debug) cout << " Fail LeadJetEta " << endl;
-    return EL::StatusCode::SUCCESS;
-  }
-
-
-  if(fabs(m_jet_eta->at(1)) > m_etaCut) {
-    if(m_debug) cout << " Fail subLeadJetEta " << endl;
-    return EL::StatusCode::SUCCESS;
-  }
-
-  TLorentzVector jet1 = TLorentzVector();
-  jet1.SetPtEtaPhiE(m_jet_pt->at(0),m_jet_eta->at(0),m_jet_phi->at(0),m_jet_E->at(0));
-  TLorentzVector jet2 = TLorentzVector();
-  jet2.SetPtEtaPhiE(m_jet_pt->at(1),m_jet_eta->at(1),m_jet_phi->at(1),m_jet_E->at(1));
-  float yStar = ( jet1.Rapidity() - jet2.Rapidity() ) / 2.0;
+  // now I'm at the jet selection. Want to split into secondary and non-secondary
+  // change to a loop, then return -> skipEvent=true; break;
   
-  if(fabs(yStar) > m_YStarCut){
-    if(m_debug) cout << " Fail Ystar " << endl;
-    return EL::StatusCode::SUCCESS;
-  }
+  std::vector<bool> isSecondaryVec;
+  isSecondaryVec.clear();
+  isSecondaryVec.push_back(false);
+  if(m_doSecondaryJets) isSecondaryVec.push_back(true);
+  
+  
+  bool skipEvent = false;
+  for(bool isSecondary: isSecondaryVec) {
+    
+    // veto njets < 2 - earlier I've done an or
+    if(isSecondary && nsecJets < 2){
+      if(m_debug) cout << " Fail NSecJets " << endl;
+      continue;
+    }
+    else if(!isSecondary && njets < 2){
+      if(m_debug) cout << " Fail NJets " << endl;
+      continue;
+    }
 
-  float yBoost = ( jet1.Rapidity() + jet2.Rapidity() ) / 2.0;
-  if(fabs(yBoost) > m_YBoostCut){
-    if(m_debug) cout << " Fail YBoost " << endl;
-    return EL::StatusCode::SUCCESS;
-  }
+    // set jet_pt etc accordingly
+    if(m_debug) {
+      cout << "setting up jet collection: ";
+      if(isSecondary) cout << "secondary" << endl;
+      else cout << "primary" <<endl;
+    }
+    
+    vector<float> *jet_pt = m_jet_pt;
+    vector<float> *jet_eta = m_jet_eta;
+    vector<int> *jet_clean_passLooseBad = m_jet_clean_passLooseBad;
+    if(isSecondary) {
+      jet_pt = m_secJet_pt;
+      jet_eta = m_secJet_eta;
+      // jet_clean_passLooseBad = m_secJet_clean_passLooseBad; // not calculated for secondary jets, but 1:1 correspondance. Might cause crashes in future if not 1:1...
+    }
+    
+    if(m_debug) cout << jet_pt->size() << " jets in collection" << endl;
 
-  //
-  // doing cleaning on all jets above 50 GeV
-  //
-  bool  passCleaning   = true;
-  if(!m_doTruthOnly){
-    for(unsigned int i = 0;  i< njets; ++i){
-      if(m_jet_pt->at(i) > 50){
-	if(fabs(m_jet_eta->at(i)) < m_etaCut){
-	  if(!m_doCleaning && !m_jet_clean_passLooseBad->at(i)){
-	    cout << "Skipping jet " << endl;
-	    continue;
+    if(jet_pt->at(0) < m_leadJetPtCut) {
+      if(m_debug) cout << " Fail LeadJetPt " << endl;
+      continue;
+    }
+
+    if(m_doTrigger){
+      if(m_debug) Info("execute()", "Doing Trigger ");
+
+      bool m_dumpTrig = false ;
+      if(m_dumpTrig){
+	cout << " --------" << endl;
+	for(std::string& thisTrig: *m_passedTriggers)
+	  cout << thisTrig << endl;
+	}//end dump trigger
+
+      std::string trig;
+      if (jet_pt->at(0) < 85) continue;
+      if (jet_pt->at(0) < 116) { trig = "HLT_j60"; }
+      else if (jet_pt->at(0) < 172) { trig = "HLT_j85"; }
+      else if (jet_pt->at(0) < 240) { trig = "HLT_j110"; }
+      else if (jet_pt->at(0) < 318) { trig = "HLT_j200"; }
+      else if (jet_pt->at(0) < 350) { trig = "HLT_j260"; }
+      else if (jet_pt->at(0) < 410) { trig = "HLT_j320"; }
+      else trig = "HLT_j360";
+	std::vector<string>::iterator trigIt = std::find(m_passedTriggers->begin(), m_passedTriggers->end(), trig);
+      if (trigIt == m_passedTriggers->end()) continue;
+      else {
+	prescaleWeight = m_triggerPrescales->at(std::distance(m_passedTriggers->begin(), trigIt));
+	//std::cout << "trig: " << trig << ", distance from front of vector" << (std::distance(m_passedTriggers->begin(), trigIt)) << std::endl;
+	//std::cout << "prescale: " << prescaleWeight << std::endl;
+      }//end do trigger with prescales
+
+      //bool passHLT_j360 = (find(m_passedTriggers->begin(), m_passedTriggers->end(), "HLT_j360" ) != m_passedTriggers->end());
+
+    }// end of do trigger
+
+    if(jet_pt->at(1) < m_subleadJetPtCut) {
+      if(m_debug) cout << " Fail subLeadJetPt " << endl;
+      continue;
+    }
+
+    if(fabs(jet_eta->at(0)) > m_etaCut) {
+      if(m_debug) cout << " Fail LeadJetEta " << endl;
+      continue;
+    }
+
+
+    if(fabs(jet_eta->at(1)) > m_etaCut) {
+      if(m_debug) cout << " Fail subLeadJetEta " << endl;
+      continue;
+    }
+
+    TLorentzVector jet1 = TLorentzVector();
+    if(isSecondary) jet1.SetPtEtaPhiE(m_secJet_pt->at(0),m_secJet_eta->at(0),m_secJet_phi->at(0),m_secJet_E->at(0));
+    else            jet1.SetPtEtaPhiE(m_jet_pt->at(0),m_jet_eta->at(0),m_jet_phi->at(0),m_jet_E->at(0));
+
+    TLorentzVector jet2 = TLorentzVector();
+    if(isSecondary) jet2.SetPtEtaPhiE(m_secJet_pt->at(1),m_secJet_eta->at(1),m_secJet_phi->at(1),m_secJet_E->at(1));
+    else            jet2.SetPtEtaPhiE(m_jet_pt->at(1),m_jet_eta->at(1),m_jet_phi->at(1),m_jet_E->at(1));
+
+    float yStar = ( jet1.Rapidity() - jet2.Rapidity() ) / 2.0;
+
+    if(fabs(yStar) > m_YStarCut){
+      if(m_debug) cout << " Fail Ystar " << endl;
+      continue;
+    }
+
+    float yBoost = ( jet1.Rapidity() + jet2.Rapidity() ) / 2.0;
+    if(fabs(yBoost) > m_YBoostCut){
+      if(m_debug) cout << " Fail YBoost " << endl;
+      continue;
+    }
+
+    //
+    // doing cleaning on all jets above 50 GeV
+    //
+    bool  passCleaning   = true;
+    if(!m_doTruthOnly){
+      for(unsigned int i = 0;  i< njets; ++i){
+	if(jet_pt->at(i) > 50){
+	  if(fabs(jet_eta->at(i)) < m_etaCut){
+	    if(!m_doCleaning && !jet_clean_passLooseBad->at(i)){
+	      cout << "Skipping jet " << endl;
+	      continue;
+	    }
+
+	    if(!jet_clean_passLooseBad->at(i)) passCleaning = false;
 	  }
-
-	  if(!m_jet_clean_passLooseBad->at(i)) passCleaning = false;
+	}else{
+	  continue;
 	}
-      }else{
-	break;
       }
     }
-  }
 
-  if(m_debug) cout << " Pass All Cut " << endl;
-  float eventWeight = m_weight;
+    if(m_debug) cout << " Pass All Cut " << endl;
 
-  if(!m_doData) eventWeight = m_weight * m_lumi/m_sampleEvents;
-  if(m_debug) cout << " lumi: " << m_lumi << endl;
-  if(m_debug) cout << " weight: " << m_weight << endl;
-  if(m_debug) cout << " sampleEvents: " << m_sampleEvents << endl;
+    // get event weight 
+    float eventWeight = m_weight;
+    if(!m_doData) eventWeight = m_weight * m_lumi/m_sampleEvents;
+    if(m_debug) cout << " lumi: " << m_lumi << endl;
+    if(m_debug) cout << " weight: " << m_weight << endl;
+    if(m_debug) cout << " sampleEvents: " << m_sampleEvents << endl;
 
-  if(m_doData) eventWeight = 1.0;
+    if(m_doData) eventWeight = 1.0;
 
-  //if(m_useWeighted && (eventWeight > 1000)){
-  //  cout << "skipping event with Weight: " << eventWeight << " " << m_lumi << " " << m_weight << " " << m_weight_xs << endl;
-  //  return EL::StatusCode::SUCCESS;    
-  //}
+    //if(m_useWeighted && (eventWeight > 1000)){
+    //  cout << "skipping event with Weight: " << eventWeight << " " << m_lumi << " " << m_weight << " " << m_weight_xs << endl;
+    //  continue;    
+    //}
 
-  //
-  //  Jet Cleaning 
-  //
-  if(m_doCleaning && !passCleaning){
-    if (m_debug) cout << "Fail Cleaning " << endl;
-    return EL::StatusCode::SUCCESS;
-  }
+    //
+    //  Jet Cleaning 
+    //
+    if(m_doCleaning && !passCleaning){
+      if (m_debug) cout << "Fail Cleaning " << endl;
+      continue;
+    }
 
-  //inclusive histograms
-  if(m_debug) cout << " Make EventData " << endl;
-  eventData thisEvent = eventData(m_runNumber,
-                                  m_eventNumber,
-                                  m_jet_pt,
-                                  m_jet_eta,
-                                  m_jet_phi,
-                                  m_jet_E,
-                                  m_jet_muonSegments,
-                                  m_jet_EMFrac,
-                                  m_jet_HECFrac,
-                                  m_MHT,
-                                  eventWeight,
-                                  prescaleWeight);
-  if(m_debug) cout << " Made EventData " << endl;
-  if(m_debug) cout << " Weight: " << eventWeight << endl;
+    if(m_debug) cout << " Weight: " << eventWeight << endl;
+
+
+    // make event data
+    if(m_debug) cout << " Make EventData " << endl;
+    eventData thisEvent = eventData(m_runNumber,
+				    m_eventNumber,
+				    m_jet_pt,
+				    m_jet_eta,
+				    m_jet_phi,
+				    m_jet_E,
+				    m_jet_muonSegments,
+				    m_jet_EMFrac,
+				    m_jet_HECFrac,
+				    m_MHT,
+				    eventWeight,
+				    prescaleWeight);
+    
+    if(isSecondary) {
+      thisEvent = eventData(m_runNumber,
+			    m_eventNumber,
+			    m_secJet_pt,
+			    m_secJet_eta,
+			    m_secJet_phi,
+			    m_secJet_E,
+			    m_secJet_muonSegments,
+			    m_secJet_EMFrac,
+			    m_secJet_HECFrac,
+			    m_MHT, // this isn't filled anyway, currently
+			    eventWeight,
+			    prescaleWeight);
+    }
+
   
-  hIncl->Fill(thisEvent);
-  //central: leading jet within 1.2
-    if (fabs(m_jet_eta->at(0))<1.2) hCentral->Fill(thisEvent);
-  //crack: leading jet within 1.2-1.6
+    // fill mjj-agnostic histograms
+    if(isSecondary) {
+      hSecIncl->Fill(thisEvent);
+      //central: leading jet within 1.2
+      if (fabs(m_secJet_eta->at(0))<1.2) hSecCentral->Fill(thisEvent);
+      //crack: leading jet within 1.2-1.6
+      else if (fabs(m_secJet_eta->at(0))>=1.2 && fabs(m_secJet_eta->at(0))<1.6) hSecCrack->Fill(thisEvent);
+      //endcap: leading jet within 1.6-2.8
+      else if (fabs(m_secJet_eta->at(0))>=1.6 && fabs(m_secJet_eta->at(0))<2.8) hSecEndcap->Fill(thisEvent);
+      if(m_debug) cout << "filled hSecIncl, hSecCentral, hSecCrack and hSecEndcap" << endl;
+    }
+    else {
+      hIncl->Fill(thisEvent);
+      if (fabs(m_jet_eta->at(0))<1.2) hCentral->Fill(thisEvent);
       else if (fabs(m_jet_eta->at(0))>=1.2 && fabs(m_jet_eta->at(0))<1.6) hCrack->Fill(thisEvent);
-  //endcap: leading jet within 1.6-2.8
       else if (fabs(m_jet_eta->at(0))>=1.6 && fabs(m_jet_eta->at(0))<2.8) hEndcap->Fill(thisEvent);
+      if(m_debug) cout << "filled hIncl, hCentral, hCrack and hEndcap" << endl;
+    }
 
-  if ( m_mjj>394 && m_mjj<1236 ) {
-    hIncl_mjjWindow->Fill(thisEvent);
-    //central: leading jet within 1.2
-    if (fabs(m_jet_eta->at(0))<1.2) hCentral_mjjWindow->Fill(thisEvent);
-    //crack: leading jet within 1.2-1.6
-    else if (fabs(m_jet_eta->at(0))>=1.2 && fabs(m_jet_eta->at(0))<1.6) hCrack_mjjWindow->Fill(thisEvent);
-    //endcap: leading jet within 1.6-2.8
-    else if (fabs(m_jet_eta->at(0))>=1.6 && fabs(m_jet_eta->at(0))<2.8) hEndcap_mjjWindow->Fill(thisEvent);
+
+
+
+    // mjj isn't in the new ntuples, calculate it here
+    float mjj = 0;
+    if(m_isDijetNtuple) {
+      if(m_debug) cout << "calculating mjj" << endl;
+      mjj = (thisEvent.jets.at(0).vec() + thisEvent.jets.at(1).vec()).M();
+    }
+    else {
+      mjj = m_mjj;
+    }
+
+    // fill mjj-aware histograms
+    if(isSecondary) {
+      if ( mjj>394 && mjj<1236 ) {
+	hSecIncl_mjjWindow->Fill(thisEvent);
+	//central: leading jet within 1.2
+	if (fabs(m_secJet_eta->at(0))<1.2) hSecCentral_mjjWindow->Fill(thisEvent);
+	//crack: leading jet within 1.2-1.6
+	else if (fabs(m_secJet_eta->at(0))>=1.2 && fabs(m_secJet_eta->at(0))<1.6) hSecCrack_mjjWindow->Fill(thisEvent);
+	//endcap: leading jet within 1.6-2.8
+	else if (fabs(m_secJet_eta->at(0))>=1.6 && fabs(m_secJet_eta->at(0))<2.8) hSecEndcap_mjjWindow->Fill(thisEvent);
+      }
+    }
+    else {
+      if ( mjj>394 && mjj<1236 ) {
+	hIncl_mjjWindow->Fill(thisEvent);
+	if (fabs(m_jet_eta->at(0))<1.2) hCentral_mjjWindow->Fill(thisEvent);
+	else if (fabs(m_jet_eta->at(0))>=1.2 && fabs(m_jet_eta->at(0))<1.6) hCrack_mjjWindow->Fill(thisEvent);
+	else if (fabs(m_jet_eta->at(0))>=1.6 && fabs(m_jet_eta->at(0))<2.8) hEndcap_mjjWindow->Fill(thisEvent);
+      }
+    }
+
+    //hOffline->Fill(thisEvent_offline);
+    //hTrigger->Fill(thisEvent_trigger);
+
   }
-  //hOffline->Fill(thisEvent_offline);
-  //hTrigger->Fill(thisEvent_trigger);
 
   return EL::StatusCode::SUCCESS;
 }
