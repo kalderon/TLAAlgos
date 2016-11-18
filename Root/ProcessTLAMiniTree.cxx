@@ -37,6 +37,9 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
 
   m_doSecondaryJets(false),
   m_secondaryJetName(""),
+  m_doPileupFromMap(false),
+  m_pileupMap(""),
+  m_avgIntPerX(-1),
 
   m_YStarCut(99),
   m_YBoostCut(99),
@@ -58,6 +61,8 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_jet_EMFrac(0),
   m_jet_HECFrac(0),
   m_LArError(false),
+  m_jet_timing(0),
+  m_jet_negativeE(0),
   m_MHT(0),
   m_mjj(0),
   m_jet_clean_passLooseBad(0),
@@ -94,7 +99,9 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_secJet_E(0),
   m_secJet_muonSegments(0),
   m_secJet_EMFrac(0),
-  m_secJet_HECFrac(0)
+  m_secJet_HECFrac(0),
+  m_secJet_timing(0),
+  m_secJet_negativeE(0)
 
 //  hOffline(nullptr),
 //  hTrigger(nullptr),
@@ -485,6 +492,13 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
 
 	tree->SetBranchStatus  ("jet_clean_passLooseBad", 1);
 	tree->SetBranchAddress ("jet_clean_passLooseBad", &m_jet_clean_passLooseBad);	
+
+	tree->SetBranchStatus  ("jet_Timing", 1);
+	tree->SetBranchAddress ("jet_Timing", &m_jet_timing);
+
+	tree->SetBranchStatus  ("jet_NegativeE", 1);
+	tree->SetBranchAddress ("jet_NegativeE", &m_jet_negativeE);
+
       }
 
       if(m_doSecondaryJets) {
@@ -511,6 +525,12 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
 	  tree->SetBranchStatus  ((m_secondaryJetName+"_GhostMuonSegmentCount").c_str(), 1);
 	  tree->SetBranchAddress ((m_secondaryJetName+"_GhostMuonSegmentCount").c_str(), &m_secJet_muonSegments);
 	  // cleaning done from primary
+	  tree->SetBranchStatus  ((m_secondaryJetName+"_Timing").c_str(), 1);
+	  tree->SetBranchAddress ((m_secondaryJetName+"_Timing").c_str(), &m_secJet_timing);
+	  
+	  tree->SetBranchStatus  ((m_secondaryJetName+"_NegativeE").c_str(), 1);
+	  tree->SetBranchAddress ((m_secondaryJetName+"_NegativeE").c_str(), &m_secJet_negativeE);
+
 	}
       }
 
@@ -537,7 +557,6 @@ EL::StatusCode ProcessTLAMiniTree :: initialize ()
   Info("initialize()", "Calling initialize \n"); // CWK debugging  
   if(m_applyGRL){
     std::cout<<"I am about to initialise with m_GRLxml = "<<m_GRLxml<<std::endl; // CWK debugging
-    Warning("initialize()", "I have hard-coded in the GRL, it doesn't seem to be picked up from the config \n");
     m_grl = new GoodRunsListSelectionTool("GoodRunsListSelectionTool");
     std::vector<std::string> vecStringGRL;
     m_GRLxml = gSystem->ExpandPathName( m_GRLxml.c_str() );
@@ -546,7 +565,7 @@ EL::StatusCode ProcessTLAMiniTree :: initialize ()
     RETURN_CHECK("BasicEventSelection::initialize()", m_grl->setProperty("PassThrough", false), "");
     RETURN_CHECK("BasicEventSelection::initialize()", m_grl->initialize(), "");
   }
-    
+  
   if(m_applyTLALArEventVetoData){
 
     m_dataForLArEventVeto = new TLALArEventVetoData();
@@ -555,6 +574,16 @@ EL::StatusCode ProcessTLAMiniTree :: initialize ()
     m_dataForLArEventVeto->loadFromDirectory(LArEventVetoExpandedPath);
   }
     
+
+  if(m_doPileupFromMap) {
+    m_pileupMap = gSystem->ExpandPathName( m_pileupMap.c_str() ); // in terms of $ROOTCOREBIN
+    std::cout << "I am getting the pileup map from " << m_pileupMap << std::endl;
+    TFile* pileupFile = new TFile(m_pileupMap.c_str());
+    m_h2_pileupMap = (TH2F*)pileupFile->Get("h_runNumber_LB_pileup");
+    m_h2_pileupMap->SetDirectory(0);
+    pileupFile->Close();
+  }
+
   Info("initialize()", "Succesfully initialized! \n");
 
 
@@ -579,8 +608,6 @@ EL::StatusCode ProcessTLAMiniTree :: initialize ()
     }
   }
   */
-
-
 
   return EL::StatusCode::SUCCESS;
 }
@@ -613,6 +640,14 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       }else{
 	//if(m_debug) cout << "GRL:: Pass Event " << endl;
       }
+    }
+
+    if(m_doPileupFromMap) {
+      // std::cout << "RunNum: " << m_runNumber << ", LB: " << m_lumiBlock << std::endl;
+      int runNumberBin = m_h2_pileupMap->GetYaxis()->FindBin(to_string(m_runNumber).c_str());
+      // std::cout << "RN bin: " << runNumberBin << std::endl;
+      m_avgIntPerX = m_h2_pileupMap->GetBinContent(m_lumiBlock, runNumberBin);
+      // std::cout << "m_avgIntPerX: " << m_avgIntPerX << std::endl;
     }
 
   }//end of do data
@@ -891,9 +926,12 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 				    m_jet_muonSegments,
 				    m_jet_EMFrac,
 				    m_jet_HECFrac,
+				    m_jet_timing,
+				    m_jet_negativeE,
 				    m_MHT,
 				    eventWeight,
-				    prescaleWeight);
+				    prescaleWeight,
+				    m_avgIntPerX);
     
     if(isSecondary) {
       thisEvent = eventData(m_runNumber,
@@ -905,9 +943,12 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 			    m_secJet_muonSegments,
 			    m_secJet_EMFrac,
 			    m_secJet_HECFrac,
+			    m_secJet_timing,
+			    m_secJet_negativeE,
 			    m_MHT, // this isn't filled anyway, currently
 			    eventWeight,
-			    prescaleWeight);
+			    prescaleWeight,
+			    m_avgIntPerX);
     }
 
   

@@ -16,6 +16,7 @@
 // ROOT include(s):
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TH2F.h"
 #include "TH3D.h"
 #include "TProfile.h"
 #include "TLorentzVector.h"
@@ -52,6 +53,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		bool m_isDijetNtuple;
 		bool m_doSecondaryJets;
 		std::string m_secondaryJetName;
+		bool m_doPileupFromMap;
+		std::string m_pileupMap;
 
 		bool m_isDijetNtupleTruth;
 		bool m_isTLANtupleTruth;
@@ -91,6 +94,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		uint32_t  m_timeStamp; //!
 		uint32_t  m_timeStampNSOffset; //!
 		int m_NPV; //!
+		float m_avgIntPerX; //!
 
 		float m_weight; //!
 		float m_weight_xs; //!
@@ -102,6 +106,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		vector<float>* m_jet_muonSegments; //!
 		vector<float>* m_jet_EMFrac; //!
 		vector<float>* m_jet_HECFrac; //!
+		vector<float>* m_jet_timing; //!
+		vector<float>* m_jet_negativeE; //!
 		float m_MHT; //!
 		float m_mjj; //!
 
@@ -117,6 +123,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		vector<float>* m_secJet_muonSegments; //!
 		vector<float>* m_secJet_EMFrac; //!
 		vector<float>* m_secJet_HECFrac; //!
+		vector<float>* m_secJet_timing; //!
+		vector<float>* m_secJet_negativeE; //!
 
 
 		// for scale factors
@@ -125,6 +133,9 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		double m_eta_freeze;//!*/
 
 		TH2D* m_h2_LArError;//!
+
+		TH2F* m_h2_pileupMap;//!
+
 		//
 		// Jet Data
 		//
@@ -134,15 +145,19 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  float phi;
 		  float E;
 		  float muonSegments;
+		  float timing;
+		  float negativeE;
 		  float EMFrac;
 		  float HECFrac;
 		  
-		  jetData(float m_pt, float m_eta, float m_phi, float m_E, float m_muonSegments=0, float m_EMFrac = 0, float m_HECFrac = 0){		    
+		  jetData(float m_pt, float m_eta, float m_phi, float m_E, float m_muonSegments=0, float m_timing = 0, float m_negativeE = 0, float m_EMFrac = 0, float m_HECFrac = 0){		    
 		    pt     = m_pt;
 		    eta    = m_eta;
 		    phi    = m_phi;
 		    E      = m_E;
 		    muonSegments      = m_muonSegments;
+		    timing = m_timing;
+		    negativeE = m_negativeE;
 		    EMFrac      = m_EMFrac;
 		    HECFrac      = m_HECFrac;
 		    
@@ -167,7 +182,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  float           yStar;
 		  float           MHT;
 		  float           weight;
-		  float prescaleWeight = 1;
+		  float           prescaleWeight = 1;
+		  float           avgIntPerX;
 		  
 		  eventData(unsigned int m_runNumber,
 			    unsigned int m_eventNumber,
@@ -178,13 +194,17 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 			    vector<float>* m_jet_muonSegments,
 			    vector<float>* m_jet_EMFrac,
 			    vector<float>* m_jet_HECFrac,
+			    vector<float>* m_jet_timing,
+			    vector<float>* m_jet_negativeE,
 			    float& m_MHT,
 			    float& m_weight,
-			    float& m_prescaleWeight){
+			    float& m_prescaleWeight,
+			    float& m_avgIntPerX){
 		    
 		    runNumber = m_runNumber;
 		    eventNumber = m_eventNumber;
 		    prescaleWeight = m_prescaleWeight;
+		    avgIntPerX = m_avgIntPerX;
 		    MHT = m_MHT;//just because too lazy to recalculate
 
 		    for(unsigned int i =0; i < m_jet_pt->size(); ++i){
@@ -194,6 +214,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 						m_jet_phi->at(i),
 						m_jet_E->at(i),
 						m_jet_muonSegments->at(i),
+						m_jet_timing->at(i),
+						m_jet_negativeE->at(i),
 						m_jet_EMFrac->at(i),
 						m_jet_HECFrac->at(i)
 						);
@@ -237,6 +259,23 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  TH1D*     h_HECFrac_sublead;
 		  TH3D*     h_pt_eta_muon;
 		  
+		  TH1D*     h_timing_lead;
+		  TH1D*     h_timing_sublead;
+		  TH1D*     h_negativeE_lead;
+		  TH1D*     h_negativeE_sublead;
+
+		  TH1D*     h_avgIntPerX;
+
+		  TH2F*     h2_eta_pt_lead;
+		  TH2F*     h2_eta_pt_sublead;
+		  TH2F*     h2_eta_phi_lead;
+		  TH2F*     h2_eta_phi_sublead;
+		  TH2F*     h2_avgIntPerX_timing_lead;
+		  TH2F*     h2_avgIntPerX_negativeE_lead;
+		  TH2F*     h2_avgIntPerX_pt_lead;
+		  TH2F*     h2_avgIntPerX_eta_lead;
+
+
 		  eventHists(std::string name, EL::Worker* wk){
 		    
 		    //
@@ -282,7 +321,26 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h_HECFrac_lead       = book     (wk, name, "HECFrac_lead"   ,       "HECFrac_lead"    ,        150          ,      0, 1.5   );
 		    h_HECFrac_sublead    = book     (wk, name, "HECFrac_sublead",       "HECFrac_sublead" ,        150          ,      0, 1.5   );
 		    h_pt_eta_muon   = book         (wk, name, "pt_eta_muon"   ,       "pt_eta_muon"    ,        ptbinnum          ,      ptbins, etabinnum, etabins, muonbinnum, muonsegmentbins );
+
+		    h_timing_lead       = book (wk, name, "timing_lead",  "timing_lead",  1000, -100, 100 );
+		    h_timing_sublead    = book (wk, name, "timing_sublead",  "timing_sublead",  1000, -100, 100 );
+		    h_negativeE_lead    = book (wk, name, "negativeE_lead",  "negativeE_lead",  210, -200, 10 );
+		    h_negativeE_sublead = book (wk, name, "negativeE_sublead",  "negativeE_sublead",  210, -200, 10 );
 		    
+		    h_avgIntPerX        = book (wk, name, "avgIntPerX", "avgIntPerX",  100, 0, 100 );
+
+		    h2_eta_pt_lead = book (wk, name, "eta_pt_lead", "eta_pt_lead;lead #eta;lead pt", 100, -4.5, 4.5, 100, 0, 2000 );
+		    h2_eta_pt_sublead = book (wk, name, "eta_pt_sublead", "eta_pt_sublead;sublead #eta;sublead pt", 100, -4.5, 4.5, 100, 0, 2000 );
+		    h2_eta_phi_lead = book (wk, name, "eta_phi_lead", "eta_phi_lead;lead #eta;lead #phi", 100, -4.5, 4.5, 100, -3.14, 3.14 );
+		    h2_eta_phi_sublead = book (wk, name, "eta_phi_sublead", "eta_phi_sublead;sublead #eta;sublead #phi", 100, -4.5, 4.5, 100, -3.14, 3.14 );
+
+		    h2_avgIntPerX_timing_lead = book (wk, name, "avgIntPerX_timing_lead", "avgIntPerX_timing_lead;avgIntPerX;timing_lead", 100, 0, 100, 100, -100, 100 );
+		    h2_avgIntPerX_negativeE_lead = book (wk, name, "avgIntPerX_negativeE_lead", "avgIntPerX_negativeE_lead;avgIntPerX;negativeE_lead", 100, 0, 100, 105, -100, 10 );
+
+		    h2_avgIntPerX_pt_lead = book (wk, name, "avgIntPerX_pt_lead", "avgIntPerX_pt_lead;avgIntPerX;lead pt", 100, 0, 100, 100, 0, 2000 );
+		    h2_avgIntPerX_eta_lead = book (wk, name, "avgIntPerX_eta_lead", "avgIntPerX_pt_lead;avgIntPerX;lead #eta", 100, 0, 100, 100, -4.5, 4.5 );
+
+
 		  }
 		  
 		  TH1D* book(EL::Worker* wk, std::string name, std::string hname, std::string title, int nBins, float xmin, float xmax){
@@ -298,6 +356,12 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    return h_tmp;
 		  }
 		  
+		  TH2F* book(EL::Worker* wk, std::string name, std::string hname, std::string title, int nBinsX, float xmin, float xmax, int nBinsY, float ymin, float ymax){
+		    TH2F* h_tmp = new TH2F((name+"/"+hname).c_str(),(hname+";"+title+";Entries").c_str(), nBinsX, xmin, xmax, nBinsY, ymin, ymax);
+		    wk->addOutput(h_tmp);
+		    return h_tmp;
+		  }
+
 		  TH3D* book(EL::Worker* wk, std::string name, std::string hname, std::string title, int nBinsX, const Float_t *xBins, int nBinsY, const Float_t *yBins, int nBinsZ, const Float_t *zBins){
 		    TH3D* h_tmp = new TH3D((name+"/"+hname).c_str(),(hname+";"+title+";Entries").c_str(), nBinsX, xBins, nBinsY, yBins, nBinsZ, zBins);
 		    wk->addOutput(h_tmp);
@@ -347,6 +411,21 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h_pt_eta_muon      ->Fill(jet1.Pt(), jet1.Eta(), leadJetMuonSegments, weight);
 		    h_pt_eta_muon      ->Fill(jet2.Pt(), jet2.Eta(), sublJetMuonSegments, weight);
 		    
+		    h_timing_lead       ->Fill(leadJet.timing, weight);
+		    h_timing_sublead    ->Fill(sublJet.timing, weight);
+		    h_negativeE_lead    ->Fill(leadJet.negativeE, weight);
+		    h_negativeE_sublead ->Fill(sublJet.negativeE, weight);
+		    
+		    h_avgIntPerX        -> Fill(thisEvent.avgIntPerX, weight); 
+		    h2_eta_pt_lead     ->Fill(jet1.Eta(), jet1.Pt(), weight);
+		    h2_eta_pt_sublead     ->Fill(jet1.Eta(), jet2.Pt(), weight);
+		    h2_eta_phi_lead     ->Fill(jet1.Eta(), jet1.Phi(), weight);
+		    h2_eta_phi_sublead     ->Fill(jet2.Eta(), jet2.Phi(), weight);
+		    h2_avgIntPerX_timing_lead -> Fill(thisEvent.avgIntPerX, leadJet.timing, weight); 
+		    h2_avgIntPerX_negativeE_lead -> Fill(thisEvent.avgIntPerX, leadJet.negativeE, weight); 
+
+		    h2_avgIntPerX_pt_lead -> Fill(thisEvent.avgIntPerX, jet1.Pt(), weight); 
+		    h2_avgIntPerX_eta_lead -> Fill(thisEvent.avgIntPerX, jet1.Eta(), weight); 
 		  }
 
 		};
