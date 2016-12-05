@@ -48,15 +48,16 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		//configuration variables
 		bool m_debug;                     
 		bool m_doTrigger;
+		bool m_doTrigger_j110;
 		bool m_useCutflow;
 		bool m_doTruthOnly;
-		bool m_isDijetNtuple;
 		bool m_doSecondaryJets;
 		std::string m_secondaryJetName;
 		bool m_doPileupFromMap;
 		std::string m_pileupMap;
-
 		bool m_isDijetNtupleTruth;
+		bool m_isDijetNtupleTrig;
+		bool m_isDijetNtupleOffline;
 		bool m_isTLANtupleTruth;
 		bool m_isTLANtupleTrig;
 		bool m_isTLANtupleOffline;
@@ -94,7 +95,10 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		uint32_t  m_timeStamp; //!
 		uint32_t  m_timeStampNSOffset; //!
 		int m_NPV; //!
+
 		float m_avgIntPerX; //!
+		float m_avgIntPerX_fromMap; //!
+		float m_avgIntPerX_fromAOD; //!
 
 		float m_weight; //!
 		float m_weight_xs; //!
@@ -112,6 +116,17 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		float m_mjj; //!
 
 		vector<int>*   m_jet_clean_passLooseBad; //!
+		vector<int>*   m_jet_clean_passLooseBad_recalc;
+		
+		vector<float>* m_jet_LArQuality; //!
+		vector<float>* m_jet_AverageLArQF; //!
+		vector<float>* m_jet_HECQuality; //!
+		vector<float>* m_jet_FracSamplingMax; //!
+		vector<int>*   m_jet_FracSamplingMaxIndex; //!
+		vector<float>* m_jet_LeadingClusterPt; //!
+		vector<float>* m_jet_LeadingClusterSecondLambda; //!
+		vector<float>* m_jet_LeadingClusterCenterLambda; //!
+		vector<float>* m_jet_LeadingClusterSecondR; //!
 
 		vector<string>* m_passedTriggers; //!
 		vector<float>* m_triggerPrescales; //!
@@ -126,6 +141,19 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		vector<float>* m_secJet_timing; //!
 		vector<float>* m_secJet_negativeE; //!
 
+		vector<int>*   m_secJet_clean_passLooseBad; //!
+		vector<int>*   m_secJet_clean_passLooseBad_recalc;
+
+		vector<float>* m_secJet_LArQuality; //!
+		vector<float>* m_secJet_AverageLArQF; //!
+		vector<float>* m_secJet_HECQuality; //!
+		vector<float>* m_secJet_FracSamplingMax; //!
+		vector<int>*   m_secJet_FracSamplingMaxIndex; //!
+		vector<float>* m_secJet_LeadingClusterPt; //!
+		vector<float>* m_secJet_LeadingClusterSecondLambda; //!
+		vector<float>* m_secJet_LeadingClusterCenterLambda; //!
+		vector<float>* m_secJet_LeadingClusterSecondR; //!
+
 
 		// for scale factors
 		/*TH2D* m_hcalibration;//!
@@ -133,7 +161,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		double m_eta_freeze;//!*/
 
 		TH2D* m_h2_LArError;//!
-
+		TH2D* m_h2_avgIntPerX_map_AOD;//!
 		TH2F* m_h2_pileupMap;//!
 
 		//
@@ -149,17 +177,44 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  float negativeE;
 		  float EMFrac;
 		  float HECFrac;
+		  int   clean_passLooseBad;
+
+		  float LArQuality;
+		  float AverageLArQF;
+		  float HECQuality;
+		  float FracSamplingMax;
+		  int   FracSamplingMaxIndex;
+		  float LeadingClusterPt;
+		  float LeadingClusterSecondLambda;
+		  float LeadingClusterCenterLambda;
+		  float LeadingClusterSecondR;
+
 		  
-		  jetData(float m_pt, float m_eta, float m_phi, float m_E, float m_muonSegments=0, float m_timing = 0, float m_negativeE = 0, float m_EMFrac = 0, float m_HECFrac = 0){		    
+		  jetData(float m_pt, float m_eta, float m_phi, float m_E, float m_muonSegments=0, float m_timing = 0, float m_negativeE = 0, 
+			  float m_EMFrac = 0, float m_HECFrac = 0, int m_clean_passLooseBad = -9, float m_LArQuality = -9, float m_AverageLArQF = -9, float m_HECQuality = -9, 
+			  float m_FracSamplingMax = -9, int m_FracSamplingMaxIndex = -9, float m_LeadingClusterPt = -9, float m_LeadingClusterSecondLambda = -9, 
+			  float m_LeadingClusterCenterLambda = -9, float m_LeadingClusterSecondR = -9 ){
 		    pt     = m_pt;
 		    eta    = m_eta;
 		    phi    = m_phi;
 		    E      = m_E;
-		    muonSegments      = m_muonSegments;
-		    timing = m_timing;
-		    negativeE = m_negativeE;
-		    EMFrac      = m_EMFrac;
+		    muonSegments = m_muonSegments;
+		    timing	 = m_timing;
+		    negativeE	 = m_negativeE;
+		    EMFrac	 = m_EMFrac;
 		    HECFrac      = m_HECFrac;
+		    clean_passLooseBad = m_clean_passLooseBad;
+
+		    LArQuality		       = m_LArQuality;
+		    AverageLArQF	       = m_AverageLArQF;
+		    HECQuality		       = m_HECQuality;
+		    FracSamplingMax	       = m_FracSamplingMax;
+		    FracSamplingMaxIndex       = m_FracSamplingMaxIndex;
+		    LeadingClusterPt	       = m_LeadingClusterPt;
+		    LeadingClusterSecondLambda = m_LeadingClusterSecondLambda;
+		    LeadingClusterCenterLambda = m_LeadingClusterCenterLambda;
+		    LeadingClusterSecondR      = m_LeadingClusterSecondR;
+
 		    
 		  }
 
@@ -181,6 +236,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  vector<jetData> jets;
 		  float           yStar;
 		  float           MHT;
+		  float           MHTvec;
 		  float           weight;
 		  float           prescaleWeight = 1;
 		  float           avgIntPerX;
@@ -196,6 +252,18 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 			    vector<float>* m_jet_HECFrac,
 			    vector<float>* m_jet_timing,
 			    vector<float>* m_jet_negativeE,
+			    vector<int>*   m_jet_clean_passLooseBad,
+
+			    vector<float>* m_jet_LArQuality,
+			    vector<float>* m_jet_AverageLArQF,
+			    vector<float>* m_jet_HECQuality,
+			    vector<float>* m_jet_FracSamplingMax,
+			    vector<int>*   m_jet_FracSamplingMaxIndex,
+			    vector<float>* m_jet_LeadingClusterPt,
+			    vector<float>* m_jet_LeadingClusterSecondLambda,
+			    vector<float>* m_jet_LeadingClusterCenterLambda,
+			    vector<float>* m_jet_LeadingClusterSecondR,
+
 			    float& m_MHT,
 			    float& m_weight,
 			    float& m_prescaleWeight,
@@ -204,11 +272,57 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    runNumber = m_runNumber;
 		    eventNumber = m_eventNumber;
 		    prescaleWeight = m_prescaleWeight;
-		    avgIntPerX = m_avgIntPerX;
-		    MHT = m_MHT;//just because too lazy to recalculate
+		    avgIntPerX         = m_avgIntPerX;
 
+		    cout << "m_MHT = " << m_MHT << endl;
+		    
+		    MHT = m_MHT;//just because too lazy to recalculate
+		    
+		    // calculate MHT
+		    MHT=0;
+		    TLorentzVector HTvec;
 		    for(unsigned int i =0; i < m_jet_pt->size(); ++i){
+		      if(m_jet_pt->at(i) < 50) continue;
+		      // other cleaning? This should be taken care of elsewhere
+		      MHT += m_jet_pt->at(i);
+		      TLorentzVector tempJetTLV;
+		      tempJetTLV.SetPtEtaPhiE(m_jet_pt->at(i), m_jet_eta->at(i), m_jet_phi->at(i), m_jet_E->at(i));
+		      HTvec += tempJetTLV;
+		    }		      
+		    MHTvec = HTvec.Pt();
+
+		    /* if(m_jet_clean_passLooseBad==NULL) { cout<< "whyyyyyy"<<endl;} */
+		    /* cout<<"m_jet_clean_passLooseBad->size() = "<< m_jet_clean_passLooseBad->size() <<", m_jet_pt->size() = "<<m_jet_pt->size()<<endl; */
+
+		    for(unsigned int i =0; i < m_jet_pt->size(); ++i){					       
+
+		      /* cout << "filling jet " <<i<<endl; */
+
+		      /* cout << "pt " << m_jet_pt->at(i) << endl; */
+		      /* cout << "eta " << m_jet_eta->at(i) << endl; */
+		      /* cout << "phi " << m_jet_phi->at(i) << endl; */
+		      /* cout << "E " << m_jet_E->at(i) << endl; */
+		      /* cout << "mS " << m_jet_muonSegments->at(i) << endl; */
+		      /* cout << "tim " << m_jet_timing->at(i) << endl; */
+		      /* cout << "negE " << m_jet_negativeE->at(i) << endl; */
+		      /* cout << "EMf " << m_jet_EMFrac->at(i) << endl; */
+		      /* cout << "HECf " << m_jet_HECFrac->at(i) << endl; */
+		      /* cout << "cplb " << m_jet_clean_passLooseBad->at(i) << endl; */
 		      
+		      /* float LArQuality_i = -1; */
+		      /* if(! m_jet_LArQuality==NULL) LArQuality_i = m_jet_LArQuality->at(i); */
+		      /* cout << "LARq " << LArQuality_i << endl; */
+		      /* cout << "LARqf " << m_jet_AverageLArQF->at(i) << endl; */
+		      /* cout << "HECq " << m_jet_HECQuality->at(i) << endl; */
+		      /* cout << "fsm " << m_jet_FracSamplingMax->at(i) << endl; */
+		      /* cout << "fsmi " << m_jet_FracSamplingMaxIndex->at(i) << endl; */
+		      /* cout << "lcp " << m_jet_LeadingClusterPt->at(i) << endl; */
+		      /* cout << "lcsl " << m_jet_LeadingClusterSecondLambda->at(i) << endl; */
+		      /* cout << "lccl " << m_jet_LeadingClusterCenterLambda->at(i) << endl; */
+		      /* cout << "lcsr " << m_jet_LeadingClusterSecondR->at(i) << endl; */
+
+		      /* cout << "all good?" << endl; */
+	      
 		      jetData thisJet = jetData(m_jet_pt->at(i),
 						m_jet_eta->at(i),
 						m_jet_phi->at(i),
@@ -217,8 +331,19 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 						m_jet_timing->at(i),
 						m_jet_negativeE->at(i),
 						m_jet_EMFrac->at(i),
-						m_jet_HECFrac->at(i)
+						m_jet_HECFrac->at(i),
+						m_jet_clean_passLooseBad->at(i),
+						m_jet_LArQuality->at(i),
+						m_jet_AverageLArQF->at(i),
+						m_jet_HECQuality->at(i),
+						m_jet_FracSamplingMax->at(i),
+						m_jet_FracSamplingMaxIndex->at(i),
+						m_jet_LeadingClusterPt->at(i),
+						m_jet_LeadingClusterSecondLambda->at(i),
+						m_jet_LeadingClusterCenterLambda->at(i),
+						m_jet_LeadingClusterSecondR->at(i)
 						);
+		      /* cout << "filled thisJet" << endl; */
 		      jets.push_back(thisJet);
 		    }
 		    
@@ -247,18 +372,40 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  TH1D*     h_mjj_uniform;
 		  TH1D*     h_yStar;
 		  TH1D*     h_MHT;
+		  TH1D*     h_MHTvec;
 		  TH1D*     h_pt_lead;
 		  TH1D*     h_pt_sublead;
 		  TH1D*     h_eta_lead;
 		  TH1D*     h_eta_sublead;
 		  TH1D*     h_phi_lead;
 		  TH1D*     h_phi_sublead;
+
 		  TH1D*     h_EMFrac_lead;
 		  TH1D*     h_EMFrac_sublead;
 		  TH1D*     h_HECFrac_lead;
 		  TH1D*     h_HECFrac_sublead;
 		  TH3D*     h_pt_eta_muon;
-		  
+
+		  TH1D*     h_LArQuality_lead;
+		  TH1D*     h_AverageLArQF_lead;
+		  TH1D*     h_HECQuality_lead;
+		  TH2F*     h_FracSamplingMax_FracSamplingMaxIndex_lead;
+		  TH2F*     h_EMfrac_phi_lead;
+		  TH1D*     h_LeadingClusterPt_lead;
+		  TH1D*     h_LeadingClusterSecondLambda_lead;
+		  TH1D*     h_LeadingClusterCenterLambda_lead;
+		  TH1D*     h_LeadingClusterSecondR_lead;
+
+		  TH1D*     h_LArQuality_sublead;
+		  TH1D*     h_AverageLArQF_sublead;
+		  TH1D*     h_HECQuality_sublead;
+		  TH2F*     h_FracSamplingMax_FracSamplingMaxIndex_sublead;
+		  TH2F*     h_EMfrac_phi_sublead;
+		  TH1D*     h_LeadingClusterPt_sublead;
+		  TH1D*     h_LeadingClusterSecondLambda_sublead;
+		  TH1D*     h_LeadingClusterCenterLambda_sublead;
+		  TH1D*     h_LeadingClusterSecondR_sublead;
+
 		  TH1D*     h_timing_lead;
 		  TH1D*     h_timing_sublead;
 		  TH1D*     h_negativeE_lead;
@@ -310,6 +457,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h_yStar         = book         (wk, name, "yStar"         ,       "yStar"          ,        100          ,      -2,    2    );
 		    h_mjj_uniform   = book         (wk, name, "mjj_uniform"   ,       "mjj_uniform"    ,        100          ,      0,    5000   );
 		    h_MHT           = book_variable(wk, name, "MHT"           ,       "MHT"            ,        ptbinnum     ,      ptbins   );
+		    h_MHTvec        = book_variable(wk, name, "MHTvec"        ,       "MHTvec"         ,        ptbinnum     ,      ptbins   );
 		    h_pt_lead       = book_variable(wk, name, "pt_lead"       ,       "pt_lead"        ,        ptbinnum     ,      ptbins   );
 		    h_pt_sublead    = book_variable(wk, name, "pt_sublead"    ,       "pt_sublead"     ,        ptbinnum     ,      ptbins   );
 		    h_eta_lead      = book         (wk, name, "eta_lead"      ,       "eta_lead"       ,        100          ,      -4.5, 4.5   );
@@ -329,6 +477,39 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    
 		    h_avgIntPerX        = book (wk, name, "avgIntPerX", "avgIntPerX",  100, 0, 100 );
 
+
+
+		    // added cleaning variables
+		    h_LArQuality_lead                    = book (wk, name, "LArQuality_lead", "LArQuality_lead;Lead jet LAr Quality",  100, 0, 5 );
+		    h_AverageLArQF_lead                  = book (wk, name, "AverageLArQF_lead", "AverageLArQF_lead;Lead jet average LAr QF",  140, 0, 70000 );
+		    h_HECQuality_lead                    = book (wk, name, "HECQuality_lead", "HECQuality_lead;Lead jet HEC Quality",  100, -1, 1 );
+		    h_FracSamplingMax_FracSamplingMaxIndex_lead = book (wk, name, "FracSamplingMax_FracSamplingMaxIndex_lead", 
+									"FracSamplingMax_FracSamplingMaxIndex_lead;Lead jet FracSamplingMax;Lead jet FracSamplingMaxIndex",
+									100, -2, -2, 25,0,25 );
+		    h_EMfrac_phi_lead                    = book (wk, name, "EMfrac_phi_lead_lead", "EMfrac_phi_lead;Lead jet EM frac;Lead jet #phi", 110,-0.1,1, 100,-3.14,3.14 );
+		    h_LeadingClusterPt_lead              = book (wk, name, "LeadingClusterPt_lead", "LeadingClusterPt_lead;Lead jet leading cluster p_{T}",  100, 0, 5000000 );
+		    h_LeadingClusterSecondLambda_lead    = book (wk, name, "LeadingClusterSecondLambda_lead",
+								 "LeadingClusterSecondLambda_lead;Lead jet leading cluster SecondLambda",  100, 0, 5000000 );
+		    h_LeadingClusterCenterLambda_lead    = book (wk, name, "LeadingClusterCenterLambda_lead",
+								 "LeadingClusterCenterLambda_lead;Lead jet leading cluster CenterLambda",  100, 0, 20000 );
+		    h_LeadingClusterSecondR_lead    = book (wk, name, "LeadingClusterSecondR_lead", "LeadingClusterSecondR_lead;Lead jet leading cluster SecondR",  100, 0, 6000000 );
+
+		    h_LArQuality_sublead                    = book (wk, name, "LArQuality_sublead", "LArQuality_sublead;Sublead jet LAr Quality",  100, 0, 5 );
+		    h_AverageLArQF_sublead                  = book (wk, name, "AverageLArQF_sublead", "AverageLArQF_sublead;Sublead jet average LAr QF",  140, 0, 70000 );
+		    h_HECQuality_sublead                    = book (wk, name, "HECQuality_sublead", "HECQuality_sublead;Sublead jet HEC Quality",  100, -1, 1 );
+		    h_FracSamplingMax_FracSamplingMaxIndex_sublead = book (wk, name, "FracSamplingMax_FracSamplingMaxIndex_sublead", 
+									"FracSamplingMax_FracSamplingMaxIndex_sublead;Sublead jet FracSamplingMax;Sublead jet FracSamplingMaxIndex",
+									100, -2, -2, 25,0,25 );
+		    h_EMfrac_phi_sublead                    = book (wk, name, "EMfrac_phi_sublead", "EMfrac_phi_sublead;Sublead jet EM frac;Sublead jet #phi", 110,-0.1,1, 100,-3.14,3.14 );
+		    h_LeadingClusterPt_sublead              = book (wk, name, "LeadingClusterPt_sublead", "LeadingClusterPt_sublead;Sublead jet leading cluster p_{T}",  100, 0, 5000000 );
+		    h_LeadingClusterSecondLambda_sublead    = book (wk, name, "LeadingClusterSecondLambda_sublead",
+								 "LeadingClusterSecondLambda_sublead;Sublead jet leading cluster SecondLambda",  100, 0, 5000000 );
+		    h_LeadingClusterCenterLambda_sublead    = book (wk, name, "LeadingClusterCenterLambda_sublead",
+								 "LeadingClusterCenterLambda_sublead;Sublead jet leading cluster CenterLambda",  100, 0, 20000 );
+		    h_LeadingClusterSecondR_sublead    = book (wk, name, "LeadingClusterSecondR_subleaed", "LeadingClusterSecondR_sublead;Sublead jet leading cluster SecondR",  100, 0, 6000000 );
+
+
+
 		    h2_eta_pt_lead = book (wk, name, "eta_pt_lead", "eta_pt_lead;lead #eta;lead pt", 100, -4.5, 4.5, 100, 0, 2000 );
 		    h2_eta_pt_sublead = book (wk, name, "eta_pt_sublead", "eta_pt_sublead;sublead #eta;sublead pt", 100, -4.5, 4.5, 100, 0, 2000 );
 		    h2_eta_phi_lead = book (wk, name, "eta_phi_lead", "eta_phi_lead;lead #eta;lead #phi", 100, -4.5, 4.5, 100, -3.14, 3.14 );
@@ -339,7 +520,6 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
 		    h2_avgIntPerX_pt_lead = book (wk, name, "avgIntPerX_pt_lead", "avgIntPerX_pt_lead;avgIntPerX;lead pt", 100, 0, 100, 100, 0, 2000 );
 		    h2_avgIntPerX_eta_lead = book (wk, name, "avgIntPerX_eta_lead", "avgIntPerX_pt_lead;avgIntPerX;lead #eta", 100, 0, 100, 100, -4.5, 4.5 );
-
 
 		  }
 		  
@@ -382,7 +562,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    float leadJetHECFrac = leadJet.HECFrac;
 		    float sublJetHECFrac = sublJet.HECFrac;
 		    float MHT = thisEvent.MHT;
-		    
+		    float MHTvec = thisEvent.MHTvec;
+
 		    TLorentzVector jet1 = leadJet.vec();
 		    TLorentzVector jet2 = sublJet.vec();
 		    
@@ -397,6 +578,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h_mjj             ->Fill(jjSystem.M(), weight);
 		    h_yStar           ->Fill(yStar, weight);
 		    h_MHT             ->Fill(MHT, weight);
+		    h_MHTvec          ->Fill(MHTvec, weight);
 		    h_mjj_uniform     ->Fill(jjSystem.M(), weight);
 		    h_pt_lead         ->Fill(jet1.Pt(), weight);
 		    h_pt_sublead      ->Fill(jet2.Pt(), weight);
@@ -426,6 +608,29 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
 		    h2_avgIntPerX_pt_lead -> Fill(thisEvent.avgIntPerX, jet1.Pt(), weight); 
 		    h2_avgIntPerX_eta_lead -> Fill(thisEvent.avgIntPerX, jet1.Eta(), weight); 
+
+		    h_LArQuality_lead                            -> Fill (leadJet.LArQuality, weight);
+		    h_AverageLArQF_lead                          -> Fill (leadJet.AverageLArQF, weight);
+		    h_HECQuality_lead                            -> Fill (leadJet.HECQuality, weight);
+		    h_FracSamplingMax_FracSamplingMaxIndex_lead  -> Fill (leadJet.FracSamplingMax, leadJet.FracSamplingMaxIndex, weight);
+		    h_EMfrac_phi_lead                            -> Fill (leadJet.EMFrac, leadJet.phi, weight);
+		    h_LeadingClusterPt_lead                      -> Fill (leadJet.LeadingClusterPt, weight);
+		    h_LeadingClusterSecondLambda_lead            -> Fill (leadJet.LeadingClusterSecondLambda, weight);
+		    h_LeadingClusterCenterLambda_lead            -> Fill (leadJet.LeadingClusterCenterLambda, weight);
+		    h_LeadingClusterSecondR_lead                 -> Fill (leadJet.LeadingClusterSecondR, weight);
+
+		    h_LArQuality_sublead                            -> Fill (sublJet.LArQuality, weight);
+		    h_AverageLArQF_sublead                          -> Fill (sublJet.AverageLArQF, weight);
+		    h_HECQuality_sublead                            -> Fill (sublJet.HECQuality, weight);
+		    h_FracSamplingMax_FracSamplingMaxIndex_sublead  -> Fill (sublJet.FracSamplingMax, sublJet.FracSamplingMaxIndex, weight);
+		    h_EMfrac_phi_sublead                            -> Fill (sublJet.EMFrac, sublJet.phi, weight);
+		    h_LeadingClusterPt_sublead                      -> Fill (sublJet.LeadingClusterPt, weight);
+		    h_LeadingClusterSecondLambda_sublead            -> Fill (sublJet.LeadingClusterSecondLambda, weight);
+		    h_LeadingClusterCenterLambda_sublead            -> Fill (sublJet.LeadingClusterCenterLambda, weight);
+		    h_LeadingClusterSecondR_sublead                 -> Fill (sublJet.LeadingClusterSecondR, weight);
+
+
+
 		  }
 
 		};
@@ -442,6 +647,12 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		eventHists*   hEndcap_mjjWindow; //!
 		//        eventHists*   hTrigger; //!
 		//        eventHists*   hTruth; //!
+		eventHists*   hPt200; //!
+		eventHists*   hPt210; //!
+		eventHists*   hPt220; //!
+		eventHists*   hPt230; //!
+		eventHists*   hPt240; //!
+		eventHists*   hPt250; //!
 
 		eventHists*   hSecIncl; //!
 		eventHists*   hSecCentral; //!
@@ -451,6 +662,12 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		eventHists*   hSecCentral_mjjWindow; //!
 		eventHists*   hSecCrack_mjjWindow; //!
 		eventHists*   hSecEndcap_mjjWindow; //!
+		eventHists*   hSecPt200; //!
+		eventHists*   hSecPt210; //!
+		eventHists*   hSecPt220; //!
+		eventHists*   hSecPt230; //!
+		eventHists*   hSecPt240; //!
+		eventHists*   hSecPt250; //!
 
 		
 		// variables that don't get filled at submission time should be
