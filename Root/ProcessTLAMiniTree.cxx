@@ -25,8 +25,14 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_applyGRL(false),
   // m_GRLxml("$ROOTCOREBIN/data/xAODAnaHelpers/data12_8TeV.periodAllYear_DetStatus-v61-pro14-02_DQDefects-00-01-00_PHYS_StandardGRL_All_Good.xml"),
   m_GRLxml("$ROOTCOREBIN/data/TLAAlgos/data16_13TeV.periodAllYear_DetStatus-v82-pro20-13_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml"),
+
+  m_applyLArEventCleaning(true),
+  m_invertLArEventCleaning(false),
   m_applyTLALArEventVetoData(false),
   m_TLALArEventVetoFiles("$ROOTCOREBIN/data/TLAEventCleaning/event-veto-data/"),
+  m_doCleaning(false),
+  m_invertJetCleaning(false),
+
   m_debug(false),
   m_doTrigger(false),
   m_doTrigger_j110(false),
@@ -51,7 +57,6 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_doBlind(false),
   m_doData(false),
   m_useWeighted(false),
-  m_doCleaning(false),
   m_etaCut(1.8),
   m_leadJetPtCut(200.),
   m_subleadJetPtCut(200.),
@@ -283,6 +288,9 @@ EL::StatusCode ProcessTLAMiniTree :: histInitialize ()
   m_h2_avgIntPerX_map_AOD = new TH2D("h2_avgIntPerX_map_AOD", "h2_avgIntPerX_map_AOD;from map;from AOD", 101,-1,100,101,-1,100);
   wk()->addOutput(m_h2_avgIntPerX_map_AOD);
     
+  m_h2_jetCleaning = new TH2D("h2_jetCleaning", "h2_jetCleaning;jet pass LooseBad;manual calc", 2, 0, 2, 2, 0, 2);
+  wk()->addOutput(m_h2_jetCleaning);
+
   return EL::StatusCode::SUCCESS;
 }
 
@@ -769,53 +777,6 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
   }//end of m_doData
 
-  //
-  // Minimum selection is a dijet
-  //
-    
-  if(njets < 2 && nsecJets < 2){
-    if(m_debug) cout << " Fail NJets " << endl;
-    return EL::StatusCode::SUCCESS;
-  }
-    
-  //minimal NPV selection
-  if(m_NPV < 1 && m_isTLANtupleOffline){
-      if(m_debug) cout << " Fail NPV " << endl;
-      return EL::StatusCode::SUCCESS;
-  }
-  bool failLArError = false;
-  bool failToolError = false;
-    
-  //minimal LAr/event cleaning selection
-  if (m_LArError && (m_isTLANtupleOffline || m_isTLANtupleTrig || m_isDijetNtupleOffline || m_isDijetNtupleTrig )) { // CWK add m_isDijetNtuple*
-      //if(m_debug) cout << " Fail LArError " << endl;
-      //cout << "eventNumber: " << m_eventNumber << " Fail LArError " << endl;
-      //return EL::StatusCode::SUCCESS;
-      failLArError=true;
-  }
-
-
-  if (m_applyTLALArEventVetoData && !m_isTLANtupleTruth && !m_isDijetNtupleTruth) {
-        //if(m_debug) cout << " Fail LArError " << endl;
-        // run, lbn, timestamp (seconds), timestamp_ns_offset
-        bool veto = m_dataForLArEventVeto->shouldVeto(m_runNumber,m_lumiBlock,m_timeStamp,m_timeStampNSOffset);
-        failToolError=veto;
-        //if (veto) cout << "eventNumber: " << m_eventNumber << " Fail LArError, event veto " << endl;
-        //return EL::StatusCode::SUCCESS;
-    }
-    
-  if (m_applyTLALArEventVetoData) {
-    if (failToolError && failLArError) m_h2_LArError->Fill(1.5,1.5);
-    if (!failToolError && failLArError) m_h2_LArError->Fill(1.5,0.5);
-    if (failToolError && !failLArError) m_h2_LArError->Fill(0.5,1.5);
-    if (!failToolError && !failLArError) m_h2_LArError->Fill(0.5,0.5);
-  }
-  
-  if (m_isTLANtupleOffline)
-    if (failLArError) return EL::StatusCode::SUCCESS;
-
-  if (m_isTLANtupleTrig && m_applyTLALArEventVetoData)
-    if (failToolError) return EL::StatusCode::SUCCESS;
 
   m_avgIntPerX = -1;
   if (m_doPileupFromMap) {
@@ -826,6 +787,72 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   if(m_avgIntPerX_fromAOD != -1) {
     m_avgIntPerX = m_avgIntPerX_fromAOD;
   }
+
+
+
+  //////////////////////////////
+  // LAr event cleaning start //
+  //////////////////////////////
+
+  bool failLArError = false;
+  bool failToolError = false;
+    
+  //minimal LAr/event cleaning selection
+  if(!m_isTLANtupleTruth && !m_isDijetNtupleTruth) {
+    if (m_LArError) failLArError=true;
+
+    if (m_applyTLALArEventVetoData) {
+        //if(m_debug) cout << " Fail LArError " << endl;
+        // run, lbn, timestamp (seconds), timestamp_ns_offset
+      bool veto = m_dataForLArEventVeto->shouldVeto(m_runNumber,m_lumiBlock,m_timeStamp,m_timeStampNSOffset);
+      failToolError=veto;
+      //if (veto) cout << "eventNumber: " << m_eventNumber << " Fail LArError, event veto " << endl;
+      
+      if (failToolError && failLArError) m_h2_LArError->Fill(1.5,1.5);
+      if (!failToolError && failLArError) m_h2_LArError->Fill(1.5,0.5);
+      if (failToolError && !failLArError) m_h2_LArError->Fill(0.5,1.5);
+      if (!failToolError && !failLArError) m_h2_LArError->Fill(0.5,0.5);
+    }
+    
+  }
+
+  // apply decision of tool, if I'm applying it
+  if (m_applyLArEventCleaning) {
+    if (m_invertLArEventCleaning) {
+      if( ( (m_isTLANtupleOffline || m_isDijetNtupleOffline) && !failLArError) || 
+	  ( (m_isTLANtupleTrig || m_isDijetNtupleTrig) && !failToolError) ) {
+	if(m_debug) cout << " Pass LAr event cleaning" << endl;
+	return EL::StatusCode::SUCCESS;
+      }
+    }
+    else {
+      if( ( (m_isTLANtupleOffline || m_isDijetNtupleOffline) && failLArError) || 
+	  ( (m_isTLANtupleTrig || m_isDijetNtupleTrig) && failToolError) ) {
+	if(m_debug) cout << " Fail LAr event cleaning" << endl;
+	return EL::StatusCode::SUCCESS;
+      }
+    }
+  }
+
+  //////////////////////////////
+  // LAr event cleaning end   //
+  //////////////////////////////
+
+
+  
+  // Require dijet
+  if(njets < 2 && nsecJets < 2){
+    if(m_debug) cout << " Fail NJets " << endl;
+    return EL::StatusCode::SUCCESS;
+  }
+    
+  //minimal NPV selection
+  if(m_NPV < 1 && (m_isTLANtupleOffline || m_isDijetNtupleOffline)){
+      if(m_debug) cout << " Fail NPV " << endl;
+      return EL::StatusCode::SUCCESS;
+  }
+
+
 
   /*if (m_applySF) {
 
@@ -1053,7 +1080,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     }
 
     //
-    // doing cleaning on all jets above 50 GeV
+    // doing cleaning on all jets above **60** GeV
     //
     if(m_debug) cout << " about to do cleaning" << endl;
     bool  passCleaning   = true;
@@ -1073,73 +1100,161 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     if(m_debug) cout << "following my checks, redo is " << redo << endl;
 
     // maybe want to check recalc vs actual
+    if(m_debug) cout << "\nthis is a new event\n";
     if(redo) {
       jet_clean_passLooseBad->clear();
       
       for(unsigned int i = 0;  i < jet_pt->size(); ++i){
-	bool jetFailCleaning = false;
-	if (
+
+	// need to apply chf for jets below 60 -> we should ignore them
+	if(jet_pt->at(i) < 60) {
+	  jet_clean_passLooseBad->push_back(0);
+	  continue;
+	}
+
+	bool jetPassCleaning = true;
+	if(m_debug) cout << "  welcome to jet "<<i<<endl;
+	// if (m_jet_clean_passLooseBad->at(i)==0)
+	  // cout << "jet "<<i<<" failed cleaning according to AOD value";
+
+	if ( m_jet_HECFrac->at(i) > 0.5 && 
+	     fabs(m_jet_HECQuality->at(i)) > 0.5 && 
+	     m_jet_AverageLArQF->at(i) > 0.8 ) {
+	  if(m_debug) cout << "    HECfrac failed" << endl;
+	  jetPassCleaning = false;
+	}
+	  
+	if ( fabs(m_jet_negativeE->at(i)) > 60 ) {
+	  if(m_debug) cout << "    negativeE failed" << endl;
+	  jetPassCleaning = false;
+	}
+
+	if ( m_jet_EMFrac->at(i) > 0.95 && 
+	     m_jet_LArQuality->at(i) > 0.8 && 
+	     m_jet_AverageLArQF->at(i) > 0.8 && 
+	     fabs(m_jet_eta->at(i)) < 2.8 ) {
+	  if(m_debug) cout << "    EMfrac failed" << endl;
+	  jetPassCleaning = false;
+	}
+	
+	if ( m_jet_FracSamplingMax->at(i) > 0.99 &&
+	     fabs(m_jet_eta->at(i)) < 2.0 ) {
+	  if(m_debug) cout << "    high fracSamplingMax failed" << endl;
+	  jetPassCleaning = false;
+	}
+	    
+	// if (m_jet_EMFrac->at(i) < 0.05 &&
+	    // m_jet_chFrac->at(i) < 0.05 && 
+	    // fabs(m_jet_eta->at(i)) < 2.0 ) {
+	  // if(m_debug) cout << "    low fracSamplingMax (low eta plus low chf) failed" << endl;
+	  // jetPassCleaning = false;
+	// }
+	    
+	if ( m_jet_EMFrac->at(i) < 0.05 && 
+	     fabs(m_jet_eta->at(i)) >= 2.0 ) {
+	  if(m_debug) cout << "    low fracSamplingMax (high eta) failed" << endl;
+	  jetPassCleaning = false;
+	}
+
+	if (!jetPassCleaning) {
+	  jet_clean_passLooseBad->push_back(0);
+	  if(m_debug) cout <<"  did not pass recalcuated cleaning" << endl;
+	}
+	else {
+	  if(m_debug) cout <<"  passed recalcuated cleaning" << endl;
+	  jet_clean_passLooseBad->push_back(1);
+	}
+
+	// if(jet_clean_passLooseBad->at(i) != m_jet_clean_passLooseBad->at(i) ) {
+	  // cout << "  WARNING in fill loop! Jet " << i << " has discrepant cleaning decision... original says passed = "<< m_jet_clean_passLooseBad->at(i) << " but recalculated version says " << jet_clean_passLooseBad->at(i) << endl;
+	// }	
+      }
+
+    }
+
+    // assign to the relevant part
+    if (isSecondary) m_secJet_clean_passLooseBad_recalc = jet_clean_passLooseBad;
+    else             m_jet_clean_passLooseBad_recalc = jet_clean_passLooseBad;
+
+
+    // fill comparison histogram, print out decision if different
+    // don't do for secondary since I know that's broken
+    if(!isSecondary) {
+
+      for (unsigned int i = 0;  i < jet_pt->size(); ++i){ 
+	if(jet_pt->at(i) < 60) continue;
+
+	m_h2_jetCleaning->Fill(m_jet_clean_passLooseBad->at(i), m_jet_clean_passLooseBad_recalc->at(i));
+	
+	if( m_jet_clean_passLooseBad_recalc->at(i) != m_jet_clean_passLooseBad->at(i) ) {
+	  cout << "WARNING! Jet " << i << " has discrepant cleaning decision... original says passed = "<< m_jet_clean_passLooseBad->at(i) << " but recalculated version says " << m_jet_clean_passLooseBad_recalc->at(i) << endl;
+	  
+	  cout << "here are the relevant cleaning variables..." << endl;
+	  
+	  cout << "  HECfrac: \t" << m_jet_HECFrac->at(i) << endl;
+	  cout << "  abs(HECQual): " << fabs(m_jet_HECQuality->at(i)) << endl; 
+	  cout << "  <LArQF>: \t" << m_jet_AverageLArQF->at(i) << endl;
+	  cout << "  abs(negE): \t" << fabs(m_jet_negativeE->at(i)) << endl;
+	  cout << "  EMfrac: \t" << m_jet_EMFrac->at(i) << endl;
+	  cout << "  LARQual: \t" << m_jet_LArQuality->at(i) << endl;
+	  cout << "  fracMax: \t" << m_jet_FracSamplingMax->at(i) << endl;
+	  cout << "  abs(eta): \t" << fabs(m_jet_eta->at(i)) << endl;
+	  cout << "  pT: \t\t" << fabs(m_jet_pt->at(i)) << endl;
+	  
+	  cout << "What about the subsets?" << endl;
+	  
+	  cout << "  HECfrac? \t" << 
 	    ( m_jet_HECFrac->at(i) > 0.5 && 
 	      fabs(m_jet_HECQuality->at(i)) > 0.5 && 
-	      m_jet_AverageLArQF->at(i) > 0.8 ) ||
-	    
-	    ( fabs(m_jet_negativeE->at(i)) > 60 ) ||
-	    
+	      m_jet_AverageLArQF->at(i) > 0.8 ) << endl;
+	  
+	  cout << "  negE? \t" <<
+	    ( fabs(m_jet_negativeE->at(i)) > 60 ) << endl;
+	  cout << "  EMfrac? \t" << 
 	    ( m_jet_EMFrac->at(i) > 0.95 && 
 	      m_jet_LArQuality->at(i) > 0.8 && 
 	      m_jet_AverageLArQF->at(i) > 0.8 && 
-	      fabs(m_jet_eta->at(i)) < 2.8 ) ||
-	    
+	      fabs(m_jet_eta->at(i)) < 2.8 ) << endl;
+	  cout << "  fracMax? \t" <<
 	    ( m_jet_FracSamplingMax->at(i) > 0.99 &&
-	      fabs(m_jet_eta->at(i)) < 2.0 ) ||
-	    
-	    // (m_jet_EMFrac->at(i) < 0.05 &&
-	    // m_jet_chFrac->at(i) < 0.05 && 
-	    // fabs(m_jet_eta->at(i)) < 2.0 ) ||
-	    
+	      fabs(m_jet_eta->at(i)) < 2.0 ) << endl;
+	  cout << "  low EMfrac? \t" <<
 	    ( m_jet_EMFrac->at(i) < 0.05 && 
-	      fabs(m_jet_eta->at(i)) >= 2.0 )
-	    ) {
-	  jetFailCleaning = true;
+	      fabs(m_jet_eta->at(i)) >= 2.0 ) << endl;
+	  cout << "  with CHF? \t" << 
+	    (m_jet_EMFrac->at(i) < 0.05 && fabs(m_jet_eta->at(i)) < 2.0 ) << endl; // if true then if chf<0.05 would have been flagged as bad
 	}
-
-	jet_clean_passLooseBad->push_back(jetFailCleaning);
-	
       }
     }
     
-    for (unsigned int i = 0;  i < jet_pt->size(); ++i){
-      if(isSecondary) m_secJet_clean_passLooseBad_recalc->push_back(jet_clean_passLooseBad->at(i));
-      else            m_jet_clean_passLooseBad_recalc->push_back(jet_clean_passLooseBad->at(i));
-    }
 
-    // print out decision if different
-    // make 2D histogram of cleaning decision??
-    for (unsigned int i = 0;  i < jet_pt->size(); ++i){ 
-      if(m_jet_clean_passLooseBad_recalc->at(i) != jet_clean_passLooseBad->at(i)) {
-	cout << "  WARNING! Jet " << i << " has discrepant cleaning decision... original is "<< jet_clean_passLooseBad->at(i) << " but recalculated version is " << m_jet_clean_passLooseBad_recalc->at(i) << endl;
-	cout << "Is this the missing chf case? " << (m_jet_EMFrac->at(i) < 0.05 && fabs(m_jet_eta->at(i)) < 2.0 ) << " - if true then if chf<0.05 would have been flagged as bad" << endl;
-      }
-    }
-    
-    // if(!m_doTruthOnly && !redo){ // redo checks whether cleaning is applied properly
     if(!m_doTruthOnly){
       for(unsigned int i = 0;  i < jet_pt->size(); ++i){ // change from njets since that is hard-coded from primary 
-	
-	if(jet_pt->at(i) > 50){
+	// if (i > 2) continue; // If we only care about cleaning the leading three jets?
+	if(jet_pt->at(i) > 60){ // threshold for JVT has increased to 60 for 2016
 	  if(fabs(jet_eta->at(i)) < m_etaCut){
-	    if(!m_doCleaning && !jet_clean_passLooseBad->at(i)){
-	      cout << "not doing cleaning, jet failed passLooseBad - skipping jet " << endl;
-	      continue;
+	    if(!jet_clean_passLooseBad->at(i)) {
+	      passCleaning = false;
+	      if(!m_doCleaning) {
+		cout << "not doing cleaning, but jet "<< i <<" failed passLooseBad" << endl;
+		continue;
+	      }
 	    }
-	    
-	    if(!jet_clean_passLooseBad->at(i)) passCleaning = false;
 	  }
-	}else{
-	  continue;
 	}
       }
     }
+
+    
+    
+    //
+    //  Jet Cleaning 
+    //
+    if(m_doCleaning && !passCleaning){
+      if (m_debug) cout << "Fail Cleaning " << endl;
+      continue;
+    }
+
 
     if(m_debug) cout << " Pass All Cut " << endl;
 
@@ -1157,13 +1272,6 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     //  continue;    
     //}
 
-    //
-    //  Jet Cleaning 
-    //
-    if(m_doCleaning && !passCleaning){
-      if (m_debug) cout << "Fail Cleaning " << endl;
-      continue;
-    }
 
     if(m_debug) cout << " Weight: " << eventWeight << endl;
 
@@ -1270,7 +1378,6 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       if (m_jet_pt->at(0) > 240) hPt240->Fill(thisEvent);
       if (m_jet_pt->at(0) > 250) hPt250->Fill(thisEvent);
     }
-
 
 
 

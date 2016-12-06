@@ -4,8 +4,10 @@ from xAH_config import xAH_config
 c = xAH_config()
 
 GRL = "$ROOTCOREBIN/data/TLAAlgos/data16_13TeV.periodAllYear_DetStatus-v83-pro20-14_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns.xml" # circulated 19.10
+PUmap = "$ROOTCOREBIN/data/TLAAlgos/PRW/pileup_map_None_297730-309759_OflLumi-13TeV-005.root" # made with dijet-TLA/lumi_and_pileup/make_pileup_map.py
+
 GRL = "$ROOTCOREBIN/data/TLAAlgos/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns_ignore_TOROID_STATUS.xml" # final? 2016, circulated XX.11
-PUmap = "$ROOTCOREBIN/data/TLAAlgos/PRW/pileup_map_None_297730-309759_OflLumi-13TeV-005.root" # using relevant ilumicalc file from this, and make_pileup_map.py
+PUmap = "$ROOTCOREBIN/data/TLAAlgos/PRW/pileup_map_None_297730-311481_OflLumi-13TeV-005.root"
 
 #
 #  Data Config
@@ -35,19 +37,23 @@ doTruthOnly = False
 
 c.setalg("ProcessTLAMiniTree", { "m_name"                   : "TLAAlgo",
                                  "m_debug"                  : False,
-                                 "m_doTrigger"              : True, # this selects according to an OR of single jet triggers
+                                 "m_doTrigger"              : False, # this selects according to an OR of single jet triggers
                                  "m_doTrigger_j110"         : False, # this selects according to j110 only
                                  "m_doTruthOnly"            : doTruthOnly,
-                                 "m_useCutflow"             : False,
                                  "m_isDijetNtupleOffline"   : True,
                                  "m_isDijetNtupleTrig"      : False,
-                                 "m_useWeighted"            : True,
+                                 "m_useCutflow"             : False, # get normalisation from cutflow
+                                 "m_useWeighted"            : True,  # get normalisation from weighted cutflow
 
-                                 # changed section for TLALArEventVeto
-                                 "m_doCleaning"             : False, # originally False
-                                 "m_applyTLALArEventVetoData" : False,
-                                 # parsing seems to fail now...??? :-(
-                                 "m_TLALArEventVetoFiles"   : "$ROOTCOREBIN/data/TLAEventCleaning/event-veto-data/", # dump is in event-veto-info, modified one for 304006 in here
+                                 # jet cleaning
+                                 "m_doCleaning"             : False, # veto events which fail jet cleaning
+                                 "m_invertJetCleaning"      : True,  # veto events which pass jet cleaning (only if above is True)
+
+                                 # event cleaning
+                                 "m_applyLArEventCleaning"    : True, # veto events which fail LAr event cleaning, from AOD if isDijetNtupleOffline, from tool if ....Trig
+                                 "m_invertLArEventCleaning"   : True, # veto events which pass event cleaning (only if above is true)
+                                 "m_applyTLALArEventVetoData" : True, # run tool
+                                 "m_TLALArEventVetoFiles"   : "$ROOTCOREBIN/data/TLAEventCleaning/event-veto-data/",
 
                                  "m_etaCut"                 : 2.8, # only applied if not Truth only? FIXME
                                  # "m_leadJetPtCut"           : 150,
@@ -60,7 +66,7 @@ c.setalg("ProcessTLAMiniTree", { "m_name"                   : "TLAAlgo",
                                  "m_GRLxml"                 : GRL,
                                  "m_doSecondaryJets"        : False,
                                  "m_secondaryJetName"       : "trigJet",
-                                 "m_doPileupFromMap"        : True,
+                                 "m_doPileupFromMap"        : True, # get pileup from map
                                  "m_pileupMap"              : PUmap,
                                } )
 

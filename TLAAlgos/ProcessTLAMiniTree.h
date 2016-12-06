@@ -40,11 +40,16 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		/* std::string m_GRLxml; //! CWK: not sure why this was set to be unmodifiable, means isn't changed by config... */
     
     
-		//LArEventVetoData
+		// Event cleaning configuration
+		bool m_applyLArEventCleaning;
+		bool m_invertLArEventCleaning;
 		bool m_applyTLALArEventVetoData;
 		TLALArEventVetoData * m_dataForLArEventVeto; //!
 		std::string m_TLALArEventVetoFiles; //!
-		
+
+		bool m_doCleaning;
+		bool m_invertJetCleaning;
+
 		//configuration variables
 		bool m_debug;                     
 		bool m_doTrigger;
@@ -66,7 +71,6 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		bool m_doBlind;                
 		bool m_doData;                 
 		bool m_useWeighted;            
-		bool m_doCleaning;        
 		float m_etaCut;       
 		float m_leadJetPtCut;          
 		float m_subleadJetPtCut;          
@@ -161,6 +165,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		double m_eta_freeze;//!*/
 
 		TH2D* m_h2_LArError;//!
+		TH2D* m_h2_jetCleaning;//!
 		TH2D* m_h2_avgIntPerX_map_AOD;//!
 		TH2F* m_h2_pileupMap;//!
 
@@ -274,16 +279,13 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    prescaleWeight = m_prescaleWeight;
 		    avgIntPerX         = m_avgIntPerX;
 
-		    cout << "m_MHT = " << m_MHT << endl;
-		    
-		    MHT = m_MHT;//just because too lazy to recalculate
+		    /* MHT = m_MHT; // it's not filled in Dijet NTUPs */
 		    
 		    // calculate MHT
 		    MHT=0;
 		    TLorentzVector HTvec;
 		    for(unsigned int i =0; i < m_jet_pt->size(); ++i){
-		      if(m_jet_pt->at(i) < 50) continue;
-		      // other cleaning? This should be taken care of elsewhere
+		      if(m_jet_pt->at(i) < 60) continue;
 		      MHT += m_jet_pt->at(i);
 		      TLorentzVector tempJetTLV;
 		      tempJetTLV.SetPtEtaPhiE(m_jet_pt->at(i), m_jet_eta->at(i), m_jet_phi->at(i), m_jet_E->at(i));
