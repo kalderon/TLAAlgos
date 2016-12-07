@@ -847,12 +847,52 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     return EL::StatusCode::SUCCESS;
   }
     
+
   //minimal NPV selection
   if(m_NPV < 1 && (m_isTLANtupleOffline || m_isDijetNtupleOffline)){
       if(m_debug) cout << " Fail NPV " << endl;
       return EL::StatusCode::SUCCESS;
   }
 
+
+  // select on relevant triggers (want to base trigger choice on calibrated, offline jets...)
+  if(m_doTrigger || m_doTrigger_j110){
+    if(m_debug) Info("execute()", "Doing Trigger ");
+    
+    bool m_dumpTrig = false ;
+    if(m_dumpTrig){
+      cout << " --------" << endl;
+      for(std::string& thisTrig: *m_passedTriggers)
+	cout << thisTrig << endl;
+    }//end dump trigger
+    
+    std::string trig;
+    if (m_jet_pt->at(0) < 85) return EL::StatusCode::SUCCESS; 
+    if (m_jet_pt->at(0) < 116) { trig = "HLT_j60"; }
+    else if (m_jet_pt->at(0) < 172) { trig = "HLT_j85"; }
+    else if (m_jet_pt->at(0) < 240) { trig = "HLT_j110"; }
+    else if (m_jet_pt->at(0) < 318) { trig = "HLT_j200"; }
+    else if (m_jet_pt->at(0) < 350) { trig = "HLT_j260"; }
+    else if (m_jet_pt->at(0) < 410) { trig = "HLT_j320"; }
+    else trig = "HLT_j360";
+    
+    if(m_doTrigger_j110)
+      trig = "HLT_j110";
+    
+    std::vector<string>::iterator trigIt = std::find(m_passedTriggers->begin(), m_passedTriggers->end(), trig);
+    if (trigIt == m_passedTriggers->end()) {
+      return EL::StatusCode::SUCCESS;
+    }
+    else {
+      prescaleWeight = m_triggerPrescales->at(std::distance(m_passedTriggers->begin(), trigIt));
+      //std::cout << "trig: " << trig << ", distance from front of vector" << (std::distance(m_passedTriggers->begin(), trigIt)) << std::endl;
+      //std::cout << "prescale: " << prescaleWeight << std::endl;
+    }//end do trigger with prescales
+    
+    //bool passHLT_j360 = (find(m_passedTriggers->begin(), m_passedTriggers->end(), "HLT_j360" ) != m_passedTriggers->end());
+    
+  }// end of do trigger
+  
 
 
   /*if (m_applySF) {
@@ -1007,41 +1047,6 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       if(m_debug) cout << " Fail LeadJetPt " << endl;
       continue;
     }
-
-    if(m_doTrigger || m_doTrigger_j110){
-      if(m_debug) Info("execute()", "Doing Trigger ");
-
-      bool m_dumpTrig = false ;
-      if(m_dumpTrig){
-	cout << " --------" << endl;
-	for(std::string& thisTrig: *m_passedTriggers)
-	  cout << thisTrig << endl;
-	}//end dump trigger
-
-      std::string trig;
-      if (jet_pt->at(0) < 85) continue;
-      if (jet_pt->at(0) < 116) { trig = "HLT_j60"; }
-      else if (jet_pt->at(0) < 172) { trig = "HLT_j85"; }
-      else if (jet_pt->at(0) < 240) { trig = "HLT_j110"; }
-      else if (jet_pt->at(0) < 318) { trig = "HLT_j200"; }
-      else if (jet_pt->at(0) < 350) { trig = "HLT_j260"; }
-      else if (jet_pt->at(0) < 410) { trig = "HLT_j320"; }
-      else trig = "HLT_j360";
-
-      if(m_doTrigger_j110)
-	trig = "HLT_j110";
-
-      std::vector<string>::iterator trigIt = std::find(m_passedTriggers->begin(), m_passedTriggers->end(), trig);
-      if (trigIt == m_passedTriggers->end()) continue;
-      else {
-	prescaleWeight = m_triggerPrescales->at(std::distance(m_passedTriggers->begin(), trigIt));
-	//std::cout << "trig: " << trig << ", distance from front of vector" << (std::distance(m_passedTriggers->begin(), trigIt)) << std::endl;
-	//std::cout << "prescale: " << prescaleWeight << std::endl;
-      }//end do trigger with prescales
-
-      //bool passHLT_j360 = (find(m_passedTriggers->begin(), m_passedTriggers->end(), "HLT_j360" ) != m_passedTriggers->end());
-
-    }// end of do trigger
 
     if(jet_pt->at(1) < m_subleadJetPtCut) {
       if(m_debug) cout << " Fail subLeadJetPt " << endl;
@@ -1282,75 +1287,89 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     if(m_debug) cout << " Weight: " << eventWeight << endl;
 
 
-    // make event data
-    if(m_debug) cout << " Make EventData " << endl;
-
-    // I think I should do this manually to avoid i) the annoying duplication and ii) maybe get around the NULL issue
-
 
 
     // make event data
-    if(m_debug) cout << " Make EventData " << endl;
+    // jet_pt set earlier
+    // jet_eta set earlier
+    vector<float>*	jet_phi		 = ( isSecondary ? m_secJet_phi : m_jet_phi );
+    vector<float>*	jet_E			 = ( isSecondary ? m_secJet_E : m_jet_E );
+    vector<float>*	jet_muonSegments	 = ( isSecondary ? m_secJet_muonSegments : m_jet_muonSegments );
+    vector<float>*	jet_EMFrac		 = ( isSecondary ? m_secJet_EMFrac : m_jet_EMFrac );
+    vector<float>*	jet_HECFrac		 = ( isSecondary ? m_secJet_HECFrac : m_jet_HECFrac );
+    vector<float>*	jet_timing		 = ( isSecondary ? m_secJet_timing : m_jet_timing );
+    vector<float>*	jet_negativeE		 = ( isSecondary ? m_secJet_negativeE : m_jet_negativeE );
+    // jet_clean_passLooseBad set earlier
+    vector<float>*	jet_LArQuality		 = ( isSecondary ? m_secJet_LeadingClusterPt : m_jet_LArQuality );
+    vector<float>*	jet_AverageLArQF		 = ( isSecondary ? m_secJet_AverageLArQF : m_jet_AverageLArQF );
+    vector<float>*	jet_HECQuality		 = ( isSecondary ? m_secJet_HECQuality : m_jet_HECQuality );
+    vector<float>*	jet_FracSamplingMax		 = ( isSecondary ? m_secJet_FracSamplingMax : m_jet_FracSamplingMax );
+    vector<int>*	jet_FracSamplingMaxIndex	 = ( isSecondary ? m_secJet_FracSamplingMaxIndex : m_jet_FracSamplingMaxIndex );
+    vector<float>*	jet_LeadingClusterPt		 = ( isSecondary ? m_secJet_LeadingClusterPt : m_jet_LeadingClusterPt );
+    vector<float>*	jet_LeadingClusterSecondLambda = ( isSecondary ? m_secJet_LeadingClusterSecondLambda : m_jet_LeadingClusterSecondLambda );
+    vector<float>*	jet_LeadingClusterCenterLambda = ( isSecondary ? m_secJet_LeadingClusterCenterLambda : m_jet_LeadingClusterCenterLambda );
+    vector<float>*	jet_LeadingClusterSecondR	= ( isSecondary ? m_secJet_LeadingClusterSecondR : m_jet_LeadingClusterSecondR );
+
+
+    if(m_debug) cout << " filling eventData" << endl;
+
     eventData thisEvent = eventData(m_runNumber,
 				    m_eventNumber,
-				    m_jet_pt,
-				    m_jet_eta,
-				    m_jet_phi,
-				    m_jet_E,
-				    m_jet_muonSegments,
-				    m_jet_EMFrac,
-				    m_jet_HECFrac,
-				    m_jet_timing,
-				    m_jet_negativeE,
-				    // m_jet_clean_passLooseBad,
+				    jet_pt,
+				    jet_eta,
+				    jet_phi,
+				    jet_E,
+				    jet_muonSegments,
+				    jet_EMFrac,
+				    jet_HECFrac,
+				    jet_timing,
+				    jet_negativeE,
 				    jet_clean_passLooseBad,
-				    
-				    m_jet_LArQuality,
-				    m_jet_AverageLArQF,
-				    m_jet_HECQuality,
-				    m_jet_FracSamplingMax,
-				    m_jet_FracSamplingMaxIndex,
-				    m_jet_LeadingClusterPt,
-				    m_jet_LeadingClusterSecondLambda,
-				    m_jet_LeadingClusterCenterLambda,
-				    m_jet_LeadingClusterSecondR,
-				    
+				    jet_LArQuality,
+				    jet_AverageLArQF,
+				    jet_HECQuality,
+				    jet_FracSamplingMax,
+				    jet_FracSamplingMaxIndex,
+				    jet_LeadingClusterPt,
+				    jet_LeadingClusterSecondLambda,
+				    jet_LeadingClusterCenterLambda,
+				    jet_LeadingClusterSecondR,
 				    m_MHT,
 				    eventWeight,
 				    prescaleWeight,
 				    m_avgIntPerX);
     
-    if(isSecondary) {
-      if(m_debug) cout <<"filling secondary eventData"<<endl;
-      thisEvent = eventData(m_runNumber,
-			    m_eventNumber,
-			    m_secJet_pt,
-			    m_secJet_eta,
-			    m_secJet_phi,
-			    m_secJet_E,
-			    m_secJet_muonSegments,
-			    m_secJet_EMFrac,
-			    m_secJet_HECFrac,
-			    m_secJet_timing,
-			    m_secJet_negativeE,
+    // if(isSecondary) {
+      // if(m_debug) cout <<"filling secondary eventData"<<endl;
+      // thisEvent = eventData(m_runNumber,
+			    // m_eventNumber,
+			    // m_secJet_pt,
+			    // m_secJet_eta,
+			    // m_secJet_phi,
+			    // m_secJet_E,
+			    // m_secJet_muonSegments,
+			    // m_secJet_EMFrac,
+			    // m_secJet_HECFrac,
+			    // m_secJet_timing,
+			    // m_secJet_negativeE,
 			    // m_secJet_clean_passLooseBad,
-			    jet_clean_passLooseBad,
+			    // jet_clean_passLooseBad,
 			    
-			    m_secJet_LArQuality,
-			    m_secJet_AverageLArQF,
-			    m_secJet_HECQuality,
-			    m_secJet_FracSamplingMax,
-			    m_secJet_FracSamplingMaxIndex,
-			    m_secJet_LeadingClusterPt,
-			    m_secJet_LeadingClusterSecondLambda,
-			    m_secJet_LeadingClusterCenterLambda,
-			    m_secJet_LeadingClusterSecondR,
+			    // m_secJet_LArQuality,
+			    // m_secJet_AverageLArQF,
+			    // m_secJet_HECQuality,
+			    // m_secJet_FracSamplingMax,
+			    // m_secJet_FracSamplingMaxIndex,
+			    // m_secJet_LeadingClusterPt,
+			    // m_secJet_LeadingClusterSecondLambda,
+			    // m_secJet_LeadingClusterCenterLambda,
+			    // m_secJet_LeadingClusterSecondR,
 
-			    m_MHT, // this isn't filled anyway, currently
-			    eventWeight,
-			    prescaleWeight,
-			    m_avgIntPerX);
-    }
+			    // m_MHT, // this isn't filled anyway, currently
+			    // eventWeight,
+			    // prescaleWeight,
+			    // m_avgIntPerX);
+    // }
 
     if(m_debug) cout << "done extracting event data to structs" << endl;
   
