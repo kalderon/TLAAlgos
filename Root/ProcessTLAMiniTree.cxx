@@ -694,6 +694,7 @@ EL::StatusCode ProcessTLAMiniTree :: initialize ()
 
     m_dataForLArEventVeto = new TLALArEventVetoData();
     std::string LArEventVetoExpandedPath = gSystem->ExpandPathName( m_TLALArEventVetoFiles.c_str() );
+    cout << "I am loading LArEventVeto files from " << LArEventVetoExpandedPath << endl;
     // replace this path with the path to your event veto data directory
     m_dataForLArEventVeto->loadFromDirectory(LArEventVetoExpandedPath);
   }
@@ -756,6 +757,8 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   if(m_eventCounter % 10000 == 0) cout << "executing event " << m_eventCounter << endl;
   else if(m_debug) cout << "executing event " << m_eventCounter << endl;
 
+  m_avgIntPerX = -1;
+
   if(m_doData){
    
     if ( m_applyGRL ) {
@@ -770,20 +773,18 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     if(m_doPileupFromMap) {
       // std::cout << "RunNum: " << m_runNumber << ", LB: " << m_lumiBlock << std::endl;
       int runNumberBin = m_h2_pileupMap->GetYaxis()->FindBin(to_string(m_runNumber).c_str());
-      // std::cout << "RN bin: " << runNumberBin << std::endl;
-      m_avgIntPerX_fromMap = m_h2_pileupMap->GetBinContent(m_lumiBlock, runNumberBin);
+      int lumiBlockBin = m_h2_pileupMap->GetXaxis()->FindBin(m_lumiBlock);
+      // std::cout << "RN bin: " << runNumberBin << ", LB bin: " << lumiBlockBin << std::endl;
+      m_avgIntPerX_fromMap = m_h2_pileupMap->GetBinContent(lumiBlockBin, runNumberBin);
       // std::cout << "m_avgIntPerX: " << m_avgIntPerX << std::endl;
+
+      m_h2_avgIntPerX_map_AOD->Fill(m_avgIntPerX_fromMap, m_avgIntPerX_fromAOD);
+      m_avgIntPerX = m_avgIntPerX_fromMap;
     }
 
   }//end of m_doData
 
-
-  m_avgIntPerX = -1;
-  if (m_doPileupFromMap) {
-    m_h2_avgIntPerX_map_AOD->Fill(m_avgIntPerX_fromMap, m_avgIntPerX_fromAOD);
-    m_avgIntPerX = m_avgIntPerX_fromMap;
-  }
-
+  // take avgIntPerX from the AOD if it exists, otherwise go for the 'from map' version (which will be -1 if unset)
   if(m_avgIntPerX_fromAOD != -1) {
     m_avgIntPerX = m_avgIntPerX_fromAOD;
   }

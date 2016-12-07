@@ -45,7 +45,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		bool m_invertLArEventCleaning;
 		bool m_applyTLALArEventVetoData;
 		TLALArEventVetoData * m_dataForLArEventVeto; //!
-		std::string m_TLALArEventVetoFiles; //!
+		std::string m_TLALArEventVetoFiles;
 
 		bool m_doCleaning;
 		bool m_invertJetCleaning;
