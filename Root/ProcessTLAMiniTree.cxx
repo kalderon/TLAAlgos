@@ -1231,14 +1231,13 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
     if(!m_doTruthOnly){
       for(unsigned int i = 0;  i < jet_pt->size(); ++i){ // change from njets since that is hard-coded from primary 
-	// if (i > 2) continue; // If we only care about cleaning the leading three jets?
+	if (i > 2) continue; // If we only care about cleaning the leading three jets?
 	if(jet_pt->at(i) > 60){ // threshold for JVT has increased to 60 for 2016
 	  if(fabs(jet_eta->at(i)) < m_etaCut){
 	    if(!jet_clean_passLooseBad->at(i)) {
 	      passCleaning = false;
 	      if(!m_doCleaning) {
 		cout << "not doing cleaning, but jet "<< i <<" failed passLooseBad" << endl;
-		continue;
 	      }
 	    }
 	  }
@@ -1251,9 +1250,15 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     //
     //  Jet Cleaning 
     //
-    if(m_doCleaning && !passCleaning){
-      if (m_debug) cout << "Fail Cleaning " << endl;
-      continue;
+    if(m_doCleaning) {
+      if ( !m_invertJetCleaning && !passCleaning ) {
+	if (m_debug) cout << "Fail jet cleaning " << endl;
+	continue;
+      }
+      if ( m_invertJetCleaning && passCleaning ) {
+	if (m_debug) cout << "Pass jet cleaning (but I'm inverting, so skip event) " << endl;
+	continue;
+      }
     }
 
 

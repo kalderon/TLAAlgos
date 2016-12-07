@@ -48,12 +48,12 @@ c.setalg("ProcessTLAMiniTree", { "m_name"                   : "TLAAlgo",
                                  "m_useWeighted"            : True,  # get normalisation from weighted cutflow
 
                                  # jet cleaning
-                                 "m_doCleaning"             : False, # veto events which fail jet cleaning
-                                 "m_invertJetCleaning"      : True,  # veto events which pass jet cleaning (only if above is True)
+                                 "m_doCleaning"             : True, # veto events which fail jet cleaning
+                                 "m_invertJetCleaning"      : False,  # veto events which pass jet cleaning (only if above is True)
 
                                  # event cleaning
                                  "m_applyLArEventCleaning"    : True, # veto events which fail LAr event cleaning, from AOD if isDijetNtupleOffline, from tool if ....Trig
-                                 "m_invertLArEventCleaning"   : True, # veto events which pass event cleaning (only if above is true)
+                                 "m_invertLArEventCleaning"   : False, # veto events which pass event cleaning (only if above is true)
                                  "m_applyTLALArEventVetoData" : True, # run tool
                                  "m_TLALArEventVetoFiles"   : "$ROOTCOREBIN/data/TLAEventCleaning/event-veto-data/",
 
