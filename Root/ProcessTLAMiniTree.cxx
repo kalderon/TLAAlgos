@@ -867,14 +867,33 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     }//end dump trigger
     
     std::string trig;
-    if (m_jet_pt->at(0) < 85) return EL::StatusCode::SUCCESS; 
-    if (m_jet_pt->at(0) < 116) { trig = "HLT_j60"; }
-    else if (m_jet_pt->at(0) < 172) { trig = "HLT_j85"; }
-    else if (m_jet_pt->at(0) < 240) { trig = "HLT_j110"; }
-    else if (m_jet_pt->at(0) < 318) { trig = "HLT_j200"; }
-    else if (m_jet_pt->at(0) < 350) { trig = "HLT_j260"; }
-    else if (m_jet_pt->at(0) < 410) { trig = "HLT_j320"; }
-    else trig = "HLT_j360";
+
+    // this is from 2015
+    // if (m_jet_pt->at(0) < 85) return EL::StatusCode::SUCCESS; 
+    // if (m_jet_pt->at(0) < 116) { trig = "HLT_j60"; }
+    // else if (m_jet_pt->at(0) < 172) { trig = "HLT_j85"; }
+    // else if (m_jet_pt->at(0) < 240) { trig = "HLT_j110"; }
+    // else if (m_jet_pt->at(0) < 318) { trig = "HLT_j200"; }
+    // else if (m_jet_pt->at(0) < 350) { trig = "HLT_j260"; }
+    // else if (m_jet_pt->at(0) < 410) { trig = "HLT_j320"; }
+    // else trig = "HLT_j360";
+
+
+    // taking triggers active for all of 2016
+    // j110 21
+    // j150 26 <- ignore since barely any less prescaled than j110
+    // j175 154
+    // j260 950
+    // j380 38074
+    // full 38409
+
+    // linear fit to 2015 turnons: t = (1.03*p + 36)
+    // tried 10% increase but looked a tad worse re not-on-threshold
+
+    if (m_jet_pt->at(0) < 216) { trig = "HLT_j110"; }
+    else if (m_jet_pt->at(0) < 304) { trig = "HLT_j175"; }
+    else if (m_jet_pt->at(0) < 427) { trig = "HLT_j260"; }
+    else trig = "HLT_j380";
     
     if(m_doTrigger_j110)
       trig = "HLT_j110";
