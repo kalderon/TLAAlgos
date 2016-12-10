@@ -56,8 +56,11 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		bool m_doTrigger_j110;
 		bool m_useCutflow;
 		bool m_doTruthOnly;
+		std::string m_primaryJetInName;
+		std::string m_primaryJetOutName;
 		bool m_doSecondaryJets;
-		std::string m_secondaryJetName;
+		std::string m_secondaryJetInName;
+		std::string m_secondaryJetOutName;
 		bool m_doPileupFromMap;
 		std::string m_pileupMap;
 		bool m_isDijetNtupleTruth;

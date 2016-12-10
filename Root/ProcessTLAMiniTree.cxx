@@ -44,8 +44,11 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_isTLANtupleOffline(false),
   m_doTruthOnly(false),
 
+  m_primaryJetInName("jet"),
+  m_primaryJetOutName("OfflineJets"),
   m_doSecondaryJets(false),
-  m_secondaryJetName(""),
+  m_secondaryJetInName("trigJet"),
+  m_secondaryJetOutName("TriggerJets"),
   m_doPileupFromMap(false),
   m_pileupMap(""),
   m_avgIntPerX(-1),
@@ -523,17 +526,17 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
   //truth-level variables
   else if (m_isDijetNtupleTrig || m_isDijetNtupleOffline) {
     
-      tree->SetBranchStatus  ("jet_pt", 1);
-      tree->SetBranchAddress ("jet_pt", &m_jet_pt);
+      tree->SetBranchStatus  ((m_primaryJetInName+"_pt").c_str(), 1);
+      tree->SetBranchAddress ((m_primaryJetInName+"_pt").c_str(), &m_jet_pt);
       
-      tree->SetBranchStatus  ("jet_eta", 1);
-      tree->SetBranchAddress ("jet_eta", &m_jet_eta);
+      tree->SetBranchStatus  ((m_primaryJetInName+"_eta").c_str(), 1);
+      tree->SetBranchAddress ((m_primaryJetInName+"_eta").c_str(), &m_jet_eta);
       
-      tree->SetBranchStatus  ("jet_phi", 1);
-      tree->SetBranchAddress ("jet_phi", &m_jet_phi);
+      tree->SetBranchStatus  ((m_primaryJetInName+"_phi").c_str(), 1);
+      tree->SetBranchAddress ((m_primaryJetInName+"_phi").c_str(), &m_jet_phi);
       
-      tree->SetBranchStatus  ("jet_E", 1);
-      tree->SetBranchAddress ("jet_E", &m_jet_E);
+      tree->SetBranchStatus  ((m_primaryJetInName+"_E").c_str(), 1);
+      tree->SetBranchAddress ((m_primaryJetInName+"_E").c_str(), &m_jet_E);
 
       if(!m_doTruthOnly) {
 	// old NTUPs- prior to Oct 2016
@@ -547,42 +550,42 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
 	// tree->SetBranchAddress ("jet__GhostMuonSegmentCount", &m_jet_muonSegments);
 
 	// new NTUPs - from 15.10.16
-	tree->SetBranchStatus  ("jet_EMFrac", 1);
-	tree->SetBranchAddress ("jet_EMFrac", &m_jet_EMFrac);
+	tree->SetBranchStatus  ((m_primaryJetInName+"_EMFrac").c_str(), 1);
+	tree->SetBranchAddress ((m_primaryJetInName+"_EMFrac").c_str(), &m_jet_EMFrac);
 	
-	tree->SetBranchStatus  ("jet_HECFrac", 1);
-	tree->SetBranchAddress ("jet_HECFrac", &m_jet_HECFrac);
+	tree->SetBranchStatus  ((m_primaryJetInName+"_HECFrac").c_str(), 1);
+	tree->SetBranchAddress ((m_primaryJetInName+"_HECFrac").c_str(), &m_jet_HECFrac);
 	
-	tree->SetBranchStatus  ("jet_GhostMuonSegmentCount", 1);
-	tree->SetBranchAddress ("jet_GhostMuonSegmentCount", &m_jet_muonSegments);
+	tree->SetBranchStatus  ((m_primaryJetInName+"_GhostMuonSegmentCount").c_str(), 1);
+	tree->SetBranchAddress ((m_primaryJetInName+"_GhostMuonSegmentCount").c_str(), &m_jet_muonSegments);
 
-	tree->SetBranchStatus  ("jet_clean_passLooseBad", 1);
-	tree->SetBranchAddress ("jet_clean_passLooseBad", &m_jet_clean_passLooseBad);	
+	tree->SetBranchStatus  ((m_primaryJetInName+"_clean_passLooseBad").c_str(), 1);
+	tree->SetBranchAddress ((m_primaryJetInName+"_clean_passLooseBad").c_str(), &m_jet_clean_passLooseBad);	
 
-	tree->SetBranchStatus  ("jet_Timing", 1);
-	tree->SetBranchAddress ("jet_Timing", &m_jet_timing);
+	tree->SetBranchStatus  ((m_primaryJetInName+"_Timing").c_str(), 1);
+	tree->SetBranchAddress ((m_primaryJetInName+"_Timing").c_str(), &m_jet_timing);
 
-	tree->SetBranchStatus  ("jet_NegativeE", 1);
-	tree->SetBranchAddress ("jet_NegativeE", &m_jet_negativeE);
+	tree->SetBranchStatus  ((m_primaryJetInName+"_NegativeE").c_str(), 1);
+	tree->SetBranchAddress ((m_primaryJetInName+"_NegativeE").c_str(), &m_jet_negativeE);
 
-        tree->SetBranchStatus  ("jet_LArQuality", 1);
-        tree->SetBranchAddress ("jet_LArQuality", &m_jet_LArQuality);
-        tree->SetBranchStatus  ("jet_AverageLArQF", 1);
-        tree->SetBranchAddress ("jet_AverageLArQF", &m_jet_AverageLArQF);
-        tree->SetBranchStatus  ("jet_HECQuality", 1);
-        tree->SetBranchAddress ("jet_HECQuality", &m_jet_HECQuality);
-        tree->SetBranchStatus  ("jet_FracSamplingMax", 1);
-        tree->SetBranchAddress ("jet_FracSamplingMax", &m_jet_FracSamplingMax);
-        tree->SetBranchStatus  ("jet_FracSamplingMaxIndex", 1);
-        tree->SetBranchAddress ("jet_FracSamplingMaxIndex", &m_jet_FracSamplingMaxIndex);
-        tree->SetBranchStatus  ("jet_LeadingClusterPt", 1);
-        tree->SetBranchAddress ("jet_LeadingClusterPt", &m_jet_LeadingClusterPt);
-        tree->SetBranchStatus  ("jet_LeadingClusterSecondLambda", 1);
-	tree->SetBranchAddress ("jet_LeadingClusterSecondLambda", &m_jet_LeadingClusterSecondLambda);
-	tree->SetBranchStatus  ("jet_LeadingClusterCenterLambda", 1);
-	tree->SetBranchAddress ("jet_LeadingClusterCenterLambda", &m_jet_LeadingClusterCenterLambda);
-	tree->SetBranchStatus  ("jet_LeadingClusterSecondR", 1);
-	tree->SetBranchAddress ("jet_LeadingClusterSecondR", &m_jet_LeadingClusterSecondR);
+        tree->SetBranchStatus  ((m_primaryJetInName+"_LArQuality").c_str(), 1);
+        tree->SetBranchAddress ((m_primaryJetInName+"_LArQuality").c_str(), &m_jet_LArQuality);
+        tree->SetBranchStatus  ((m_primaryJetInName+"_AverageLArQF").c_str(), 1);
+        tree->SetBranchAddress ((m_primaryJetInName+"_AverageLArQF").c_str(), &m_jet_AverageLArQF);
+        tree->SetBranchStatus  ((m_primaryJetInName+"_HECQuality").c_str(), 1);
+        tree->SetBranchAddress ((m_primaryJetInName+"_HECQuality").c_str(), &m_jet_HECQuality);
+        tree->SetBranchStatus  ((m_primaryJetInName+"_FracSamplingMax").c_str(), 1);
+        tree->SetBranchAddress ((m_primaryJetInName+"_FracSamplingMax").c_str(), &m_jet_FracSamplingMax);
+        tree->SetBranchStatus  ((m_primaryJetInName+"_FracSamplingMaxIndex").c_str(), 1);
+        tree->SetBranchAddress ((m_primaryJetInName+"_FracSamplingMaxIndex").c_str(), &m_jet_FracSamplingMaxIndex);
+        tree->SetBranchStatus  ((m_primaryJetInName+"_LeadingClusterPt").c_str(), 1);
+        tree->SetBranchAddress ((m_primaryJetInName+"_LeadingClusterPt").c_str(), &m_jet_LeadingClusterPt);
+        tree->SetBranchStatus  ((m_primaryJetInName+"_LeadingClusterSecondLambda").c_str(), 1);
+	tree->SetBranchAddress ((m_primaryJetInName+"_LeadingClusterSecondLambda").c_str(), &m_jet_LeadingClusterSecondLambda);
+	tree->SetBranchStatus  ((m_primaryJetInName+"_LeadingClusterCenterLambda").c_str(), 1);
+	tree->SetBranchAddress ((m_primaryJetInName+"_LeadingClusterCenterLambda").c_str(), &m_jet_LeadingClusterCenterLambda);
+	tree->SetBranchStatus  ((m_primaryJetInName+"_LeadingClusterSecondR").c_str(), 1);
+	tree->SetBranchAddress ((m_primaryJetInName+"_LeadingClusterSecondR").c_str(), &m_jet_LeadingClusterSecondR);
 
       }
 
@@ -593,56 +596,56 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
 
 
       if(m_doSecondaryJets) {
-	tree->SetBranchStatus  ((m_secondaryJetName+"_pt").c_str(), 1);
-	tree->SetBranchAddress ((m_secondaryJetName+"_pt").c_str(), &m_secJet_pt);
+	tree->SetBranchStatus  ((m_secondaryJetInName+"_pt").c_str(), 1);
+	tree->SetBranchAddress ((m_secondaryJetInName+"_pt").c_str(), &m_secJet_pt);
 	
-	tree->SetBranchStatus  ((m_secondaryJetName+"_eta").c_str(), 1);
-	tree->SetBranchAddress ((m_secondaryJetName+"_eta").c_str(), &m_secJet_eta);
+	tree->SetBranchStatus  ((m_secondaryJetInName+"_eta").c_str(), 1);
+	tree->SetBranchAddress ((m_secondaryJetInName+"_eta").c_str(), &m_secJet_eta);
 	
-	tree->SetBranchStatus  ((m_secondaryJetName+"_phi").c_str(), 1);
-	tree->SetBranchAddress ((m_secondaryJetName+"_phi").c_str(), &m_secJet_phi);
+	tree->SetBranchStatus  ((m_secondaryJetInName+"_phi").c_str(), 1);
+	tree->SetBranchAddress ((m_secondaryJetInName+"_phi").c_str(), &m_secJet_phi);
 	
-	tree->SetBranchStatus  ((m_secondaryJetName+"_E").c_str(), 1);
-	tree->SetBranchAddress ((m_secondaryJetName+"_E").c_str(), &m_secJet_E);
+	tree->SetBranchStatus  ((m_secondaryJetInName+"_E").c_str(), 1);
+	tree->SetBranchAddress ((m_secondaryJetInName+"_E").c_str(), &m_secJet_E);
 	
 	if(!m_doTruthOnly) {
 	  // new NTUPs - from 15.10.16
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_EMFrac").c_str(), 1);
-	  tree->SetBranchAddress ((m_secondaryJetName+"_EMFrac").c_str(), &m_secJet_EMFrac);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_EMFrac").c_str(), 1);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_EMFrac").c_str(), &m_secJet_EMFrac);
 	  
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_HECFrac").c_str(), 1);
-	  tree->SetBranchAddress ((m_secondaryJetName+"_HECFrac").c_str(), &m_secJet_HECFrac);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_HECFrac").c_str(), 1);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_HECFrac").c_str(), &m_secJet_HECFrac);
 	  
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_GhostMuonSegmentCount").c_str(), 1);
-	  tree->SetBranchAddress ((m_secondaryJetName+"_GhostMuonSegmentCount").c_str(), &m_secJet_muonSegments);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_Timing").c_str(), 1);
-	  tree->SetBranchAddress ((m_secondaryJetName+"_Timing").c_str(), &m_secJet_timing);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_NegativeE").c_str(), 1);
-	  tree->SetBranchAddress ((m_secondaryJetName+"_NegativeE").c_str(), &m_secJet_negativeE);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_GhostMuonSegmentCount").c_str(), 1);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_GhostMuonSegmentCount").c_str(), &m_secJet_muonSegments);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_Timing").c_str(), 1);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_Timing").c_str(), &m_secJet_timing);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_NegativeE").c_str(), 1);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_NegativeE").c_str(), &m_secJet_negativeE);
 
-          tree->SetBranchStatus  ((m_secondaryJetName+"_clean_passLooseBad").c_str(), 1);
-          tree->SetBranchStatus  ((m_secondaryJetName+"_clean_passLooseBad").c_str(), &m_secJet_clean_passLooseBad);
+          tree->SetBranchStatus  ((m_secondaryJetInName+"_clean_passLooseBad").c_str(), 1);
+          tree->SetBranchStatus  ((m_secondaryJetInName+"_clean_passLooseBad").c_str(), &m_secJet_clean_passLooseBad);
           // tree->SetBranchStatus  ("jet_clean_passLooseBad", 1);
           // tree->SetBranchStatus  ("jet_clean_passLooseBad", &m_secJet_clean_passLooseBad);
 
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_LArQuality").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_LArQuality").c_str(), &m_secJet_LArQuality);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_AverageLArQF").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_AverageLArQF").c_str(), &m_secJet_AverageLArQF);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_HECQuality").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_HECQuality").c_str(), &m_secJet_HECQuality);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_FracSamplingMax").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_FracSamplingMax").c_str(), &m_secJet_FracSamplingMax);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_FracSamplingMaxIndex").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_FracSamplingMaxIndex").c_str(), &m_secJet_FracSamplingMaxIndex);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_LeadingClusterPt").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_LeadingClusterPt").c_str(), &m_secJet_LeadingClusterPt);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_LeadingClusterSecondLambda").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_LeadingClusterSecondLambda").c_str(), &m_secJet_LeadingClusterSecondLambda);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_LeadingClusterCenterLambda").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_LeadingClusterCenterLambda").c_str(), &m_secJet_LeadingClusterCenterLambda);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_LeadingClusterSecondR").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetName+"_LeadingClusterSecondR").c_str(), &m_secJet_LeadingClusterSecondR);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LArQuality").c_str(), 1);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LArQuality").c_str(), &m_secJet_LArQuality);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_AverageLArQF").c_str(), 1);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_AverageLArQF").c_str(), &m_secJet_AverageLArQF);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_HECQuality").c_str(), 1);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_HECQuality").c_str(), &m_secJet_HECQuality);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_FracSamplingMax").c_str(), 1);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_FracSamplingMax").c_str(), &m_secJet_FracSamplingMax);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_FracSamplingMaxIndex").c_str(), 1);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_FracSamplingMaxIndex").c_str(), &m_secJet_FracSamplingMaxIndex);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterPt").c_str(), 1);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterPt").c_str(), &m_secJet_LeadingClusterPt);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterSecondLambda").c_str(), 1);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterSecondLambda").c_str(), &m_secJet_LeadingClusterSecondLambda);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterCenterLambda").c_str(), 1);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterCenterLambda").c_str(), &m_secJet_LeadingClusterCenterLambda);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterSecondR").c_str(), 1);
+	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterSecondR").c_str(), &m_secJet_LeadingClusterSecondR);
 
 	}
 	
@@ -753,7 +756,9 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   unsigned nsecJets    = 0;
   if(m_doSecondaryJets) nsecJets = m_secJet_pt->size();
   float prescaleWeight = 1.0;
-    
+
+  if (m_eventCounter < 36294)   return EL::StatusCode::SUCCESS;
+
   if(m_eventCounter % 10000 == 0) cout << "executing event " << m_eventCounter << endl;
   else if(m_debug) cout << "executing event " << m_eventCounter << endl;
 
