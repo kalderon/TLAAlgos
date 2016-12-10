@@ -1320,23 +1320,23 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     // make event data
     // jet_pt set earlier
     // jet_eta set earlier
-    vector<float>*	jet_phi		 = ( isSecondary ? m_secJet_phi : m_jet_phi );
-    vector<float>*	jet_E			 = ( isSecondary ? m_secJet_E : m_jet_E );
+    vector<float>*	jet_phi	                 = ( isSecondary ? m_secJet_phi          : m_jet_phi );
+    vector<float>*	jet_E			 = ( isSecondary ? m_secJet_E            : m_jet_E );
     vector<float>*	jet_muonSegments	 = ( isSecondary ? m_secJet_muonSegments : m_jet_muonSegments );
-    vector<float>*	jet_EMFrac		 = ( isSecondary ? m_secJet_EMFrac : m_jet_EMFrac );
-    vector<float>*	jet_HECFrac		 = ( isSecondary ? m_secJet_HECFrac : m_jet_HECFrac );
-    vector<float>*	jet_timing		 = ( isSecondary ? m_secJet_timing : m_jet_timing );
-    vector<float>*	jet_negativeE		 = ( isSecondary ? m_secJet_negativeE : m_jet_negativeE );
+    vector<float>*	jet_EMFrac		 = ( isSecondary ? m_secJet_EMFrac       : m_jet_EMFrac );
+    vector<float>*	jet_HECFrac		 = ( isSecondary ? m_secJet_HECFrac      : m_jet_HECFrac );
+    vector<float>*	jet_timing		 = ( isSecondary ? m_secJet_timing       : m_jet_timing );
+    vector<float>*	jet_negativeE		 = ( isSecondary ? m_secJet_negativeE    : m_jet_negativeE );
     // jet_clean_passLooseBad set earlier
-    vector<float>*	jet_LArQuality		 = ( isSecondary ? m_secJet_LeadingClusterPt : m_jet_LArQuality );
-    vector<float>*	jet_AverageLArQF		 = ( isSecondary ? m_secJet_AverageLArQF : m_jet_AverageLArQF );
-    vector<float>*	jet_HECQuality		 = ( isSecondary ? m_secJet_HECQuality : m_jet_HECQuality );
-    vector<float>*	jet_FracSamplingMax		 = ( isSecondary ? m_secJet_FracSamplingMax : m_jet_FracSamplingMax );
-    vector<int>*	jet_FracSamplingMaxIndex	 = ( isSecondary ? m_secJet_FracSamplingMaxIndex : m_jet_FracSamplingMaxIndex );
-    vector<float>*	jet_LeadingClusterPt		 = ( isSecondary ? m_secJet_LeadingClusterPt : m_jet_LeadingClusterPt );
+    vector<float>*	jet_LArQuality	               = ( isSecondary ? m_secJet_LArQuality                 : m_jet_LArQuality );
+    vector<float>*	jet_AverageLArQF	       = ( isSecondary ? m_secJet_AverageLArQF               : m_jet_AverageLArQF );
+    vector<float>*	jet_HECQuality		       = ( isSecondary ? m_secJet_HECQuality                 : m_jet_HECQuality );
+    vector<float>*	jet_FracSamplingMax	       = ( isSecondary ? m_secJet_FracSamplingMax            : m_jet_FracSamplingMax );
+    vector<int>*	jet_FracSamplingMaxIndex       = ( isSecondary ? m_secJet_FracSamplingMaxIndex       : m_jet_FracSamplingMaxIndex );
+    vector<float>*	jet_LeadingClusterPt           = ( isSecondary ? m_secJet_LeadingClusterPt           : m_jet_LeadingClusterPt );
     vector<float>*	jet_LeadingClusterSecondLambda = ( isSecondary ? m_secJet_LeadingClusterSecondLambda : m_jet_LeadingClusterSecondLambda );
     vector<float>*	jet_LeadingClusterCenterLambda = ( isSecondary ? m_secJet_LeadingClusterCenterLambda : m_jet_LeadingClusterCenterLambda );
-    vector<float>*	jet_LeadingClusterSecondR	= ( isSecondary ? m_secJet_LeadingClusterSecondR : m_jet_LeadingClusterSecondR );
+    vector<float>*	jet_LeadingClusterSecondR      = ( isSecondary ? m_secJet_LeadingClusterSecondR      : m_jet_LeadingClusterSecondR );
 
 
     if(m_debug) cout << " filling eventData" << endl;
