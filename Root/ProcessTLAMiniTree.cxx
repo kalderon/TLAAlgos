@@ -212,40 +212,40 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
 
   }
   else if (m_isDijetNtupleTrig || m_isDijetNtupleOffline) {
-   hIncl    = new eventHists("TriggerJets"        ,       wk());
-   hCentral = new eventHists("TriggerJets_0-12"   ,       wk());
-   hCrack   = new eventHists("TriggerJets_12-16"  ,       wk());
-   hEndcap  = new eventHists("TriggerJets_16-28"  ,       wk());
+   hIncl    = new eventHists((m_primaryJetOutName+"").c_str()        ,       wk());
+   hCentral = new eventHists((m_primaryJetOutName+"_0-12").c_str()   ,       wk());
+   hCrack   = new eventHists((m_primaryJetOutName+"_12-16").c_str()  ,       wk());
+   hEndcap  = new eventHists((m_primaryJetOutName+"_16-28").c_str()  ,       wk());
       
-   hIncl_mjjWindow    = new eventHists("TriggerJets_mjjWindow"        ,       wk());
-   hCentral_mjjWindow = new eventHists("TriggerJets_0-12_mjjWindow"   ,       wk());
-   hCrack_mjjWindow   = new eventHists("TriggerJets_12-16_mjjWindow"  ,       wk());
-   hEndcap_mjjWindow  = new eventHists("TriggerJets_16-28_mjjWindow"  ,       wk());
+   hIncl_mjjWindow    = new eventHists((m_primaryJetOutName+"_mjjWindow").c_str()        ,       wk());
+   hCentral_mjjWindow = new eventHists((m_primaryJetOutName+"_0-12_mjjWindow").c_str()   ,       wk());
+   hCrack_mjjWindow   = new eventHists((m_primaryJetOutName+"_12-16_mjjWindow").c_str()  ,       wk());
+   hEndcap_mjjWindow  = new eventHists((m_primaryJetOutName+"_16-28_mjjWindow").c_str()  ,       wk());
 
-   hPt200 = new eventHists("TriggerJets_j0Pt200"  ,       wk());
-   hPt210 = new eventHists("TriggerJets_j0Pt210"  ,       wk());
-   hPt220 = new eventHists("TriggerJets_j0Pt220"  ,       wk());
-   hPt230 = new eventHists("TriggerJets_j0Pt230"  ,       wk());
-   hPt240 = new eventHists("TriggerJets_j0Pt240"  ,       wk());
-   hPt250 = new eventHists("TriggerJets_j0Pt250"  ,       wk());
+   hPt200 = new eventHists((m_primaryJetOutName+"_j0Pt200").c_str()  ,       wk());
+   hPt210 = new eventHists((m_primaryJetOutName+"_j0Pt210").c_str()  ,       wk());
+   hPt220 = new eventHists((m_primaryJetOutName+"_j0Pt220").c_str()  ,       wk());
+   hPt230 = new eventHists((m_primaryJetOutName+"_j0Pt230").c_str()  ,       wk());
+   hPt240 = new eventHists((m_primaryJetOutName+"_j0Pt240").c_str()  ,       wk());
+   hPt250 = new eventHists((m_primaryJetOutName+"_j0Pt250").c_str()  ,       wk());
 
    if(m_doSecondaryJets) {
-     hSecIncl    = new eventHists("TriggerJetsSec"        ,       wk());
-     hSecCentral = new eventHists("TriggerJetsSec_0-12"   ,       wk());
-     hSecCrack   = new eventHists("TriggerJetsSec_12-16"  ,       wk());
-     hSecEndcap  = new eventHists("TriggerJetsSec_16-28"  ,       wk());
+     hSecIncl    = new eventHists((m_secondaryJetOutName+"Sec").c_str()        ,       wk());
+     hSecCentral = new eventHists((m_secondaryJetOutName+"Sec_0-12").c_str()   ,       wk());
+     hSecCrack   = new eventHists((m_secondaryJetOutName+"Sec_12-16").c_str()  ,       wk());
+     hSecEndcap  = new eventHists((m_secondaryJetOutName+"Sec_16-28").c_str()  ,       wk());
      
-     hSecIncl_mjjWindow    = new eventHists("TriggerJetsSec_mjjWindow"        ,       wk());
-     hSecCentral_mjjWindow = new eventHists("TriggerJetsSec_0-12_mjjWindow"   ,       wk());
-     hSecCrack_mjjWindow   = new eventHists("TriggerJetsSec_12-16_mjjWindow"  ,       wk());
-     hSecEndcap_mjjWindow  = new eventHists("TriggerJetsSec_16-28_mjjWindow"  ,       wk());
+     hSecIncl_mjjWindow    = new eventHists((m_secondaryJetOutName+"Sec_mjjWindow").c_str()        ,       wk());
+     hSecCentral_mjjWindow = new eventHists((m_secondaryJetOutName+"Sec_0-12_mjjWindow").c_str()   ,       wk());
+     hSecCrack_mjjWindow   = new eventHists((m_secondaryJetOutName+"Sec_12-16_mjjWindow").c_str()  ,       wk());
+     hSecEndcap_mjjWindow  = new eventHists((m_secondaryJetOutName+"Sec_16-28_mjjWindow").c_str()  ,       wk());
 
-     hSecPt200 = new eventHists("TriggerJetsSec_j0Pt200"  ,       wk());
-     hSecPt210 = new eventHists("TriggerJetsSec_j0Pt210"  ,       wk());
-     hSecPt220 = new eventHists("TriggerJetsSec_j0Pt220"  ,       wk());
-     hSecPt230 = new eventHists("TriggerJetsSec_j0Pt230"  ,       wk());
-     hSecPt240 = new eventHists("TriggerJetsSec_j0Pt240"  ,       wk());
-     hSecPt250 = new eventHists("TriggerJetsSec_j0Pt250"  ,       wk());
+     hSecPt200 = new eventHists((m_secondaryJetOutName+"Sec_j0Pt200").c_str()  ,       wk());
+     hSecPt210 = new eventHists((m_secondaryJetOutName+"Sec_j0Pt210").c_str()  ,       wk());
+     hSecPt220 = new eventHists((m_secondaryJetOutName+"Sec_j0Pt220").c_str()  ,       wk());
+     hSecPt230 = new eventHists((m_secondaryJetOutName+"Sec_j0Pt230").c_str()  ,       wk());
+     hSecPt240 = new eventHists((m_secondaryJetOutName+"Sec_j0Pt240").c_str()  ,       wk());
+     hSecPt250 = new eventHists((m_secondaryJetOutName+"Sec_j0Pt250").c_str()  ,       wk());
 
    }
   }
@@ -858,64 +858,6 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       if(m_debug) cout << " Fail NPV " << endl;
       return EL::StatusCode::SUCCESS;
   }
-
-
-  // select on relevant triggers (want to base trigger choice on calibrated, offline jets...)
-  if(m_doTrigger || m_doTrigger_j110){
-    if(m_debug) Info("execute()", "Doing Trigger ");
-    
-    bool m_dumpTrig = false ;
-    if(m_dumpTrig){
-      cout << " --------" << endl;
-      for(std::string& thisTrig: *m_passedTriggers)
-	cout << thisTrig << endl;
-    }//end dump trigger
-    
-    std::string trig;
-
-    // this is from 2015
-    // if (m_jet_pt->at(0) < 85) return EL::StatusCode::SUCCESS; 
-    // if (m_jet_pt->at(0) < 116) { trig = "HLT_j60"; }
-    // else if (m_jet_pt->at(0) < 172) { trig = "HLT_j85"; }
-    // else if (m_jet_pt->at(0) < 240) { trig = "HLT_j110"; }
-    // else if (m_jet_pt->at(0) < 318) { trig = "HLT_j200"; }
-    // else if (m_jet_pt->at(0) < 350) { trig = "HLT_j260"; }
-    // else if (m_jet_pt->at(0) < 410) { trig = "HLT_j320"; }
-    // else trig = "HLT_j360";
-
-
-    // taking triggers active for all of 2016
-    // j110 21
-    // j150 26 <- ignore since barely any less prescaled than j110
-    // j175 154
-    // j260 950
-    // j380 38074
-    // full 38409
-
-    // linear fit to 2015 turnons: t = (1.03*p + 36)
-    // tried 10% increase but looked a tad worse re not-on-threshold
-
-    if (m_jet_pt->at(0) < 216) { trig = "HLT_j110"; }
-    else if (m_jet_pt->at(0) < 304) { trig = "HLT_j175"; }
-    else if (m_jet_pt->at(0) < 427) { trig = "HLT_j260"; }
-    else trig = "HLT_j380";
-    
-    if(m_doTrigger_j110)
-      trig = "HLT_j110";
-    
-    std::vector<string>::iterator trigIt = std::find(m_passedTriggers->begin(), m_passedTriggers->end(), trig);
-    if (trigIt == m_passedTriggers->end()) {
-      return EL::StatusCode::SUCCESS;
-    }
-    else {
-      prescaleWeight = m_triggerPrescales->at(std::distance(m_passedTriggers->begin(), trigIt));
-      //std::cout << "trig: " << trig << ", distance from front of vector" << (std::distance(m_passedTriggers->begin(), trigIt)) << std::endl;
-      //std::cout << "prescale: " << prescaleWeight << std::endl;
-    }//end do trigger with prescales
-    
-    //bool passHLT_j360 = (find(m_passedTriggers->begin(), m_passedTriggers->end(), "HLT_j360" ) != m_passedTriggers->end());
-    
-  }// end of do trigger
   
 
 
@@ -1066,6 +1008,68 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     }
     
     if(m_debug) cout << jet_pt->size() << " jets in collection" << endl;
+
+
+    // select on relevant triggers (want to base trigger choice on relevant jet collection)
+    // (this way it doesn't matter whether I run together or separately)
+
+    if(m_doTrigger || m_doTrigger_j110){
+      if(m_debug) Info("execute()", "Doing Trigger ");
+      
+      bool m_dumpTrig = false ;
+      if(m_dumpTrig){
+	cout << " --------" << endl;
+	for(std::string& thisTrig: *m_passedTriggers)
+	  cout << thisTrig << endl;
+      }//end dump trigger
+      
+      std::string trig;
+      
+      // this is from 2015
+      // if (m_jet_pt->at(0) < 85) return EL::StatusCode::SUCCESS; 
+      // if (m_jet_pt->at(0) < 116) { trig = "HLT_j60"; }
+      // else if (m_jet_pt->at(0) < 172) { trig = "HLT_j85"; }
+      // else if (m_jet_pt->at(0) < 240) { trig = "HLT_j110"; }
+      // else if (m_jet_pt->at(0) < 318) { trig = "HLT_j200"; }
+      // else if (m_jet_pt->at(0) < 350) { trig = "HLT_j260"; }
+      // else if (m_jet_pt->at(0) < 410) { trig = "HLT_j320"; }
+      // else trig = "HLT_j360";
+      
+      
+      // taking triggers active for all of 2016
+      // j110 21
+      // j150 26 <- ignore since barely any less prescaled than j110
+      // j175 154
+      // j260 950
+      // j380 38074
+      // full 38409
+      
+      // linear fit to 2015 turnons: t = (1.03*p + 36)
+      // tried 10% increase but looked a tad worse re not-on-threshold
+      
+      if (m_jet_pt->at(0) < 216) { trig = "HLT_j110"; }
+      else if (m_jet_pt->at(0) < 304) { trig = "HLT_j175"; }
+      else if (m_jet_pt->at(0) < 427) { trig = "HLT_j260"; }
+      else trig = "HLT_j380";
+      
+      if(m_doTrigger_j110)
+	trig = "HLT_j110";
+      
+      std::vector<string>::iterator trigIt = std::find(m_passedTriggers->begin(), m_passedTriggers->end(), trig);
+      if (trigIt == m_passedTriggers->end()) {
+	continue;
+      }
+      else {
+	prescaleWeight = m_triggerPrescales->at(std::distance(m_passedTriggers->begin(), trigIt));
+	//std::cout << "trig: " << trig << ", distance from front of vector" << (std::distance(m_passedTriggers->begin(), trigIt)) << std::endl;
+	//std::cout << "prescale: " << prescaleWeight << std::endl;
+      }//end do trigger with prescales
+      
+      //bool passHLT_j360 = (find(m_passedTriggers->begin(), m_passedTriggers->end(), "HLT_j360" ) != m_passedTriggers->end());
+      
+    }// end of do trigger
+    
+
 
     if(jet_pt->at(0) < m_leadJetPtCut) {
       if(m_debug) cout << " Fail LeadJetPt " << endl;
