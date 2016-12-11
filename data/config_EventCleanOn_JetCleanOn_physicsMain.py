@@ -76,9 +76,9 @@ c.setalg("ProcessTLAMiniTree",
            
            
            # event cleaning
-           "m_applyLArEventCleaning"    : True, # veto events which fail LAr event cleaning, from AOD if isDijetNtupleOffline, from tool if ....Trig
+           "m_applyLArEventCleaning"    : False, # veto events which fail LAr event cleaning, from AOD if isDijetNtupleOffline, from tool if ....Trig
            "m_invertLArEventCleaning"   : False, # veto events which pass event cleaning (only if above is true)
-           "m_applyTLALArEventVetoData" : False, # run tool
+           "m_applyTLALArEventVetoData" : True, # run tool
            "m_TLALArEventVetoFiles"   : "$ROOTCOREBIN/data/TLAEventCleaning/event-veto-data/",
            
            # jet cleaning

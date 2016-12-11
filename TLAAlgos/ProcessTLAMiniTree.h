@@ -169,6 +169,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		double m_eta_freeze;//!*/
 
 		TH2D* m_h2_LArError; //!
+		TH2D* m_h2_LArError_postSelection; //!
+		TH2D* m_h2_LArError_postSelection_w; //!
 		TH2D* m_h2_jetCleaning; //!
 		TH2D* m_h2_avgIntPerX_map_AOD; //!
 		TH2F* m_h2_pileupMap; //!

@@ -267,8 +267,15 @@ EL::StatusCode ProcessTLAMiniTree :: histInitialize ()
   Info("histInitialize()", "Calling histInitialize \n");
 
   // validation histograms
-  m_h2_LArError = new TH2D("h2_LArError", "h2_LArError;Offline: isLArError;Tool: isLArError", 2, 0, 2, 2, 0, 2);
+  m_h2_LArError = new TH2D("h2_LArError", "h2_LArError;Offline: isLArError;Tool: isLArError", 2, 0, 2, 4, 0, 4);
   wk()->addOutput(m_h2_LArError);
+
+  m_h2_LArError_postSelection = new TH2D("h2_LArError_postSelection", "h2_LArError_postSelection;Offline: isLArError;Tool: isLArError", 2, 0, 2, 4, 0, 4);
+  wk()->addOutput(m_h2_LArError_postSelection);
+
+  m_h2_LArError_postSelection_w = new TH2D("h2_LArError_postSelection_w", "h2_LArError_postSelection_weighted;Offline: isLArError;Tool: isLArError", 2, 0, 2, 4, 0, 4);
+  wk()->addOutput(m_h2_LArError_postSelection_w);
+
 
   m_h2_avgIntPerX_map_AOD = new TH2D("h2_avgIntPerX_map_AOD", "h2_avgIntPerX_map_AOD;from map;from AOD", 101,-1,100,101,-1,100);
   wk()->addOutput(m_h2_avgIntPerX_map_AOD);
@@ -835,24 +842,31 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   // LAr event cleaning start //
   //////////////////////////////
 
+  int LArError_offline = 0;
+  int LArError_tool = 0;
   bool failLArError = false;
   bool failToolError = false;
-    
+
   //minimal LAr/event cleaning selection
   if(!m_isTLANtupleTruth && !m_isDijetNtupleTruth) {
-    if (m_LArError) failLArError=true;
+    if (m_LArError) {
+      LArError_offline = 1;
+      failLArError = true;
+    }
 
     if (m_applyTLALArEventVetoData) {
         //if(m_debug) cout << " Fail LArError " << endl;
         // run, lbn, timestamp (seconds), timestamp_ns_offset
       bool veto = m_dataForLArEventVeto->shouldVeto(m_runNumber,m_lumiBlock,m_timeStamp,m_timeStampNSOffset);
-      failToolError=veto;
-      //if (veto) cout << "eventNumber: " << m_eventNumber << " Fail LArError, event veto " << endl;
-      
-      if (failToolError && failLArError) m_h2_LArError->Fill(1.5,1.5);
-      if (!failToolError && failLArError) m_h2_LArError->Fill(1.5,0.5);
-      if (failToolError && !failLArError) m_h2_LArError->Fill(0.5,1.5);
-      if (!failToolError && !failLArError) m_h2_LArError->Fill(0.5,0.5);
+      if(veto) {
+	failToolError = true;
+	LArError_tool = 1;
+	string LArErrorType = m_dataForLArEventVeto->vetoType(m_runNumber,m_lumiBlock,m_timeStamp,m_timeStampNSOffset);
+	if (LArErrorType=="NoiseBurst")          LArError_tool = 1;
+	else if (LArErrorType=="MiniNoiseBurst") LArError_tool = 2;
+	else                                     LArError_tool = 3;
+      }
+      m_h2_LArError->Fill(LArError_offline, LArError_tool);
     }
     
   }
@@ -1419,6 +1433,13 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
 
     if(m_debug) cout << " Pass All Cut " << endl;
+
+
+    // fill LAr Event cleaning histo after event selection cuts
+    if(!isSecondary) {
+      m_h2_LArError_postSelection->Fill(LArError_offline, LArError_tool);
+      m_h2_LArError_postSelection_w->Fill(LArError_offline, LArError_tool, eventWeight*prescaleWeight);
+    }
 
 
     // make event data
