@@ -171,6 +171,11 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
 EL::StatusCode  ProcessTLAMiniTree :: configure ()
 {
 
+  if(m_isDijetNtupleTrig || m_isTLANtupleTrig) {
+    m_doTrigger = false;
+    m_doTrigger_j110 = false;
+  }
+
   //histograms that are always there, defaulting to what is in the 'jet' branch
   //this is the distribution we cut on
     
