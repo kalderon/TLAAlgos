@@ -213,22 +213,22 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
    hPt250 = new eventHists((m_primaryJetOutName+"_j0Pt250").c_str()  ,       wk());
 
    if(m_doSecondaryJets) {
-     hSecIncl    = new eventHists((m_secondaryJetOutName+"Sec").c_str()        ,       wk());
-     hSecCentral = new eventHists((m_secondaryJetOutName+"Sec_0-12").c_str()   ,       wk());
-     hSecCrack   = new eventHists((m_secondaryJetOutName+"Sec_12-16").c_str()  ,       wk());
-     hSecEndcap  = new eventHists((m_secondaryJetOutName+"Sec_16-28").c_str()  ,       wk());
+     hSecIncl    = new eventHists((m_secondaryJetOutName+"").c_str()        ,       wk());
+     hSecCentral = new eventHists((m_secondaryJetOutName+"_0-12").c_str()   ,       wk());
+     hSecCrack   = new eventHists((m_secondaryJetOutName+"_12-16").c_str()  ,       wk());
+     hSecEndcap  = new eventHists((m_secondaryJetOutName+"_16-28").c_str()  ,       wk());
      
-     hSecIncl_mjjWindow    = new eventHists((m_secondaryJetOutName+"Sec_mjjWindow").c_str()        ,       wk());
-     hSecCentral_mjjWindow = new eventHists((m_secondaryJetOutName+"Sec_0-12_mjjWindow").c_str()   ,       wk());
-     hSecCrack_mjjWindow   = new eventHists((m_secondaryJetOutName+"Sec_12-16_mjjWindow").c_str()  ,       wk());
-     hSecEndcap_mjjWindow  = new eventHists((m_secondaryJetOutName+"Sec_16-28_mjjWindow").c_str()  ,       wk());
+     hSecIncl_mjjWindow    = new eventHists((m_secondaryJetOutName+"_mjjWindow").c_str()        ,       wk());
+     hSecCentral_mjjWindow = new eventHists((m_secondaryJetOutName+"_0-12_mjjWindow").c_str()   ,       wk());
+     hSecCrack_mjjWindow   = new eventHists((m_secondaryJetOutName+"_12-16_mjjWindow").c_str()  ,       wk());
+     hSecEndcap_mjjWindow  = new eventHists((m_secondaryJetOutName+"_16-28_mjjWindow").c_str()  ,       wk());
 
-     hSecPt200 = new eventHists((m_secondaryJetOutName+"Sec_j0Pt200").c_str()  ,       wk());
-     hSecPt210 = new eventHists((m_secondaryJetOutName+"Sec_j0Pt210").c_str()  ,       wk());
-     hSecPt220 = new eventHists((m_secondaryJetOutName+"Sec_j0Pt220").c_str()  ,       wk());
-     hSecPt230 = new eventHists((m_secondaryJetOutName+"Sec_j0Pt230").c_str()  ,       wk());
-     hSecPt240 = new eventHists((m_secondaryJetOutName+"Sec_j0Pt240").c_str()  ,       wk());
-     hSecPt250 = new eventHists((m_secondaryJetOutName+"Sec_j0Pt250").c_str()  ,       wk());
+     hSecPt200 = new eventHists((m_secondaryJetOutName+"_j0Pt200").c_str()  ,       wk());
+     hSecPt210 = new eventHists((m_secondaryJetOutName+"_j0Pt210").c_str()  ,       wk());
+     hSecPt220 = new eventHists((m_secondaryJetOutName+"_j0Pt220").c_str()  ,       wk());
+     hSecPt230 = new eventHists((m_secondaryJetOutName+"_j0Pt230").c_str()  ,       wk());
+     hSecPt240 = new eventHists((m_secondaryJetOutName+"_j0Pt240").c_str()  ,       wk());
+     hSecPt250 = new eventHists((m_secondaryJetOutName+"_j0Pt250").c_str()  ,       wk());
 
    }
   }
@@ -266,8 +266,7 @@ EL::StatusCode ProcessTLAMiniTree :: histInitialize ()
   // connected.
   Info("histInitialize()", "Calling histInitialize \n");
 
-    //make the test histogram
-    
+  // validation histograms
   m_h2_LArError = new TH2D("h2_LArError", "h2_LArError;Offline: isLArError;Tool: isLArError", 2, 0, 2, 2, 0, 2);
   wk()->addOutput(m_h2_LArError);
 
@@ -276,6 +275,24 @@ EL::StatusCode ProcessTLAMiniTree :: histInitialize ()
     
   m_h2_jetCleaning = new TH2D("h2_jetCleaning", "h2_jetCleaning;jet pass LooseBad;manual calc", 2, 0, 2, 2, 0, 2);
   wk()->addOutput(m_h2_jetCleaning);
+
+  // cutflow histograms
+  m_h_cutflow_primary = new TH1D("h_cutflow_primary", "h_cutflow_primary", 1, 0, 1);
+  m_h_cutflow_primary->SetBit(TH1::kCanRebin); // since I want to extend range with more entries in cutflow
+  wk()->addOutput(m_h_cutflow_primary);
+
+  m_h_cutflow_secondary = new TH1D("h_cutflow_secondary", "h_cutflow_secondary", 1, 0, 1);
+  m_h_cutflow_secondary->SetBit(TH1::kCanRebin);
+  wk()->addOutput(m_h_cutflow_secondary);
+
+  m_h_cutflow_primary_w = new TH1D("h_cutflow_primary_w", "h_cutflow_primary_weighted", 1, 0, 1);
+  m_h_cutflow_primary_w->SetBit(TH1::kCanRebin);
+  wk()->addOutput(m_h_cutflow_primary_w);
+
+  m_h_cutflow_secondary_w = new TH1D("h_cutflow_secondary_w", "h_cutflow_secondary_weighted", 1, 0, 1);
+  m_h_cutflow_secondary_w->SetBit(TH1::kCanRebin);
+  wk()->addOutput(m_h_cutflow_secondary_w);
+
 
   return EL::StatusCode::SUCCESS;
 }
@@ -290,6 +307,30 @@ EL::StatusCode ProcessTLAMiniTree :: fileExecute ()
 
   TFile* inputFile = wk()->inputFile();
   cout << inputFile << ", " << inputFile->GetName() << endl;
+
+  // get nEvents values from NTUP and set bin errors appropriately
+  TH1D* NTUP_MetaData = (TH1D*)inputFile->Get("MetaData_EventCount");
+  m_h_cutflow_primary->Fill("NTUP initial", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents initial")));
+  m_h_cutflow_primary->Fill("NTUP selected", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents selected")));
+  m_h_cutflow_primary->SetBinError(1, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents initial"))) );
+  m_h_cutflow_primary->SetBinError(2, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents selected"))) );
+  // weighted
+  m_h_cutflow_primary_w->Fill("NTUP initial", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeights initial")));
+  m_h_cutflow_primary_w->Fill("NTUP selected", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeights selected")));
+  m_h_cutflow_primary->SetBinError(1, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeightsSquared initial"))) );
+  m_h_cutflow_primary->SetBinError(2, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeightsSquared selected"))) );
+
+  // secondary hists
+  m_h_cutflow_secondary->Fill("NTUP initial", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents initial")));
+  m_h_cutflow_secondary->Fill("NTUP selected", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents selected")));
+  m_h_cutflow_secondary->SetBinError(1, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents initial"))) );
+  m_h_cutflow_secondary->SetBinError(2, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents selected"))) );
+  // weighted
+  m_h_cutflow_secondary_w->Fill("NTUP initial", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeights initial")));
+  m_h_cutflow_secondary_w->Fill("NTUP selected", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeights selected")));
+  m_h_cutflow_secondary->SetBinError(1, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeightsSquared initial"))) );
+  m_h_cutflow_secondary->SetBinError(2, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeightsSquared selected"))) );
+
 
   return EL::StatusCode::SUCCESS;
 }
@@ -745,6 +786,13 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
   m_avgIntPerX = -1;
 
+  string cutname = "executed";
+  m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+  m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(m_weight));
+  m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+  m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(m_weight));
+
+ 
   if(m_doData){
    
     if ( m_applyGRL ) {
@@ -767,6 +815,12 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       m_h2_avgIntPerX_map_AOD->Fill(m_avgIntPerX_fromMap, m_avgIntPerX_fromAOD);
       m_avgIntPerX = m_avgIntPerX_fromMap;
     }
+
+    cutname = "pass GRL";
+    m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+    m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(m_weight));
+    m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+    m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(m_weight));
 
   }//end of m_doData
 
@@ -821,25 +875,30 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     }
   }
 
+  cutname = "LAr event cleaning";
+  m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+  m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(m_weight));
+  m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+  m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(m_weight));
+
   //////////////////////////////
   // LAr event cleaning end   //
   //////////////////////////////
 
 
-  
-  // Require dijet
-  if(njets < 2 && nsecJets < 2){
-    if(m_debug) cout << " Fail NJets " << endl;
-    return EL::StatusCode::SUCCESS;
-  }
-    
 
   //minimal NPV selection
   if(m_NPV < 1 && (m_isTLANtupleOffline || m_isDijetNtupleOffline)){
       if(m_debug) cout << " Fail NPV " << endl;
       return EL::StatusCode::SUCCESS;
   }
-  
+
+  cutname = "NPV";
+  m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+  m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(m_weight));
+  m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+  m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(m_weight));
+    
 
 
   /*if (m_applySF) {
@@ -909,7 +968,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   bool skipEvent = false;
   for(bool isSecondary: isSecondaryVec) {
     
-    // veto njets < 2 - earlier I've done an or
+    // veto njets < 2
     if(isSecondary && nsecJets < 2){
       if(m_debug) cout << " Fail NSecJets " << endl;
       continue;
@@ -917,6 +976,15 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     else if(!isSecondary && njets < 2){
       if(m_debug) cout << " Fail NJets " << endl;
       continue;
+    }
+
+    cutname = "2 jets";
+    if(isSecondary) {
+      m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(m_weight));
+    } else {
+      m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(m_weight));
     }
 
     // set jet_pt etc accordingly
@@ -995,23 +1063,92 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       
       //bool passHLT_j360 = (find(m_passedTriggers->begin(), m_passedTriggers->end(), "HLT_j360" ) != m_passedTriggers->end());
       
+      cutname = "trigger";
+      if(isSecondary) {
+	m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+	m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(m_weight));
+      } else {
+	m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+	m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(m_weight));
+      }
+
+
+      cutname = "trigger prescale";
+      if(isSecondary) {
+	m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(m_weight*prescaleWeight));
+      } else {
+	m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(m_weight*prescaleWeight));
+      }
+      
     }// end of do trigger
     
 
+    // get event weight 
+    float eventWeight = m_weight;
+    if(!m_doData) eventWeight = m_weight * m_lumi/m_sampleEvents;
+    if(m_debug) cout << " lumi: " << m_lumi << endl;
+    if(m_debug) cout << " weight: " << m_weight << endl;
+    if(m_debug) cout << " sampleEvents: " << m_sampleEvents << endl;
+    if(m_doData) eventWeight = 1.0;
+    
+    //if(m_useWeighted && (eventWeight > 1000)){
+    //  cout << "skipping event with Weight: " << eventWeight << " " << m_lumi << " " << m_weight << " " << m_weight_xs << endl;
+    //  continue;    
+    //}
 
+    if(m_debug) cout << " Weight: " << eventWeight << endl;
+
+    cutname = "final weight";
+    if(isSecondary) {
+      m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    } else {
+      m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    }
+
+    
+    // kinematic selection
     if(jet_pt->at(0) < m_leadJetPtCut) {
       if(m_debug) cout << " Fail LeadJetPt " << endl;
       continue;
     }
+
+    cutname = "lead jet pT > "+to_string(m_leadJetPtCut);
+    if(isSecondary) {
+      m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    } else {
+      m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    }
+
 
     if(jet_pt->at(1) < m_subleadJetPtCut) {
       if(m_debug) cout << " Fail subLeadJetPt " << endl;
       continue;
     }
 
+    cutname = "sublead jet pT > "+to_string(m_subleadJetPtCut);
+    if(isSecondary) {
+      m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    } else {
+      m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    }
+
+
     if(fabs(jet_eta->at(0)) > m_etaCut) {
       if(m_debug) cout << " Fail LeadJetEta " << endl;
       continue;
+    }
+
+    cutname = "lead jet eta < "+to_string(m_etaCut);
+    if(isSecondary) {
+      m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    } else {
+      m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
     }
 
 
@@ -1019,6 +1156,16 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       if(m_debug) cout << " Fail subLeadJetEta " << endl;
       continue;
     }
+
+    cutname = "sublead jet eta < "+to_string(m_etaCut);
+    if(isSecondary) {
+      m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    } else {
+      m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    }
+
 
     TLorentzVector jet1 = TLorentzVector();
     if(isSecondary) jet1.SetPtEtaPhiE(m_secJet_pt->at(0),m_secJet_eta->at(0),m_secJet_phi->at(0),m_secJet_E->at(0));
@@ -1035,10 +1182,28 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       continue;
     }
 
+    cutname = "yStar < "+to_string(m_YStarCut);
+    if(isSecondary) {
+      m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    } else {
+      m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    }
+
     float yBoost = ( jet1.Rapidity() + jet2.Rapidity() ) / 2.0;
     if(fabs(yBoost) > m_YBoostCut){
       if(m_debug) cout << " Fail YBoost " << endl;
       continue;
+    }
+
+    cutname = "yBoost < "+to_string(m_YBoostCut);
+    if(isSecondary) {
+      m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    } else {
+      m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
     }
 
 
@@ -1243,25 +1408,17 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       }
     }
 
+    cutname = "jet cleaning";
+    if(isSecondary) {
+      m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    } else {
+      m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+      m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+    }
+
 
     if(m_debug) cout << " Pass All Cut " << endl;
-
-    // get event weight 
-    float eventWeight = m_weight;
-    if(!m_doData) eventWeight = m_weight * m_lumi/m_sampleEvents;
-    if(m_debug) cout << " lumi: " << m_lumi << endl;
-    if(m_debug) cout << " weight: " << m_weight << endl;
-    if(m_debug) cout << " sampleEvents: " << m_sampleEvents << endl;
-
-    if(m_doData) eventWeight = 1.0;
-
-    //if(m_useWeighted && (eventWeight > 1000)){
-    //  cout << "skipping event with Weight: " << eventWeight << " " << m_lumi << " " << m_weight << " " << m_weight_xs << endl;
-    //  continue;    
-    //}
-
-
-    if(m_debug) cout << " Weight: " << eventWeight << endl;
 
 
     // make event data

@@ -168,10 +168,16 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		double m_pt_freeze;//!
 		double m_eta_freeze;//!*/
 
-		TH2D* m_h2_LArError;//!
-		TH2D* m_h2_jetCleaning;//!
-		TH2D* m_h2_avgIntPerX_map_AOD;//!
-		TH2F* m_h2_pileupMap;//!
+		TH2D* m_h2_LArError; //!
+		TH2D* m_h2_jetCleaning; //!
+		TH2D* m_h2_avgIntPerX_map_AOD; //!
+		TH2F* m_h2_pileupMap; //!
+		
+		TH1D* m_h_cutflow_primary; //!
+		TH1D* m_h_cutflow_secondary; //!
+		TH1D* m_h_cutflow_primary_w; //!
+		TH1D* m_h_cutflow_secondary_w; //!
+
 
 		//
 		// Jet Data
@@ -487,7 +493,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    // added cleaning variables
 		    h_LArQuality_lead                    = book (wk, name, "LArQuality_lead", "LArQuality_lead;Lead jet LAr Quality",  100, 0, 5 );
 		    h_AverageLArQF_lead                  = book (wk, name, "AverageLArQF_lead", "AverageLArQF_lead;Lead jet average LAr QF",  140, 0, 70000 );
-		    h_HECQuality_lead                    = book (wk, name, "HECQuality_lead", "HECQuality_lead;Lead jet HEC Quality",  100, -1, 1 );
+		    h_HECQuality_lead                    = book (wk, name, "HECQuality_lead", "HECQuality_lead;Lead jet HEC Quality",  150, -1, 2 );
 		    h_FracSamplingMax_FracSamplingMaxIndex_lead = book (wk, name, "FracSamplingMax_FracSamplingMaxIndex_lead", 
 									"FracSamplingMax_FracSamplingMaxIndex_lead;Lead jet FracSamplingMax;Lead jet FracSamplingMaxIndex",
 									100, -2, -2, 25,0,25 );
@@ -501,7 +507,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
 		    h_LArQuality_sublead                    = book (wk, name, "LArQuality_sublead", "LArQuality_sublead;Sublead jet LAr Quality",  100, 0, 5 );
 		    h_AverageLArQF_sublead                  = book (wk, name, "AverageLArQF_sublead", "AverageLArQF_sublead;Sublead jet average LAr QF",  140, 0, 70000 );
-		    h_HECQuality_sublead                    = book (wk, name, "HECQuality_sublead", "HECQuality_sublead;Sublead jet HEC Quality",  100, -1, 1 );
+		    h_HECQuality_sublead                    = book (wk, name, "HECQuality_sublead", "HECQuality_sublead;Sublead jet HEC Quality",  150, -1, 2 );
 		    h_FracSamplingMax_FracSamplingMaxIndex_sublead = book (wk, name, "FracSamplingMax_FracSamplingMaxIndex_sublead", 
 									"FracSamplingMax_FracSamplingMaxIndex_sublead;Sublead jet FracSamplingMax;Sublead jet FracSamplingMaxIndex",
 									100, -2, -2, 25,0,25 );
