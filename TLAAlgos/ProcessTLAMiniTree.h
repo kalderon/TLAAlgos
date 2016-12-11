@@ -48,38 +48,38 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		bool m_doData;
 
 		// normalisation
-		bool m_useCutflow;
-		bool m_useWeighted;            
-		float m_lumi;                   // Lumi we are scaling to
+		bool m_useCutflow;         // get normalisation from cutflow
+		bool m_useWeighted;        // get normalisation from weighted cutflow (is m_useCutflow is True)
+		float m_lumi;              // Lumi we are scaling to
 		
 		// GRL and pileup
 		bool m_applyGRL;
 		std::string m_GRLxml;
-		bool m_doPileupFromMap;
+		bool m_doPileupFromMap;    // get pileup from map
 		std::string m_pileupMap;
     
 		// trigger selection
-		bool m_doTrigger;
-		bool m_doTrigger_j110;
+		bool m_doTrigger;          // this selects according to an OR of single jet triggers
+		bool m_doTrigger_j110;     // this selects according to j110 only (overwrites above)
 
 		// which jet collections to use
-		std::string m_primaryJetInName;
-		std::string m_primaryJetOutName;
+		std::string m_primaryJetInName;     // name in NTUP
+		std::string m_primaryJetOutName;    // subdirectory name in histogram file
 		bool m_doSecondaryJets;
 		std::string m_secondaryJetInName;
 		std::string m_secondaryJetOutName;
 		
     		// Event cleaning configuration
-		bool m_applyLArEventCleaning;
-		bool m_invertLArEventCleaning;
-		bool m_applyTLALArEventVetoData;
+		bool m_applyLArEventCleaning;        // veto events which fail LAr event cleaning
+		bool m_invertLArEventCleaning;       // veto events which pass (only if above is true)
+		bool m_applyTLALArEventVetoData;     // run tool
 		std::string m_TLALArEventVetoFiles;
 		TLALArEventVetoData * m_dataForLArEventVeto; //!
 
 		// jet cleaning
-		bool m_doCleaning;
-		bool m_recalculateJetCleaning;
-		bool m_invertJetCleaning;
+		bool m_doCleaning;               // veto events which fail jet cleaning
+		bool m_invertJetCleaning;        // veto events which pass (only if above is True)
+		bool m_recalculateJetCleaning;   // don't take the value from the NTUP but recalculate based on saved variables. (will do this anyway if NTUP values != (0,1) )
 
 		// event selection cuts
 		float m_YStarCut;

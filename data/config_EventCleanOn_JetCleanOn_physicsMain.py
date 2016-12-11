@@ -64,15 +64,10 @@ c.setalg("ProcessTLAMiniTree",
            
            # which jet collections to use
            "m_primaryJetInName"       : "jet",
-           "m_primaryJetOutName"      : "OfflineJets", # the name of the histogram file
-           # "m_primaryJetInName"       : "trigJet",
-           # "m_primaryJetOutName"      : "TriggerJets", # the name of the histogram file
-           
+           "m_primaryJetOutName"      : "OfflineJets", # subdirectory name in histogram file
            "m_doSecondaryJets"        : True,
            "m_secondaryJetInName"     : "trigJet",
            "m_secondaryJetOutName"    : "TriggerJets",
-           # "m_secondaryJetInName"     : "jet",
-           # "m_secondaryJetOutName"    : "OfflineJets", # the name of the histogram file
            
            
            # event cleaning
@@ -83,9 +78,9 @@ c.setalg("ProcessTLAMiniTree",
            
            # jet cleaning
            "m_doCleaning"             : True, # veto events which fail jet cleaning
-           "m_recalculateJetCleaning" : False, # don't take the value from the NTUP but recalculate based on saved variables. (will do this anyway if NTUP values != (0,1) )
            "m_invertJetCleaning"      : False, # veto events which pass jet cleaning (only if above is True)
-           
+           "m_recalculateJetCleaning" : False, # don't take the value from the NTUP but recalculate based on saved variables. (will do this anyway if NTUP values != (0,1) )
+
            # event selection cuts
            "m_etaCut"                 : 2.8, # only applied if not Truth only? FIXME
            "m_leadJetPtCut"           : 200, # was 150, can cull bonus selections
