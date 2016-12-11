@@ -89,7 +89,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		float m_subleadJetPtCut;
 
 		// which hists to write
-		bool m_plotPtSlices;
+		bool m_plotCleaning;
+                bool m_plotPtSlices;
 		bool m_plotEtaSlices;
 		bool m_plotMjjWindow;
 
@@ -181,8 +182,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		double m_eta_freeze;//!*/
 
 		TH2D* m_h2_LArError; //!
-		TH2D* m_h2_LArError_postSelection; //!
-		TH2D* m_h2_LArError_postSelection_w; //!
+		TH2D* m_h2_Clean_Evt_Jet; //!
+		TH2D* m_h2_Clean_Evt_Jet_w; //!
 		TH2D* m_h2_jetCleaning; //!
 		TH2D* m_h2_avgIntPerX_map_AOD; //!
 		TH2F* m_h2_pileupMap; //!
@@ -269,6 +270,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  float           weight;
 		  float           prescaleWeight = 1;
 		  float           avgIntPerX;
+                  int             LArError_offline;
+                  int             LArError_tool;
 		  
 		  eventData(unsigned int m_runNumber,
 			    unsigned int m_eventNumber,
@@ -296,12 +299,16 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 			    float& m_MHT,
 			    float& m_weight,
 			    float& m_prescaleWeight,
-			    float& m_avgIntPerX){
+			    float& m_avgIntPerX,
+                            int m_LArError_offline,
+                            int m_LArError_tool){
 		    
 		    runNumber       = m_runNumber;
 		    eventNumber     = m_eventNumber;
 		    prescaleWeight  = m_prescaleWeight;
 		    avgIntPerX      = m_avgIntPerX;
+                    LArError_offline = m_LArError_offline;
+                    LArError_tool   = m_LArError_tool;
 
 		    /* MHT = m_MHT; // it's not filled in Dijet NTUPs */		    
 		    // calculate MHT
@@ -454,6 +461,9 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  TH2F*    h2_timing_eta_sublead;
 		  TH2F*    h2_timing_mjj;
 
+		  TH2F*    h2_LArError;
+		  TH2F*    h2_LArError_w;
+
 		  eventHists(std::string name, EL::Worker* wk){
 		    
 		    //
@@ -553,6 +563,15 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h2_timing_eta_sublead = book (wk, name, "timing_eta_sublead", "sublead jet timing;sublead jet #eta", 120, -60, 60, 160, -4, 4 );
 
 		    h2_timing_mjj = book (wk, name, "timing_mjj", "lead two jets timing;mjj", 120, -60, 60, 200, 0, 10000 );
+                    
+                    // cleaning validation
+                    h2_LArError = book (wk, name, "h2_LArError", "Offline: isArError;Tool: isLArError", 2, 0, 2, 4, 0, 4 );
+                    h2_LArError_w = book (wk, name, "h2_LArError_w", "Offline: isArError;Tool: isLArError", 2, 0, 2, 4, 0, 4 );
+
+                    /* m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(1,"None"); */
+                    /* m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(2,"NoiseBurst"); */
+                    /* m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(3,"MiniNoiseBurst"); */
+                    /* m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(4,"Other/Both"); */
 
 
 		  }
@@ -677,6 +696,9 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h2_timing_mjj                                   -> Fill (leadJet.timing, jjSystem.M(), weight);
 		    h2_timing_mjj                                   -> Fill (sublJet.timing, jjSystem.M(), weight);
 
+                    h2_LArError                                     -> Fill (thisEvent.LArError_offline, thisEvent.LArError_tool);
+                    h2_LArError_w                                   -> Fill (thisEvent.LArError_offline, thisEvent.LArError_tool, weight);
+
 		  }
 
 		};
@@ -684,6 +706,15 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		
 		//		eventHists*   hOffline; //!
 		eventHists*   hIncl; //!
+		eventHists*   hClean_PassEvt; //!
+		eventHists*   hClean_FailEvt; //!
+		eventHists*   hClean_PassJet; //!
+		eventHists*   hClean_FailJet; //!
+		eventHists*   hClean_PassEvt_PassJet; //!
+		eventHists*   hClean_PassEvt_FailJet; //!
+		eventHists*   hClean_FailEvt_PassJet; //!
+		eventHists*   hClean_FailEvt_FailJet; //!
+
 		eventHists*   hCentral; //!
 		eventHists*   hCrack; //!
 		eventHists*   hEndcap; //!
@@ -701,6 +732,15 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		eventHists*   hPt250; //!
 
 		eventHists*   hSecIncl; //!
+		eventHists*   hSecClean_PassEvt; //!
+		eventHists*   hSecClean_FailEvt; //!
+		eventHists*   hSecClean_PassJet; //!
+		eventHists*   hSecClean_FailJet; //!
+		eventHists*   hSecClean_PassEvt_PassJet; //!
+		eventHists*   hSecClean_PassEvt_FailJet; //!
+		eventHists*   hSecClean_FailEvt_PassJet; //!
+		eventHists*   hSecClean_FailEvt_FailJet; //!
+
 		eventHists*   hSecCentral; //!
 		eventHists*   hSecCrack; //!
 		eventHists*   hSecEndcap; //!

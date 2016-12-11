@@ -67,6 +67,7 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_sampleEvents(0),
   m_grl(nullptr),
 
+  m_plotCleaning(false),
   m_plotPtSlices(false),
   m_plotEtaSlices(false),
   m_plotMjjWindow(false),
@@ -105,6 +106,15 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_pt_freeze(2500),
   m_eta_freeze(4.5),*/
   hIncl(nullptr),
+  hClean_PassEvt(nullptr),
+  hClean_FailEvt(nullptr),
+  hClean_PassJet(nullptr),
+  hClean_FailJet(nullptr),
+  hClean_PassEvt_PassJet(nullptr),
+  hClean_PassEvt_FailJet(nullptr),
+  hClean_FailEvt_PassJet(nullptr),
+  hClean_FailEvt_FailJet(nullptr),
+
   hCentral(nullptr),
   hCrack(nullptr),
   hEndcap(nullptr),
@@ -120,6 +130,14 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   hPt250(nullptr),
 
   hSecIncl(nullptr),
+  hSecClean_PassEvt(nullptr),
+  hSecClean_FailEvt(nullptr),
+  hSecClean_PassJet(nullptr),
+  hSecClean_FailJet(nullptr),
+  hSecClean_PassEvt_PassJet(nullptr),
+  hSecClean_PassEvt_FailJet(nullptr),
+  hSecClean_FailEvt_PassJet(nullptr),
+  hSecClean_FailEvt_FailJet(nullptr),
   hSecCentral(nullptr),
   hSecCrack(nullptr),
   hSecEndcap(nullptr),
@@ -205,6 +223,18 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
   }
   else if (m_isDijetNtupleTrig || m_isDijetNtupleOffline) {
    hIncl    = new eventHists((m_primaryJetOutName+"").c_str()        ,       wk());
+   if(m_plotCleaning) {
+     hClean_PassEvt = new eventHists((m_primaryJetOutName+"_Clean_PassEvt").c_str()   ,       wk());
+     hClean_FailEvt = new eventHists((m_primaryJetOutName+"_Clean_FailEvt").c_str()   ,       wk());
+     hClean_PassJet = new eventHists((m_primaryJetOutName+"_Clean_PassJet").c_str()   ,       wk());
+     hClean_FailJet = new eventHists((m_primaryJetOutName+"_Clean_FailJet").c_str()   ,       wk());
+     hClean_PassEvt_PassJet = new eventHists((m_primaryJetOutName+"_Clean_PassEvt_PassJet").c_str()   ,       wk());
+     hClean_PassEvt_FailJet = new eventHists((m_primaryJetOutName+"_Clean_PassEvt_FailJet").c_str()   ,       wk());
+     hClean_FailEvt_PassJet = new eventHists((m_primaryJetOutName+"_Clean_FailEvt_PassJet").c_str()   ,       wk());
+     hClean_FailEvt_FailJet = new eventHists((m_primaryJetOutName+"_Clean_FailEvt_FailJet").c_str()   ,       wk());
+   }
+   
+
    if (m_plotEtaSlices) {
      hCentral = new eventHists((m_primaryJetOutName+"_0-12").c_str()   ,       wk());
      hCrack   = new eventHists((m_primaryJetOutName+"_12-16").c_str()  ,       wk());
@@ -229,6 +259,17 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
 
    if(m_doSecondaryJets) {
      hSecIncl    = new eventHists((m_secondaryJetOutName+"").c_str()        ,       wk());
+     if(m_plotCleaning) {
+       hSecClean_PassEvt = new eventHists((m_secondaryJetOutName+"_Clean_PassEvt").c_str()   ,       wk());
+       hSecClean_FailEvt = new eventHists((m_secondaryJetOutName+"_Clean_FailEvt").c_str()   ,       wk());
+       hSecClean_PassJet = new eventHists((m_secondaryJetOutName+"_Clean_PassJet").c_str()   ,       wk());
+       hSecClean_FailJet = new eventHists((m_secondaryJetOutName+"_Clean_FailJet").c_str()   ,       wk());
+       hSecClean_PassEvt_PassJet = new eventHists((m_secondaryJetOutName+"_Clean_PassEvt_PassJet").c_str()   ,       wk());
+       hSecClean_PassEvt_FailJet = new eventHists((m_secondaryJetOutName+"_Clean_PassEvt_FailJet").c_str()   ,       wk());
+       hSecClean_FailEvt_PassJet = new eventHists((m_secondaryJetOutName+"_Clean_FailEvt_PassJet").c_str()   ,       wk());
+       hSecClean_FailEvt_FailJet = new eventHists((m_secondaryJetOutName+"_Clean_FailEvt_FailJet").c_str()   ,       wk());
+     }
+
      if (m_plotEtaSlices) {
        hSecCentral = new eventHists((m_secondaryJetOutName+"_0-12").c_str()   ,       wk());
        hSecCrack   = new eventHists((m_secondaryJetOutName+"_12-16").c_str()  ,       wk());
@@ -294,19 +335,23 @@ EL::StatusCode ProcessTLAMiniTree :: histInitialize ()
   m_h2_LArError->GetYaxis()->SetBinLabel(4,"Other/Both");
   wk()->addOutput(m_h2_LArError);
 
-  m_h2_LArError_postSelection = new TH2D("h2_LArError_postSelection", "h2_LArError_postSelection;Offline: isLArError;Tool: isLArError", 2, 0, 2, 4, 0, 4);
-  m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(1,"None");
-  m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(2,"NoiseBurst");
-  m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(3,"MiniNoiseBurst");
-  m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(4,"Other/Both");
-  wk()->addOutput(m_h2_LArError_postSelection);
+  m_h2_Clean_Evt_Jet = new TH2D("h2_Clean_Evt_Jet", "h2_Clean_Evt_Jet;Pass jet cleaning?;Event Cleaning", 2, 0, 2, 6, 0, 6);
+  m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(1,"Pass Evt");
+  m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(2,"Fail Evt");
+  m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(3,"None");
+  m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(4,"NoiseBurst");
+  m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(5,"MiniNoiseBurst");
+  m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(6,"Other/Both");
+  wk()->addOutput(m_h2_Clean_Evt_Jet);
 
-  m_h2_LArError_postSelection_w = new TH2D("h2_LArError_postSelection_w", "h2_LArError_postSelection_weighted;Offline: isLArError;Tool: isLArError", 2, 0, 2, 4, 0, 4);
-  m_h2_LArError_postSelection_w->GetYaxis()->SetBinLabel(1,"None");
-  m_h2_LArError_postSelection_w->GetYaxis()->SetBinLabel(2,"NoiseBurst");
-  m_h2_LArError_postSelection_w->GetYaxis()->SetBinLabel(3,"MiniNoiseBurst");
-  m_h2_LArError_postSelection_w->GetYaxis()->SetBinLabel(4,"Other/Both");
-  wk()->addOutput(m_h2_LArError_postSelection_w);
+  m_h2_Clean_Evt_Jet_w = new TH2D("h2_Clean_Evt_Jet_w", "h2_Clean_Evt_Jet_w;Pass jet cleaning?;Event Cleaning", 2, 0, 2, 6, 0, 6);
+  m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(1,"Pass Evt");
+  m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(2,"Fail Evt");
+  m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(3,"None");
+  m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(4,"NoiseBurst");
+  m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(5,"MiniNoiseBurst");
+  m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(6,"Other/Both");
+  wk()->addOutput(m_h2_Clean_Evt_Jet_w);
 
 
   m_h2_avgIntPerX_map_AOD = new TH2D("h2_avgIntPerX_map_AOD", "h2_avgIntPerX_map_AOD;from map;from AOD", 101,-1,100,101,-1,100);
@@ -878,6 +923,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   int LArError_tool = 0;
   bool failLArError = false;
   bool failToolError = false;
+  bool passEventCleaning = true;
 
   //minimal LAr/event cleaning selection
   if(!m_isTLANtupleTruth && !m_isDijetNtupleTruth) {
@@ -916,10 +962,18 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       if( ( (m_isTLANtupleOffline || m_isDijetNtupleOffline) && failLArError) || 
 	  ( (m_isTLANtupleTrig || m_isDijetNtupleTrig) && failToolError) ) {
 	if(m_debug) cout << " Fail LAr event cleaning" << endl;
+        passEventCleaning = false;
 	return EL::StatusCode::SUCCESS;
       }
     }
   }
+  else { // I still want to set the bool for downstream
+    if( ( (m_isTLANtupleOffline || m_isDijetNtupleOffline) && failLArError) || 
+        ( (m_isTLANtupleTrig || m_isDijetNtupleTrig) && failToolError) ) {
+      passEventCleaning = false;
+    }
+  }
+
 
   cutname = "LAr event cleaning";
   m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
@@ -1280,7 +1334,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
 
     if(m_debug) cout << " about to do cleaning" << endl;
-    bool  passCleaning   = true;
+    bool  passJetCleaning   = true;
 
     // redo cleaning??
     bool redo = m_recalculateJetCleaning;
@@ -1428,7 +1482,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 	if(jet_pt->at(i) > 60){ // threshold for JVT has increased to 60 for 2016
 	  if(fabs(jet_eta->at(i)) < m_etaCut){
 	    if(!jet_clean_passLooseBad->at(i)) {
-	      passCleaning = false;
+	      passJetCleaning = false;
 	      if(!m_doCleaning) {
 		cout << "not doing cleaning, but jet "<< i <<" failed passLooseBad" << endl;
 	      }
@@ -1444,11 +1498,11 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     //  Jet Cleaning 
     //
     if(m_doCleaning) {
-      if ( !m_invertJetCleaning && !passCleaning ) {
+      if ( !m_invertJetCleaning && !passJetCleaning ) {
 	if (m_debug) cout << "Fail jet cleaning " << endl;
 	continue;
       }
-      if ( m_invertJetCleaning && passCleaning ) {
+      if ( m_invertJetCleaning && passJetCleaning ) {
 	if (m_debug) cout << "Pass jet cleaning (but I'm inverting, so skip event) " << endl;
 	continue;
       }
@@ -1466,11 +1520,14 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
     if(m_debug) cout << " Pass All Cut " << endl;
 
-
     // fill LAr Event cleaning histo after event selection cuts
     if(!isSecondary) {
-      m_h2_LArError_postSelection->Fill(LArError_offline, LArError_tool);
-      m_h2_LArError_postSelection_w->Fill(LArError_offline, LArError_tool, eventWeight*prescaleWeight);
+      m_h2_Clean_Evt_Jet->Fill(passJetCleaning, !passEventCleaning);
+      m_h2_Clean_Evt_Jet_w->Fill(passJetCleaning, !passEventCleaning, eventWeight*prescaleWeight);
+      if(m_applyTLALArEventVetoData) {
+        m_h2_Clean_Evt_Jet->Fill(passJetCleaning, LArError_tool+2);
+        m_h2_Clean_Evt_Jet_w->Fill(passJetCleaning, LArError_tool+2, eventWeight*prescaleWeight);
+      }
     }
 
 
@@ -1500,10 +1557,47 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 				    m_MHT,
 				    eventWeight,
 				    prescaleWeight,
-				    m_avgIntPerX);
+				    m_avgIntPerX,
+                                    LArError_offline,
+                                    LArError_tool);
     
     if(m_debug) cout << "done extracting event data to structs" << endl;
   
+
+    // fill cleaning histograms
+    if(m_plotCleaning) {
+      if (passEventCleaning) {
+        if(isSecondary) hSecClean_PassEvt->Fill(thisEvent);
+        else            hClean_PassEvt->Fill(thisEvent);
+        if (passJetCleaning) {
+          if(isSecondary) hSecClean_PassEvt_PassJet->Fill(thisEvent);
+          else            hClean_PassEvt_PassJet->Fill(thisEvent);
+        } else {
+          if(isSecondary) hSecClean_PassEvt_FailJet->Fill(thisEvent);
+          else            hClean_PassEvt_FailJet->Fill(thisEvent);
+        }
+      }
+      else {
+        if(isSecondary) hSecClean_FailEvt->Fill(thisEvent);
+        else            hClean_FailEvt->Fill(thisEvent);
+        if (passJetCleaning) {
+          if(isSecondary) hSecClean_FailEvt_PassJet->Fill(thisEvent);
+          else            hClean_FailEvt_PassJet->Fill(thisEvent);
+        } else {
+          if(isSecondary) hSecClean_FailEvt_FailJet->Fill(thisEvent);
+          else            hClean_FailEvt_FailJet->Fill(thisEvent);
+        }
+      }
+      if(passJetCleaning) {
+        if(isSecondary) hSecClean_PassJet->Fill(thisEvent);
+        else            hClean_PassJet->Fill(thisEvent);
+      } else {
+        if(isSecondary) hSecClean_FailJet->Fill(thisEvent);
+        else            hClean_FailJet->Fill(thisEvent);
+      }
+    }
+
+
     // fill mjj-agnostic histograms
     if(isSecondary) {
       hSecIncl->Fill(thisEvent);
@@ -1526,6 +1620,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
         if (m_secJet_pt->at(0) > 250) hSecPt250->Fill(thisEvent);
       }
     }
+    
     else {
       hIncl->Fill(thisEvent);
       if(m_debug) cout << "filled hIncl" << endl;
