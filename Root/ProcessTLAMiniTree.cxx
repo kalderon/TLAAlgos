@@ -268,12 +268,24 @@ EL::StatusCode ProcessTLAMiniTree :: histInitialize ()
 
   // validation histograms
   m_h2_LArError = new TH2D("h2_LArError", "h2_LArError;Offline: isLArError;Tool: isLArError", 2, 0, 2, 4, 0, 4);
+  m_h2_LArError->GetYaxis()->SetBinLabel(1,"None");
+  m_h2_LArError->GetYaxis()->SetBinLabel(2,"NoiseBurst");
+  m_h2_LArError->GetYaxis()->SetBinLabel(3,"MiniNoiseBurst");
+  m_h2_LArError->GetYaxis()->SetBinLabel(4,"Other/Both");
   wk()->addOutput(m_h2_LArError);
 
   m_h2_LArError_postSelection = new TH2D("h2_LArError_postSelection", "h2_LArError_postSelection;Offline: isLArError;Tool: isLArError", 2, 0, 2, 4, 0, 4);
+  m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(1,"None");
+  m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(2,"NoiseBurst");
+  m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(3,"MiniNoiseBurst");
+  m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(4,"Other/Both");
   wk()->addOutput(m_h2_LArError_postSelection);
 
   m_h2_LArError_postSelection_w = new TH2D("h2_LArError_postSelection_w", "h2_LArError_postSelection_weighted;Offline: isLArError;Tool: isLArError", 2, 0, 2, 4, 0, 4);
+  m_h2_LArError_postSelection_w->GetYaxis()->SetBinLabel(1,"None");
+  m_h2_LArError_postSelection_w->GetYaxis()->SetBinLabel(2,"NoiseBurst");
+  m_h2_LArError_postSelection_w->GetYaxis()->SetBinLabel(3,"MiniNoiseBurst");
+  m_h2_LArError_postSelection_w->GetYaxis()->SetBinLabel(4,"Other/Both");
   wk()->addOutput(m_h2_LArError_postSelection_w);
 
 

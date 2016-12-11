@@ -393,17 +393,20 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  TH1D*     h_phi_lead;
 		  TH1D*     h_phi_sublead;
 
+		  TH2F*     h_pt_eta_lead;
+		  TH2F*     h_pt_eta_sublead;
+		  TH3D*     h_pt_eta_muon;
+
 		  TH1D*     h_EMFrac_lead;
 		  TH1D*     h_EMFrac_sublead;
 		  TH1D*     h_HECFrac_lead;
 		  TH1D*     h_HECFrac_sublead;
-		  TH3D*     h_pt_eta_muon;
 
 		  TH1D*     h_LArQuality_lead;
 		  TH1D*     h_AverageLArQF_lead;
 		  TH1D*     h_HECQuality_lead;
-		  TH2F*     h_FracSamplingMax_FracSamplingMaxIndex_lead;
-		  TH2F*     h_EMfrac_phi_lead;
+		  TH2F*     h2_FracSamplingMax_FracSamplingMaxIndex_lead;
+		  TH2F*     h2_EMfrac_phi_lead;
 		  TH1D*     h_LeadingClusterPt_lead;
 		  TH1D*     h_LeadingClusterSecondLambda_lead;
 		  TH1D*     h_LeadingClusterCenterLambda_lead;
@@ -412,8 +415,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  TH1D*     h_LArQuality_sublead;
 		  TH1D*     h_AverageLArQF_sublead;
 		  TH1D*     h_HECQuality_sublead;
-		  TH2F*     h_FracSamplingMax_FracSamplingMaxIndex_sublead;
-		  TH2F*     h_EMfrac_phi_sublead;
+		  TH2F*     h2_FracSamplingMax_FracSamplingMaxIndex_sublead;
+		  TH2F*     h2_EMfrac_phi_sublead;
 		  TH1D*     h_LeadingClusterPt_sublead;
 		  TH1D*     h_LeadingClusterSecondLambda_sublead;
 		  TH1D*     h_LeadingClusterCenterLambda_sublead;
@@ -435,6 +438,9 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  TH2F*     h2_avgIntPerX_pt_lead;
 		  TH2F*     h2_avgIntPerX_eta_lead;
 
+		  TH2F*    h2_timing_eta_lead;
+		  TH2F*    h2_timing_eta_sublead;
+		  TH2F*    h2_timing_mjj;
 
 		  eventHists(std::string name, EL::Worker* wk){
 		    
@@ -466,73 +472,76 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    Int_t  etabinnum = sizeof(etabins)/sizeof(Float_t) - 1;
 		    Int_t  muonbinnum = sizeof(muonsegmentbins)/sizeof(Float_t) - 1;
 		    
-		    h_mjj           = book_variable(wk, name, "mjj"           ,       "mjj"            ,        mjjbinnum    ,      mjjbins    );
-		    h_yStar         = book         (wk, name, "yStar"         ,       "yStar"          ,        100          ,      -2,    2    );
-		    h_mjj_uniform   = book         (wk, name, "mjj_uniform"   ,       "mjj_uniform"    ,        100          ,      0,    5000   );
-		    h_MHT           = book_variable(wk, name, "MHT"           ,       "MHT"            ,        ptbinnum     ,      ptbins   );
-		    h_MHTvec        = book_variable(wk, name, "MHTvec"        ,       "MHTvec"         ,        ptbinnum     ,      ptbins   );
-		    h_pt_lead       = book_variable(wk, name, "pt_lead"       ,       "pt_lead"        ,        ptbinnum     ,      ptbins   );
-		    h_pt_sublead    = book_variable(wk, name, "pt_sublead"    ,       "pt_sublead"     ,        ptbinnum     ,      ptbins   );
-		    h_eta_lead      = book         (wk, name, "eta_lead"      ,       "eta_lead"       ,        100          ,      -4.5, 4.5   );
-		    h_eta_sublead   = book         (wk, name, "eta_sublead"   ,       "eta_sublead"    ,        100          ,      -4.5, 4.5   );
-		    h_phi_lead      = book         (wk, name, "phi_lead"      ,       "phi_lead"       ,        100          ,      -3.14, 3.14   );
-		    h_phi_sublead   = book         (wk, name, "phi_sublead"   ,       "phi_sublead"    ,        100          ,      -3.14, 3.14  );
-		    h_EMFrac_lead       = book     (wk, name, "EMFrac_lead"   ,       "EMFrac_lead"    ,        150          ,      0, 1.5   );
-		    h_EMFrac_sublead    = book     (wk, name, "EMFrac_sublead",       "EMFrac_sublead" ,        150          ,      0, 1.5   );
-		    h_HECFrac_lead       = book     (wk, name, "HECFrac_lead"   ,       "HECFrac_lead"    ,        150          ,      0, 1.5   );
-		    h_HECFrac_sublead    = book     (wk, name, "HECFrac_sublead",       "HECFrac_sublead" ,        150          ,      0, 1.5   );
-		    h_pt_eta_muon   = book         (wk, name, "pt_eta_muon"   ,       "pt_eta_muon"    ,        ptbinnum          ,      ptbins, etabinnum, etabins, muonbinnum, muonsegmentbins );
+                    // kinematics
+		    h_mjj             = book_variable(wk, name, "mjj"            , "mjj"                , mjjbinnum, mjjbins    );
+		    h_yStar           = book         (wk, name, "yStar"          , "yStar"              , 100      , -2,    2    );
+		    h_mjj_uniform     = book         (wk, name, "mjj_uniform"    , "mjj"                , 100      , 0,    5000   );
+		    h_MHT             = book_variable(wk, name, "MHT"            , "MHT"                , ptbinnum , ptbins   );
+		    h_MHTvec          = book_variable(wk, name, "MHTvec"         , "MHTvec"             , ptbinnum , ptbins   );
+		    h_pt_lead         = book_variable(wk, name, "pt_lead"        , "lead jet pt"        , ptbinnum , ptbins   );
+		    h_pt_sublead      = book_variable(wk, name, "pt_sublead"     , "sublead jet pt"     , ptbinnum , ptbins   );
+		    h_eta_lead        = book         (wk, name, "eta_lead"       , "lead jet eta"       , 100      , -4.5, 4.5   );
+		    h_eta_sublead     = book         (wk, name, "eta_sublead"    , "sublead jet eta"    , 100      , -4.5, 4.5   );
+		    h_phi_lead        = book         (wk, name, "phi_lead"       , "lead jet phi"       , 100      , -3.14, 3.14   );
+		    h_phi_sublead     = book         (wk, name, "phi_sublead"    , "sublead jet phi"    , 100      , -3.14, 3.14  );
+                    
+                    // kinematic 2D
+		    h_pt_eta_lead     = book         (wk, name, "pt_eta_lead"    , "lead jet pt;lead jet #eta"        , ptbinnum , ptbins, etabinnum, etabins );
+		    h_pt_eta_sublead  = book         (wk, name, "pt_eta_sublead" , "sublead jet pt;sublead jet #eta"        , ptbinnum , ptbins, etabinnum, etabins );
+                    // 3D
+		    h_pt_eta_muon     = book         (wk, name, "pt_eta_muon"    , "pt;eta;muon segments"    , ptbinnum , ptbins, etabinnum, etabins, muonbinnum, muonsegmentbins );
 
-		    h_timing_lead       = book (wk, name, "timing_lead",  "timing_lead",  1000, -100, 100 );
-		    h_timing_sublead    = book (wk, name, "timing_sublead",  "timing_sublead",  1000, -100, 100 );
-		    h_negativeE_lead    = book (wk, name, "negativeE_lead",  "negativeE_lead",  210, -200, 10 );
-		    h_negativeE_sublead = book (wk, name, "negativeE_sublead",  "negativeE_sublead",  210, -200, 10 );
+                    // cleaning 1D
+		    h_EMFrac_lead     = book         (wk, name, "EMFrac_lead"    , "lead jet EMFrac"    , 150      , 0, 1.5   );
+		    h_EMFrac_sublead  = book         (wk, name, "EMFrac_sublead" , "sublead jet EMFrac" , 150      , 0, 1.5   );
+		    h_HECFrac_lead    = book         (wk, name, "HECFrac_lead"   , "lead jet HECFrac"   , 150      , 0, 1.5   );
+		    h_HECFrac_sublead = book         (wk, name, "HECFrac_sublead", "sublead jet HECFrac", 150      , 0, 1.5   );
+		    h_timing_lead       = book (wk, name, "timing_lead",       "lead jet timing",        1000, -100, 100 );
+		    h_timing_sublead    = book (wk, name, "timing_sublead",    "sublead jet timing",     1000, -100, 100 );
+		    h_negativeE_lead    = book (wk, name, "negativeE_lead",    "lead jet negativeE",     210, -200, 10 );
+		    h_negativeE_sublead = book (wk, name, "negativeE_sublead", "sublead jet negativeE",  210, -200, 10 );
+
+		    h_LArQuality_lead                            = book (wk, name, "LArQuality_lead", "Lead jet LAr Quality",  100, 0, 5 );
+		    h_AverageLArQF_lead                          = book (wk, name, "AverageLArQF_lead", "Lead jet average LAr QF",  140, 0, 70000 );
+		    h_HECQuality_lead                            = book (wk, name, "HECQuality_lead", "Lead jet HEC Quality",  150, -1, 2 );
+		    h_LeadingClusterPt_lead                      = book (wk, name, "LeadingClusterPt_lead", "Lead jet leading cluster p_{T}",  100, 0, 5000000 );
+		    h_LeadingClusterSecondLambda_lead            = book (wk, name, "LeadingClusterSecondLambda_lead", "Lead jet leading cluster SecondLambda",  100, 0, 5000000 );
+		    h_LeadingClusterCenterLambda_lead            = book (wk, name, "LeadingClusterCenterLambda_lead", "Lead jet leading cluster CenterLambda",  100, 0, 20000 );
+		    h_LeadingClusterSecondR_lead                 = book (wk, name, "LeadingClusterSecondR_lead", "Lead jet leading cluster SecondR",  100, 0, 6000000 );
+
+		    h_LArQuality_sublead                            = book (wk, name, "LArQuality_sublead", "Sublead jet LAr Quality",  100, 0, 5 );
+		    h_AverageLArQF_sublead                          = book (wk, name, "AverageLArQF_sublead", "Sublead jet average LAr QF",  140, 0, 70000 );
+		    h_HECQuality_sublead                            = book (wk, name, "HECQuality_sublead", "Sublead jet HEC Quality",  150, -1, 2 );
+		    h_LeadingClusterPt_sublead                      = book (wk, name, "LeadingClusterPt_sublead", "LeadingClusterPt_sublead;Sublead jet leading cluster p_{T}",  100, 0, 5000000 );
+		    h_LeadingClusterSecondLambda_sublead            = book (wk, name, "LeadingClusterSecondLambda_sublead", "Sublead jet leading cluster SecondLambda",  100, 0, 5000000 );
+		    h_LeadingClusterCenterLambda_sublead            = book (wk, name, "LeadingClusterCenterLambda_sublead", "Sublead jet leading cluster CenterLambda",  100, 0, 20000 );
+		    h_LeadingClusterSecondR_sublead                 = book (wk, name, "LeadingClusterSecondR_subleaed", "Sublead jet leading cluster SecondR",  100, 0, 6000000 );
 		    
 		    h_avgIntPerX        = book (wk, name, "avgIntPerX", "avgIntPerX",  100, 0, 100 );
 
+		    // cleaning 2D
+		    h2_FracSamplingMax_FracSamplingMaxIndex_lead = book (wk, name, "FracSamplingMax_FracSamplingMaxIndex_lead", "Lead jet FracSamplingMax;Lead jet FSM Index", 100, -2, -2, 25,0,25 );
+		    h2_EMfrac_phi_lead                           = book (wk, name, "EMfrac_phi_lead_lead", "Lead jet EM frac;Lead jet #phi", 110,-0.1,1, 100,-3.14,3.14 );
 
+		    h2_FracSamplingMax_FracSamplingMaxIndex_sublead = book (wk, name, "FracSamplingMax_FracSamplingMaxIndex_sublead", "Sublead jet FracSamplingMax;Sublead jet FSM Index", 100, -2, -2, 25,0,25 );
+		    h2_EMfrac_phi_sublead                           = book (wk, name, "EMfrac_phi_sublead", "Sublead jet EM frac;Sublead jet #phi", 110, -0.1, 1, 100, -3.14, 3.14 );
 
-		    // added cleaning variables
-		    h_LArQuality_lead                    = book (wk, name, "LArQuality_lead", "LArQuality_lead;Lead jet LAr Quality",  100, 0, 5 );
-		    h_AverageLArQF_lead                  = book (wk, name, "AverageLArQF_lead", "AverageLArQF_lead;Lead jet average LAr QF",  140, 0, 70000 );
-		    h_HECQuality_lead                    = book (wk, name, "HECQuality_lead", "HECQuality_lead;Lead jet HEC Quality",  150, -1, 2 );
-		    h_FracSamplingMax_FracSamplingMaxIndex_lead = book (wk, name, "FracSamplingMax_FracSamplingMaxIndex_lead", 
-									"FracSamplingMax_FracSamplingMaxIndex_lead;Lead jet FracSamplingMax;Lead jet FracSamplingMaxIndex",
-									100, -2, -2, 25,0,25 );
-		    h_EMfrac_phi_lead                    = book (wk, name, "EMfrac_phi_lead_lead", "EMfrac_phi_lead;Lead jet EM frac;Lead jet #phi", 110,-0.1,1, 100,-3.14,3.14 );
-		    h_LeadingClusterPt_lead              = book (wk, name, "LeadingClusterPt_lead", "LeadingClusterPt_lead;Lead jet leading cluster p_{T}",  100, 0, 5000000 );
-		    h_LeadingClusterSecondLambda_lead    = book (wk, name, "LeadingClusterSecondLambda_lead",
-								 "LeadingClusterSecondLambda_lead;Lead jet leading cluster SecondLambda",  100, 0, 5000000 );
-		    h_LeadingClusterCenterLambda_lead    = book (wk, name, "LeadingClusterCenterLambda_lead",
-								 "LeadingClusterCenterLambda_lead;Lead jet leading cluster CenterLambda",  100, 0, 20000 );
-		    h_LeadingClusterSecondR_lead    = book (wk, name, "LeadingClusterSecondR_lead", "LeadingClusterSecondR_lead;Lead jet leading cluster SecondR",  100, 0, 6000000 );
+		    h2_eta_pt_lead     = book (wk, name, "eta_pt_lead", "lead #eta;lead pt", 100, -4.5, 4.5, 100, 0, 2000 );
+		    h2_eta_pt_sublead  = book (wk, name, "eta_pt_sublead", "sublead #eta;sublead pt", 100, -4.5, 4.5, 100, 0, 2000 );
+		    h2_eta_phi_lead    = book (wk, name, "eta_phi_lead", "lead #eta;lead #phi", 100, -4.5, 4.5, 100, -3.14, 3.14 );
+		    h2_eta_phi_sublead = book (wk, name, "eta_phi_sublead", "sublead #eta;sublead #phi", 100, -4.5, 4.5, 100, -3.14, 3.14 );
 
-		    h_LArQuality_sublead                    = book (wk, name, "LArQuality_sublead", "LArQuality_sublead;Sublead jet LAr Quality",  100, 0, 5 );
-		    h_AverageLArQF_sublead                  = book (wk, name, "AverageLArQF_sublead", "AverageLArQF_sublead;Sublead jet average LAr QF",  140, 0, 70000 );
-		    h_HECQuality_sublead                    = book (wk, name, "HECQuality_sublead", "HECQuality_sublead;Sublead jet HEC Quality",  150, -1, 2 );
-		    h_FracSamplingMax_FracSamplingMaxIndex_sublead = book (wk, name, "FracSamplingMax_FracSamplingMaxIndex_sublead", 
-									"FracSamplingMax_FracSamplingMaxIndex_sublead;Sublead jet FracSamplingMax;Sublead jet FracSamplingMaxIndex",
-									100, -2, -2, 25,0,25 );
-		    h_EMfrac_phi_sublead                    = book (wk, name, "EMfrac_phi_sublead", "EMfrac_phi_sublead;Sublead jet EM frac;Sublead jet #phi", 110,-0.1,1, 100,-3.14,3.14 );
-		    h_LeadingClusterPt_sublead              = book (wk, name, "LeadingClusterPt_sublead", "LeadingClusterPt_sublead;Sublead jet leading cluster p_{T}",  100, 0, 5000000 );
-		    h_LeadingClusterSecondLambda_sublead    = book (wk, name, "LeadingClusterSecondLambda_sublead",
-								 "LeadingClusterSecondLambda_sublead;Sublead jet leading cluster SecondLambda",  100, 0, 5000000 );
-		    h_LeadingClusterCenterLambda_sublead    = book (wk, name, "LeadingClusterCenterLambda_sublead",
-								 "LeadingClusterCenterLambda_sublead;Sublead jet leading cluster CenterLambda",  100, 0, 20000 );
-		    h_LeadingClusterSecondR_sublead    = book (wk, name, "LeadingClusterSecondR_subleaed", "LeadingClusterSecondR_sublead;Sublead jet leading cluster SecondR",  100, 0, 6000000 );
+		    h2_avgIntPerX_timing_lead    = book (wk, name, "avgIntPerX_timing_lead", "avgIntPerX;timing_lead", 100, 0, 100, 100, -100, 100 );
+		    h2_avgIntPerX_negativeE_lead = book (wk, name, "avgIntPerX_negativeE_lead", "avgIntPerX;negativeE_lead", 100, 0, 100, 105, -100, 10 );
 
+		    h2_avgIntPerX_pt_lead  = book (wk, name, "avgIntPerX_pt_lead", "avgIntPerX;lead pt", 100, 0, 100, 100, 0, 2000 );
+		    h2_avgIntPerX_eta_lead = book (wk, name, "avgIntPerX_eta_lead", "avgIntPerX;lead #eta", 100, 0, 100, 100, -4.5, 4.5 );
 
+		    h2_timing_eta_lead    = book (wk, name, "timing_eta_lead", "lead jet timing;lead jet #eta", 120, -60, 60, 160, -4, 4 );
+		    h2_timing_eta_sublead = book (wk, name, "timing_eta_sublead", "sublead jet timing;sublead jet #eta", 120, -60, 60, 160, -4, 4 );
 
-		    h2_eta_pt_lead = book (wk, name, "eta_pt_lead", "eta_pt_lead;lead #eta;lead pt", 100, -4.5, 4.5, 100, 0, 2000 );
-		    h2_eta_pt_sublead = book (wk, name, "eta_pt_sublead", "eta_pt_sublead;sublead #eta;sublead pt", 100, -4.5, 4.5, 100, 0, 2000 );
-		    h2_eta_phi_lead = book (wk, name, "eta_phi_lead", "eta_phi_lead;lead #eta;lead #phi", 100, -4.5, 4.5, 100, -3.14, 3.14 );
-		    h2_eta_phi_sublead = book (wk, name, "eta_phi_sublead", "eta_phi_sublead;sublead #eta;sublead #phi", 100, -4.5, 4.5, 100, -3.14, 3.14 );
+		    h2_timing_mjj = book (wk, name, "timing_mjj", "lead two jets timing;mjj", 120, -60, 60, 200, 0, 10000 );
 
-		    h2_avgIntPerX_timing_lead = book (wk, name, "avgIntPerX_timing_lead", "avgIntPerX_timing_lead;avgIntPerX;timing_lead", 100, 0, 100, 100, -100, 100 );
-		    h2_avgIntPerX_negativeE_lead = book (wk, name, "avgIntPerX_negativeE_lead", "avgIntPerX_negativeE_lead;avgIntPerX;negativeE_lead", 100, 0, 100, 105, -100, 10 );
-
-		    h2_avgIntPerX_pt_lead = book (wk, name, "avgIntPerX_pt_lead", "avgIntPerX_pt_lead;avgIntPerX;lead pt", 100, 0, 100, 100, 0, 2000 );
-		    h2_avgIntPerX_eta_lead = book (wk, name, "avgIntPerX_eta_lead", "avgIntPerX_pt_lead;avgIntPerX;lead #eta", 100, 0, 100, 100, -4.5, 4.5 );
 
 		  }
 		  
@@ -551,6 +560,12 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  
 		  TH2F* book(EL::Worker* wk, std::string name, std::string hname, std::string title, int nBinsX, float xmin, float xmax, int nBinsY, float ymin, float ymax){
 		    TH2F* h_tmp = new TH2F((name+"/"+hname).c_str(),(hname+";"+title+";Entries").c_str(), nBinsX, xmin, xmax, nBinsY, ymin, ymax);
+		    wk->addOutput(h_tmp);
+		    return h_tmp;
+		  }
+
+		  TH2F* book(EL::Worker* wk, std::string name, std::string hname, std::string title, int nBinsX, const Float_t *xBins, int nBinsY, const Float_t *yBins){
+		    TH2F* h_tmp = new TH2F((name+"/"+hname).c_str(),(hname+";"+title+";Entries").c_str(), nBinsX, xBins, nBinsY, yBins);
 		    wk->addOutput(h_tmp);
 		    return h_tmp;
 		  }
@@ -599,12 +614,15 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h_eta_sublead      ->Fill(jet2.Eta(), weight);
 		    h_phi_lead         ->Fill(jet1.Phi(), weight);
 		    h_phi_sublead      ->Fill(jet2.Phi(), weight);
+		    h_pt_eta_lead      ->Fill(jet1.Pt(), jet1.Eta(), weight);
+		    h_pt_eta_sublead   ->Fill(jet2.Pt(), jet2.Eta(), weight);
+		    h_pt_eta_muon      ->Fill(jet1.Pt(), jet1.Eta(), leadJetMuonSegments, weight);
+		    h_pt_eta_muon      ->Fill(jet2.Pt(), jet2.Eta(), sublJetMuonSegments, weight);
+
 		    h_EMFrac_lead         ->Fill(leadJetEMFrac, weight);
 		    h_EMFrac_sublead      ->Fill(sublJetEMFrac, weight);
 		    h_HECFrac_lead         ->Fill(leadJetHECFrac, weight);
 		    h_HECFrac_sublead      ->Fill(sublJetHECFrac, weight);
-		    h_pt_eta_muon      ->Fill(jet1.Pt(), jet1.Eta(), leadJetMuonSegments, weight);
-		    h_pt_eta_muon      ->Fill(jet2.Pt(), jet2.Eta(), sublJetMuonSegments, weight);
 		    
 		    h_timing_lead       ->Fill(leadJet.timing, weight);
 		    h_timing_sublead    ->Fill(sublJet.timing, weight);
@@ -625,8 +643,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h_LArQuality_lead                            -> Fill (leadJet.LArQuality, weight);
 		    h_AverageLArQF_lead                          -> Fill (leadJet.AverageLArQF, weight);
 		    h_HECQuality_lead                            -> Fill (leadJet.HECQuality, weight);
-		    h_FracSamplingMax_FracSamplingMaxIndex_lead  -> Fill (leadJet.FracSamplingMax, leadJet.FracSamplingMaxIndex, weight);
-		    h_EMfrac_phi_lead                            -> Fill (leadJet.EMFrac, leadJet.phi, weight);
+		    h2_FracSamplingMax_FracSamplingMaxIndex_lead  -> Fill (leadJet.FracSamplingMax, leadJet.FracSamplingMaxIndex, weight);
+		    h2_EMfrac_phi_lead                            -> Fill (leadJet.EMFrac, leadJet.phi, weight);
 		    h_LeadingClusterPt_lead                      -> Fill (leadJet.LeadingClusterPt, weight);
 		    h_LeadingClusterSecondLambda_lead            -> Fill (leadJet.LeadingClusterSecondLambda, weight);
 		    h_LeadingClusterCenterLambda_lead            -> Fill (leadJet.LeadingClusterCenterLambda, weight);
@@ -635,14 +653,17 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h_LArQuality_sublead                            -> Fill (sublJet.LArQuality, weight);
 		    h_AverageLArQF_sublead                          -> Fill (sublJet.AverageLArQF, weight);
 		    h_HECQuality_sublead                            -> Fill (sublJet.HECQuality, weight);
-		    h_FracSamplingMax_FracSamplingMaxIndex_sublead  -> Fill (sublJet.FracSamplingMax, sublJet.FracSamplingMaxIndex, weight);
-		    h_EMfrac_phi_sublead                            -> Fill (sublJet.EMFrac, sublJet.phi, weight);
+		    h2_FracSamplingMax_FracSamplingMaxIndex_sublead  -> Fill (sublJet.FracSamplingMax, sublJet.FracSamplingMaxIndex, weight);
+		    h2_EMfrac_phi_sublead                            -> Fill (sublJet.EMFrac, sublJet.phi, weight);
 		    h_LeadingClusterPt_sublead                      -> Fill (sublJet.LeadingClusterPt, weight);
 		    h_LeadingClusterSecondLambda_sublead            -> Fill (sublJet.LeadingClusterSecondLambda, weight);
 		    h_LeadingClusterCenterLambda_sublead            -> Fill (sublJet.LeadingClusterCenterLambda, weight);
 		    h_LeadingClusterSecondR_sublead                 -> Fill (sublJet.LeadingClusterSecondR, weight);
 
-
+		    h2_timing_eta_lead                              -> Fill (leadJet.timing, leadJet.eta, weight);
+		    h2_timing_eta_sublead                           -> Fill (sublJet.timing, sublJet.eta, weight);
+		    h2_timing_mjj                                   -> Fill (leadJet.timing, jjSystem.M(), weight);
+		    h2_timing_mjj                                   -> Fill (sublJet.timing, jjSystem.M(), weight);
 
 		  }
 
