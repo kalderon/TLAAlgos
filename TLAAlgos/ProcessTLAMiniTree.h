@@ -48,6 +48,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		std::string m_TLALArEventVetoFiles;
 
 		bool m_doCleaning;
+		bool m_recalculateJetCleaning;
 		bool m_invertJetCleaning;
 
 		//configuration variables
@@ -147,9 +148,9 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		vector<float>* m_secJet_HECFrac; //!
 		vector<float>* m_secJet_timing; //!
 		vector<float>* m_secJet_negativeE; //!
-
+		
 		vector<int>*   m_secJet_clean_passLooseBad; //!
-		vector<int>*   m_secJet_clean_passLooseBad_recalc;
+		vector<int>*   m_secJet_clean_passLooseBad_recalc; //!
 
 		vector<float>* m_secJet_LArQuality; //!
 		vector<float>* m_secJet_AverageLArQF; //!
@@ -277,13 +278,12 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 			    float& m_prescaleWeight,
 			    float& m_avgIntPerX){
 		    
-		    runNumber = m_runNumber;
-		    eventNumber = m_eventNumber;
-		    prescaleWeight = m_prescaleWeight;
-		    avgIntPerX         = m_avgIntPerX;
+		    runNumber       = m_runNumber;
+		    eventNumber     = m_eventNumber;
+		    prescaleWeight  = m_prescaleWeight;
+		    avgIntPerX      = m_avgIntPerX;
 
-		    /* MHT = m_MHT; // it's not filled in Dijet NTUPs */
-		    
+		    /* MHT = m_MHT; // it's not filled in Dijet NTUPs */		    
 		    // calculate MHT
 		    MHT=0;
 		    TLorentzVector HTvec;

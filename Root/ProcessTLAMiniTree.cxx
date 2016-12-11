@@ -31,6 +31,7 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_applyTLALArEventVetoData(false),
   m_TLALArEventVetoFiles("$ROOTCOREBIN/data/TLAEventCleaning/event-veto-data/"),
   m_doCleaning(false),
+  m_recalculateJetCleaning(false),
   m_invertJetCleaning(false),
 
   m_debug(false),
@@ -165,24 +166,6 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
 
 EL::StatusCode  ProcessTLAMiniTree :: configure ()
 {
-
-//  //
-//  // Read Input from .config file
-//  //
-//  m_debug                    = config->GetValue("Debug" ,          m_debug );
-//  m_doTrigger                = config->GetValue("DoTrigger" ,      m_doTrigger );
-//  m_YStarCut                 = config->GetValue("YStarCut" ,       m_YStarCut);
-//  m_YBoostCut                = config->GetValue("YBoostCut" ,      m_YBoostCut);
-//  m_doBlind                  = config->GetValue("DoBlind" ,        m_doBlind );
-//  m_doData                   = config->GetValue("DoData" ,         m_doData );
-//  m_useWeighted              = config->GetValue("UseWeighted" ,    m_useWeighted );
-//  m_doCleaning               = config->GetValue("DoCleaning" ,     m_doCleaning );
-//  m_etaCut                   = config->GetValue("AbsEtaCut" ,      m_etaCut );
-//  m_leadJetPtCut             = config->GetValue("LeadJetPtCut" ,   m_leadJetPtCut );
-//  m_subleadJetPtCut          = config->GetValue("subLeadJetPtCut" ,   m_leadJetPtCut );
-//  m_lumi                     = config->GetValue("Lumi",            m_lumi );
-//  m_applyGRL                 = config->GetValue("ApplyGRL",        m_applyGRL);
-//  m_GRLxml                   = config->GetValue("GRL",             m_GRLxml.c_str());
 
   //histograms that are always there, defaulting to what is in the 'jet' branch
   //this is the distribution we cut on
@@ -622,30 +605,29 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
 	  tree->SetBranchAddress ((m_secondaryJetInName+"_Timing").c_str(), &m_secJet_timing);
 	  tree->SetBranchStatus  ((m_secondaryJetInName+"_NegativeE").c_str(), 1);
 	  tree->SetBranchAddress ((m_secondaryJetInName+"_NegativeE").c_str(), &m_secJet_negativeE);
-
+	  
+	  // below this they are dodgy (irrespective of whe secondaryJetInName is)
           tree->SetBranchStatus  ((m_secondaryJetInName+"_clean_passLooseBad").c_str(), 1);
-          tree->SetBranchStatus  ((m_secondaryJetInName+"_clean_passLooseBad").c_str(), &m_secJet_clean_passLooseBad);
-          // tree->SetBranchStatus  ("jet_clean_passLooseBad", 1);
-          // tree->SetBranchStatus  ("jet_clean_passLooseBad", &m_secJet_clean_passLooseBad);
-
+          tree->SetBranchAddress ((m_secondaryJetInName+"_clean_passLooseBad").c_str(), &m_secJet_clean_passLooseBad);
 	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LArQuality").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LArQuality").c_str(), &m_secJet_LArQuality);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_LArQuality").c_str(), &m_secJet_LArQuality);
 	  tree->SetBranchStatus  ((m_secondaryJetInName+"_AverageLArQF").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetInName+"_AverageLArQF").c_str(), &m_secJet_AverageLArQF);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_AverageLArQF").c_str(), &m_secJet_AverageLArQF);
+
 	  tree->SetBranchStatus  ((m_secondaryJetInName+"_HECQuality").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetInName+"_HECQuality").c_str(), &m_secJet_HECQuality);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_HECQuality").c_str(), &m_secJet_HECQuality);
 	  tree->SetBranchStatus  ((m_secondaryJetInName+"_FracSamplingMax").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetInName+"_FracSamplingMax").c_str(), &m_secJet_FracSamplingMax);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_FracSamplingMax").c_str(), &m_secJet_FracSamplingMax);
 	  tree->SetBranchStatus  ((m_secondaryJetInName+"_FracSamplingMaxIndex").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetInName+"_FracSamplingMaxIndex").c_str(), &m_secJet_FracSamplingMaxIndex);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_FracSamplingMaxIndex").c_str(), &m_secJet_FracSamplingMaxIndex);
 	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterPt").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterPt").c_str(), &m_secJet_LeadingClusterPt);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_LeadingClusterPt").c_str(), &m_secJet_LeadingClusterPt);
 	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterSecondLambda").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterSecondLambda").c_str(), &m_secJet_LeadingClusterSecondLambda);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_LeadingClusterSecondLambda").c_str(), &m_secJet_LeadingClusterSecondLambda);
 	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterCenterLambda").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterCenterLambda").c_str(), &m_secJet_LeadingClusterCenterLambda);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_LeadingClusterCenterLambda").c_str(), &m_secJet_LeadingClusterCenterLambda);
 	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterSecondR").c_str(), 1);
-	  tree->SetBranchStatus  ((m_secondaryJetInName+"_LeadingClusterSecondR").c_str(), &m_secJet_LeadingClusterSecondR);
+	  tree->SetBranchAddress ((m_secondaryJetInName+"_LeadingClusterSecondR").c_str(), &m_secJet_LeadingClusterSecondR);
 
 	}
 	
@@ -752,12 +734,11 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
   wk()->tree()->GetEntry (wk()->treeEntry());
 
+ 
   unsigned njets       = m_jet_pt->size();
   unsigned nsecJets    = 0;
   if(m_doSecondaryJets) nsecJets = m_secJet_pt->size();
   float prescaleWeight = 1.0;
-
-  if (m_eventCounter < 36294)   return EL::StatusCode::SUCCESS;
 
   if(m_eventCounter % 10000 == 0) cout << "executing event " << m_eventCounter << endl;
   else if(m_debug) cout << "executing event " << m_eventCounter << endl;
@@ -916,59 +897,6 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
 
 
-  // now for some debugging - why is everything NULL?????
-  if(m_debug) {
-    cout<<"\nchecking for NULL..."<<endl;
-    cout<< m_runNumber << endl;
-    cout<< m_eventNumber << endl;
-    cout<< m_MHT << endl;
-    cout<< m_avgIntPerX << endl;
-    
-    cout<< "\nprimary jets"<<endl;
-    cout<< m_jet_pt << endl;
-    cout<< m_jet_eta << endl;
-    cout<< m_jet_phi << endl;
-    cout<< m_jet_E << endl;
-    cout<< m_jet_muonSegments << endl;
-    cout<< m_jet_EMFrac << endl;
-    cout<< m_jet_HECFrac << endl;
-    cout<< m_jet_timing << endl;
-    cout<< m_jet_negativeE << endl;
-    cout<< m_jet_clean_passLooseBad << endl;
-    cout<< m_jet_LArQuality << endl;
-    cout<< m_jet_AverageLArQF << endl;
-    cout<< m_jet_HECQuality << endl;
-    cout<< m_jet_FracSamplingMax << endl;
-    cout<< m_jet_FracSamplingMaxIndex << endl;
-    cout<< m_jet_LeadingClusterPt << endl;
-    cout<< m_jet_LeadingClusterSecondLambda << endl;
-    cout<< m_jet_LeadingClusterCenterLambda << endl;
-    cout<< m_jet_LeadingClusterSecondR << endl;
-    
-    cout<< "\nsecJets:"<<endl;
-    cout<< m_secJet_pt << endl;
-    cout<< m_secJet_eta << endl;
-    cout<< m_secJet_phi << endl;
-    cout<< m_secJet_E << endl;
-    cout<< m_secJet_muonSegments << endl;
-    cout<< m_secJet_EMFrac << endl;
-    cout<< m_secJet_HECFrac << endl;
-    cout<< m_secJet_timing << endl;
-    cout<< m_secJet_negativeE << endl;
-    // these are all 0. WHY??????
-    cout<< "cpLB? " << m_secJet_clean_passLooseBad << endl;
-    cout<< m_secJet_LArQuality << endl;
-    cout<< m_secJet_AverageLArQF << endl;
-    cout<< m_secJet_HECQuality << endl;
-    cout<< m_secJet_FracSamplingMax << endl;
-    cout<< m_secJet_FracSamplingMaxIndex << endl;
-    cout<< m_secJet_LeadingClusterPt << endl;
-    cout<< m_secJet_LeadingClusterSecondLambda << endl;
-    cout<< m_secJet_LeadingClusterCenterLambda << endl;
-    cout<< m_secJet_LeadingClusterSecondR << endl;
-  }
-
-
   // now I'm at the jet selection. Want to split into secondary and non-secondary
   // change to a loop, then return -> skipEvent=true; break;
   
@@ -1113,28 +1041,48 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       continue;
     }
 
-    //
-    // doing cleaning on all jets above **60** GeV
-    //
+
+    /////////////////////////////////////////////////
+    // doing cleaning on all jets above **60** GeV //
+    /////////////////////////////////////////////////
+
+    // first, set all other variables according to primary / secondary
+    // jet_pt set earlier
+    // jet_eta set earlier
+    vector<float>*	jet_phi	                 = ( isSecondary ? m_secJet_phi          : m_jet_phi );
+    vector<float>*	jet_E			 = ( isSecondary ? m_secJet_E            : m_jet_E );
+    vector<float>*	jet_muonSegments	 = ( isSecondary ? m_secJet_muonSegments : m_jet_muonSegments );
+    vector<float>*	jet_EMFrac		 = ( isSecondary ? m_secJet_EMFrac       : m_jet_EMFrac );
+    vector<float>*	jet_HECFrac		 = ( isSecondary ? m_secJet_HECFrac      : m_jet_HECFrac );
+    vector<float>*	jet_timing		 = ( isSecondary ? m_secJet_timing       : m_jet_timing );
+    vector<float>*	jet_negativeE		 = ( isSecondary ? m_secJet_negativeE    : m_jet_negativeE );
+    // jet_clean_passLooseBad set earlier (and is maybe about to be reset)
+    vector<float>*	jet_LArQuality	               = ( isSecondary ? m_secJet_LArQuality                 : m_jet_LArQuality );
+    vector<float>*	jet_AverageLArQF	       = ( isSecondary ? m_secJet_AverageLArQF               : m_jet_AverageLArQF );
+    vector<float>*	jet_HECQuality		       = ( isSecondary ? m_secJet_HECQuality                 : m_jet_HECQuality );
+    vector<float>*	jet_FracSamplingMax	       = ( isSecondary ? m_secJet_FracSamplingMax            : m_jet_FracSamplingMax );
+    vector<int>*	jet_FracSamplingMaxIndex       = ( isSecondary ? m_secJet_FracSamplingMaxIndex       : m_jet_FracSamplingMaxIndex );
+    vector<float>*	jet_LeadingClusterPt           = ( isSecondary ? m_secJet_LeadingClusterPt           : m_jet_LeadingClusterPt );
+    vector<float>*	jet_LeadingClusterSecondLambda = ( isSecondary ? m_secJet_LeadingClusterSecondLambda : m_jet_LeadingClusterSecondLambda );
+    vector<float>*	jet_LeadingClusterCenterLambda = ( isSecondary ? m_secJet_LeadingClusterCenterLambda : m_jet_LeadingClusterCenterLambda );
+    vector<float>*	jet_LeadingClusterSecondR      = ( isSecondary ? m_secJet_LeadingClusterSecondR      : m_jet_LeadingClusterSecondR );
+
+
     if(m_debug) cout << " about to do cleaning" << endl;
     bool  passCleaning   = true;
 
     // redo cleaning??
-    // work out how to set this...
-    bool redo = false;
-    if( jet_clean_passLooseBad==NULL ) {
-      redo = true;
-      if(m_debug) cout << "jet_clean_passLooseBad==NULL" << endl;
+    bool redo = m_recalculateJetCleaning;
+    if(!redo) { // check it's actually filled, if not redo
+      if(jet_clean_passLooseBad->at(0) != 0 && jet_clean_passLooseBad->at(0) != 1)
+	redo = true;
     }
-    else if ( jet_clean_passLooseBad->size() != jet_pt->size() ) {
-      redo = true;
-      if(m_debug) cout << "jet_clean_passLooseBad->size() != jet_pt->size()" << endl;
+    if(m_debug) {
+      cout << "jet_clean_passLooseBad->at(0) = " << jet_clean_passLooseBad->at(0) << endl;
+      cout << "redo is " << redo << endl;
     }
-    redo = true;
-    if(m_debug) cout << "following my checks, redo is " << redo << endl;
 
-    // maybe want to check recalc vs actual
-    if(m_debug) cout << "\nthis is a new event\n";
+    // now redo if requested / required
     if(redo) {
       jet_clean_passLooseBad->clear();
       
@@ -1147,45 +1095,46 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 	}
 
 	bool jetPassCleaning = true;
-	if(m_debug) cout << "  welcome to jet "<<i<<endl;
+	if(m_debug) cout << "  welcome to the cleaning of jet "<<i<<endl;
 	// if (m_jet_clean_passLooseBad->at(i)==0)
 	  // cout << "jet "<<i<<" failed cleaning according to AOD value";
 
-	if ( m_jet_HECFrac->at(i) > 0.5 && 
-	     fabs(m_jet_HECQuality->at(i)) > 0.5 && 
-	     m_jet_AverageLArQF->at(i) > 0.8 ) {
+	
+	if ( jet_HECFrac->at(i) > 0.5 && 
+	     fabs(jet_HECQuality->at(i)) > 0.5 && 
+	     jet_AverageLArQF->at(i) > 0.8 ) {
 	  if(m_debug) cout << "    HECfrac failed" << endl;
 	  jetPassCleaning = false;
 	}
 	  
-	if ( fabs(m_jet_negativeE->at(i)) > 60 ) {
+	if ( fabs(jet_negativeE->at(i)) > 60 ) {
 	  if(m_debug) cout << "    negativeE failed" << endl;
 	  jetPassCleaning = false;
 	}
 
-	if ( m_jet_EMFrac->at(i) > 0.95 && 
-	     m_jet_LArQuality->at(i) > 0.8 && 
-	     m_jet_AverageLArQF->at(i) > 0.8 && 
-	     fabs(m_jet_eta->at(i)) < 2.8 ) {
+	if ( jet_EMFrac->at(i) > 0.95 && 
+	     jet_LArQuality->at(i) > 0.8 && 
+	     jet_AverageLArQF->at(i) > 0.8 && 
+	     fabs(jet_eta->at(i)) < 2.8 ) {
 	  if(m_debug) cout << "    EMfrac failed" << endl;
 	  jetPassCleaning = false;
 	}
 	
-	if ( m_jet_FracSamplingMax->at(i) > 0.99 &&
-	     fabs(m_jet_eta->at(i)) < 2.0 ) {
+	if ( jet_FracSamplingMax->at(i) > 0.99 &&
+	     fabs(jet_eta->at(i)) < 2.0 ) {
 	  if(m_debug) cout << "    high fracSamplingMax failed" << endl;
 	  jetPassCleaning = false;
 	}
 	    
-	// if (m_jet_EMFrac->at(i) < 0.05 &&
-	    // m_jet_chFrac->at(i) < 0.05 && 
-	    // fabs(m_jet_eta->at(i)) < 2.0 ) {
+	// if (jet_EMFrac->at(i) < 0.05 &&
+	    // jet_chFrac->at(i) < 0.05 && 
+	    // fabs(jet_eta->at(i)) < 2.0 ) {
 	  // if(m_debug) cout << "    low fracSamplingMax (low eta plus low chf) failed" << endl;
 	  // jetPassCleaning = false;
 	// }
 	    
-	if ( m_jet_EMFrac->at(i) < 0.05 && 
-	     fabs(m_jet_eta->at(i)) >= 2.0 ) {
+	if ( jet_EMFrac->at(i) < 0.05 && 
+	     fabs(jet_eta->at(i)) >= 2.0 ) {
 	  if(m_debug) cout << "    low fracSamplingMax (high eta) failed" << endl;
 	  jetPassCleaning = false;
 	}
@@ -1212,7 +1161,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
 
     // fill comparison histogram, print out decision if different
-    // don't do for secondary since I know that's broken
+    // don't do for secondary since I know that's broken (at least, secJets in NTUP don't have it - you could have swapped them in the HIST config)
     if(!isSecondary) {
 
       for (unsigned int i = 0;  i < jet_pt->size(); ++i){ 
@@ -1315,32 +1264,8 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     if(m_debug) cout << " Weight: " << eventWeight << endl;
 
 
-
-
     // make event data
-    // jet_pt set earlier
-    // jet_eta set earlier
-    vector<float>*	jet_phi	                 = ( isSecondary ? m_secJet_phi          : m_jet_phi );
-    vector<float>*	jet_E			 = ( isSecondary ? m_secJet_E            : m_jet_E );
-    vector<float>*	jet_muonSegments	 = ( isSecondary ? m_secJet_muonSegments : m_jet_muonSegments );
-    vector<float>*	jet_EMFrac		 = ( isSecondary ? m_secJet_EMFrac       : m_jet_EMFrac );
-    vector<float>*	jet_HECFrac		 = ( isSecondary ? m_secJet_HECFrac      : m_jet_HECFrac );
-    vector<float>*	jet_timing		 = ( isSecondary ? m_secJet_timing       : m_jet_timing );
-    vector<float>*	jet_negativeE		 = ( isSecondary ? m_secJet_negativeE    : m_jet_negativeE );
-    // jet_clean_passLooseBad set earlier
-    vector<float>*	jet_LArQuality	               = ( isSecondary ? m_secJet_LArQuality                 : m_jet_LArQuality );
-    vector<float>*	jet_AverageLArQF	       = ( isSecondary ? m_secJet_AverageLArQF               : m_jet_AverageLArQF );
-    vector<float>*	jet_HECQuality		       = ( isSecondary ? m_secJet_HECQuality                 : m_jet_HECQuality );
-    vector<float>*	jet_FracSamplingMax	       = ( isSecondary ? m_secJet_FracSamplingMax            : m_jet_FracSamplingMax );
-    vector<int>*	jet_FracSamplingMaxIndex       = ( isSecondary ? m_secJet_FracSamplingMaxIndex       : m_jet_FracSamplingMaxIndex );
-    vector<float>*	jet_LeadingClusterPt           = ( isSecondary ? m_secJet_LeadingClusterPt           : m_jet_LeadingClusterPt );
-    vector<float>*	jet_LeadingClusterSecondLambda = ( isSecondary ? m_secJet_LeadingClusterSecondLambda : m_jet_LeadingClusterSecondLambda );
-    vector<float>*	jet_LeadingClusterCenterLambda = ( isSecondary ? m_secJet_LeadingClusterCenterLambda : m_jet_LeadingClusterCenterLambda );
-    vector<float>*	jet_LeadingClusterSecondR      = ( isSecondary ? m_secJet_LeadingClusterSecondR      : m_jet_LeadingClusterSecondR );
-
-
     if(m_debug) cout << " filling eventData" << endl;
-
     eventData thisEvent = eventData(m_runNumber,
 				    m_eventNumber,
 				    jet_pt,
@@ -1367,38 +1292,6 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 				    prescaleWeight,
 				    m_avgIntPerX);
     
-    // if(isSecondary) {
-      // if(m_debug) cout <<"filling secondary eventData"<<endl;
-      // thisEvent = eventData(m_runNumber,
-			    // m_eventNumber,
-			    // m_secJet_pt,
-			    // m_secJet_eta,
-			    // m_secJet_phi,
-			    // m_secJet_E,
-			    // m_secJet_muonSegments,
-			    // m_secJet_EMFrac,
-			    // m_secJet_HECFrac,
-			    // m_secJet_timing,
-			    // m_secJet_negativeE,
-			    // m_secJet_clean_passLooseBad,
-			    // jet_clean_passLooseBad,
-			    
-			    // m_secJet_LArQuality,
-			    // m_secJet_AverageLArQF,
-			    // m_secJet_HECQuality,
-			    // m_secJet_FracSamplingMax,
-			    // m_secJet_FracSamplingMaxIndex,
-			    // m_secJet_LeadingClusterPt,
-			    // m_secJet_LeadingClusterSecondLambda,
-			    // m_secJet_LeadingClusterCenterLambda,
-			    // m_secJet_LeadingClusterSecondR,
-
-			    // m_MHT, // this isn't filled anyway, currently
-			    // eventWeight,
-			    // prescaleWeight,
-			    // m_avgIntPerX);
-    // }
-
     if(m_debug) cout << "done extracting event data to structs" << endl;
   
     // fill mjj-agnostic histograms
@@ -1431,7 +1324,6 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       if (m_jet_pt->at(0) > 240) hPt240->Fill(thisEvent);
       if (m_jet_pt->at(0) > 250) hPt250->Fill(thisEvent);
     }
-
 
 
     // mjj isn't in the new ntuples, calculate it here
