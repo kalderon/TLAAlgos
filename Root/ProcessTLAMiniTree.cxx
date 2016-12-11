@@ -58,7 +58,6 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
 
   m_YStarCut(99),
   m_YBoostCut(99),
-  m_doBlind(false),
   m_doData(false),
   m_useWeighted(false),
   m_etaCut(1.8),
@@ -67,6 +66,11 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_lumi(0),
   m_sampleEvents(0),
   m_grl(nullptr),
+
+  m_plotPtSlices(false),
+  m_plotEtaSlices(false),
+  m_plotMjjWindow(false),
+
   m_jet_pt(0),
   m_jet_eta(0),
   m_jet_phi(0),
@@ -196,40 +200,51 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
   }
   else if (m_isDijetNtupleTrig || m_isDijetNtupleOffline) {
    hIncl    = new eventHists((m_primaryJetOutName+"").c_str()        ,       wk());
-   hCentral = new eventHists((m_primaryJetOutName+"_0-12").c_str()   ,       wk());
-   hCrack   = new eventHists((m_primaryJetOutName+"_12-16").c_str()  ,       wk());
-   hEndcap  = new eventHists((m_primaryJetOutName+"_16-28").c_str()  ,       wk());
-      
-   hIncl_mjjWindow    = new eventHists((m_primaryJetOutName+"_mjjWindow").c_str()        ,       wk());
-   hCentral_mjjWindow = new eventHists((m_primaryJetOutName+"_0-12_mjjWindow").c_str()   ,       wk());
-   hCrack_mjjWindow   = new eventHists((m_primaryJetOutName+"_12-16_mjjWindow").c_str()  ,       wk());
-   hEndcap_mjjWindow  = new eventHists((m_primaryJetOutName+"_16-28_mjjWindow").c_str()  ,       wk());
-
-   hPt200 = new eventHists((m_primaryJetOutName+"_j0Pt200").c_str()  ,       wk());
-   hPt210 = new eventHists((m_primaryJetOutName+"_j0Pt210").c_str()  ,       wk());
-   hPt220 = new eventHists((m_primaryJetOutName+"_j0Pt220").c_str()  ,       wk());
-   hPt230 = new eventHists((m_primaryJetOutName+"_j0Pt230").c_str()  ,       wk());
-   hPt240 = new eventHists((m_primaryJetOutName+"_j0Pt240").c_str()  ,       wk());
-   hPt250 = new eventHists((m_primaryJetOutName+"_j0Pt250").c_str()  ,       wk());
+   if (m_plotEtaSlices) {
+     hCentral = new eventHists((m_primaryJetOutName+"_0-12").c_str()   ,       wk());
+     hCrack   = new eventHists((m_primaryJetOutName+"_12-16").c_str()  ,       wk());
+     hEndcap  = new eventHists((m_primaryJetOutName+"_16-28").c_str()  ,       wk());
+   }
+   if(m_plotMjjWindow) {
+     hIncl_mjjWindow    = new eventHists((m_primaryJetOutName+"_mjjWindow").c_str()        ,       wk());
+     if (m_plotEtaSlices) {
+       hCentral_mjjWindow = new eventHists((m_primaryJetOutName+"_0-12_mjjWindow").c_str()   ,       wk());
+       hCrack_mjjWindow   = new eventHists((m_primaryJetOutName+"_12-16_mjjWindow").c_str()  ,       wk());
+       hEndcap_mjjWindow  = new eventHists((m_primaryJetOutName+"_16-28_mjjWindow").c_str()  ,       wk());
+     }
+   }
+   if(m_plotPtSlices) {
+     hPt200 = new eventHists((m_primaryJetOutName+"_j0Pt200").c_str()  ,       wk());
+     hPt210 = new eventHists((m_primaryJetOutName+"_j0Pt210").c_str()  ,       wk());
+     hPt220 = new eventHists((m_primaryJetOutName+"_j0Pt220").c_str()  ,       wk());
+     hPt230 = new eventHists((m_primaryJetOutName+"_j0Pt230").c_str()  ,       wk());
+     hPt240 = new eventHists((m_primaryJetOutName+"_j0Pt240").c_str()  ,       wk());
+     hPt250 = new eventHists((m_primaryJetOutName+"_j0Pt250").c_str()  ,       wk());
+   }
 
    if(m_doSecondaryJets) {
      hSecIncl    = new eventHists((m_secondaryJetOutName+"").c_str()        ,       wk());
-     hSecCentral = new eventHists((m_secondaryJetOutName+"_0-12").c_str()   ,       wk());
-     hSecCrack   = new eventHists((m_secondaryJetOutName+"_12-16").c_str()  ,       wk());
-     hSecEndcap  = new eventHists((m_secondaryJetOutName+"_16-28").c_str()  ,       wk());
-     
-     hSecIncl_mjjWindow    = new eventHists((m_secondaryJetOutName+"_mjjWindow").c_str()        ,       wk());
-     hSecCentral_mjjWindow = new eventHists((m_secondaryJetOutName+"_0-12_mjjWindow").c_str()   ,       wk());
-     hSecCrack_mjjWindow   = new eventHists((m_secondaryJetOutName+"_12-16_mjjWindow").c_str()  ,       wk());
-     hSecEndcap_mjjWindow  = new eventHists((m_secondaryJetOutName+"_16-28_mjjWindow").c_str()  ,       wk());
-
-     hSecPt200 = new eventHists((m_secondaryJetOutName+"_j0Pt200").c_str()  ,       wk());
-     hSecPt210 = new eventHists((m_secondaryJetOutName+"_j0Pt210").c_str()  ,       wk());
-     hSecPt220 = new eventHists((m_secondaryJetOutName+"_j0Pt220").c_str()  ,       wk());
-     hSecPt230 = new eventHists((m_secondaryJetOutName+"_j0Pt230").c_str()  ,       wk());
-     hSecPt240 = new eventHists((m_secondaryJetOutName+"_j0Pt240").c_str()  ,       wk());
-     hSecPt250 = new eventHists((m_secondaryJetOutName+"_j0Pt250").c_str()  ,       wk());
-
+     if (m_plotEtaSlices) {
+       hSecCentral = new eventHists((m_secondaryJetOutName+"_0-12").c_str()   ,       wk());
+       hSecCrack   = new eventHists((m_secondaryJetOutName+"_12-16").c_str()  ,       wk());
+       hSecEndcap  = new eventHists((m_secondaryJetOutName+"_16-28").c_str()  ,       wk());
+     }
+     if (m_plotMjjWindow) {
+       hSecIncl_mjjWindow    = new eventHists((m_secondaryJetOutName+"_mjjWindow").c_str()        ,       wk());
+       if (m_plotEtaSlices) {
+         hSecCentral_mjjWindow = new eventHists((m_secondaryJetOutName+"_0-12_mjjWindow").c_str()   ,       wk());
+         hSecCrack_mjjWindow   = new eventHists((m_secondaryJetOutName+"_12-16_mjjWindow").c_str()  ,       wk());
+         hSecEndcap_mjjWindow  = new eventHists((m_secondaryJetOutName+"_16-28_mjjWindow").c_str()  ,       wk());
+       }
+     }
+     if (m_plotPtSlices) {
+       hSecPt200 = new eventHists((m_secondaryJetOutName+"_j0Pt200").c_str()  ,       wk());
+       hSecPt210 = new eventHists((m_secondaryJetOutName+"_j0Pt210").c_str()  ,       wk());
+       hSecPt220 = new eventHists((m_secondaryJetOutName+"_j0Pt220").c_str()  ,       wk());
+       hSecPt230 = new eventHists((m_secondaryJetOutName+"_j0Pt230").c_str()  ,       wk());
+       hSecPt240 = new eventHists((m_secondaryJetOutName+"_j0Pt240").c_str()  ,       wk());
+       hSecPt250 = new eventHists((m_secondaryJetOutName+"_j0Pt250").c_str()  ,       wk());
+     }
    }
   }
 
@@ -1487,32 +1502,42 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     // fill mjj-agnostic histograms
     if(isSecondary) {
       hSecIncl->Fill(thisEvent);
-      //central: leading jet within 1.2
-      if (fabs(m_secJet_eta->at(0))<1.2) hSecCentral->Fill(thisEvent);
-      //crack: leading jet within 1.2-1.6
-      else if (fabs(m_secJet_eta->at(0))>=1.2 && fabs(m_secJet_eta->at(0))<1.6) hSecCrack->Fill(thisEvent);
-      //endcap: leading jet within 1.6-2.8
-      else if (fabs(m_secJet_eta->at(0))>=1.6 && fabs(m_secJet_eta->at(0))<2.8) hSecEndcap->Fill(thisEvent);
-      if(m_debug) cout << "filled hSecIncl, hSecCentral, hSecCrack and hSecEndcap" << endl;
-      if (m_secJet_pt->at(0) > 200) hSecPt200->Fill(thisEvent);
-      if (m_secJet_pt->at(0) > 210) hSecPt210->Fill(thisEvent);
-      if (m_secJet_pt->at(0) > 220) hSecPt220->Fill(thisEvent);
-      if (m_secJet_pt->at(0) > 230) hSecPt230->Fill(thisEvent);
-      if (m_secJet_pt->at(0) > 240) hSecPt240->Fill(thisEvent);
-      if (m_secJet_pt->at(0) > 250) hSecPt250->Fill(thisEvent);
+      if(m_debug) cout << "filled hSecIncl" << endl;
+      if(m_plotEtaSlices) {
+        //central: leading jet within 1.2
+        if (fabs(m_secJet_eta->at(0))<1.2) hSecCentral->Fill(thisEvent);
+        //crack: leading jet within 1.2-1.6
+        else if (fabs(m_secJet_eta->at(0))>=1.2 && fabs(m_secJet_eta->at(0))<1.6) hSecCrack->Fill(thisEvent);
+        //endcap: leading jet within 1.6-2.8
+        else if (fabs(m_secJet_eta->at(0))>=1.6 && fabs(m_secJet_eta->at(0))<2.8) hSecEndcap->Fill(thisEvent);
+        if(m_debug) cout << "filled hSecCentral, hSecCrack and hSecEndcap" << endl;
+      }
+      if(m_plotPtSlices) {
+        if (m_secJet_pt->at(0) > 200) hSecPt200->Fill(thisEvent);
+        if (m_secJet_pt->at(0) > 210) hSecPt210->Fill(thisEvent);
+        if (m_secJet_pt->at(0) > 220) hSecPt220->Fill(thisEvent);
+        if (m_secJet_pt->at(0) > 230) hSecPt230->Fill(thisEvent);
+        if (m_secJet_pt->at(0) > 240) hSecPt240->Fill(thisEvent);
+        if (m_secJet_pt->at(0) > 250) hSecPt250->Fill(thisEvent);
+      }
     }
     else {
       hIncl->Fill(thisEvent);
-      if (fabs(m_jet_eta->at(0))<1.2) hCentral->Fill(thisEvent);
-      else if (fabs(m_jet_eta->at(0))>=1.2 && fabs(m_jet_eta->at(0))<1.6) hCrack->Fill(thisEvent);
-      else if (fabs(m_jet_eta->at(0))>=1.6 && fabs(m_jet_eta->at(0))<2.8) hEndcap->Fill(thisEvent);
-      if(m_debug) cout << "filled hIncl, hCentral, hCrack and hEndcap" << endl;
-      if (m_jet_pt->at(0) > 200) hPt200->Fill(thisEvent);
-      if (m_jet_pt->at(0) > 210) hPt210->Fill(thisEvent);
-      if (m_jet_pt->at(0) > 220) hPt220->Fill(thisEvent);
-      if (m_jet_pt->at(0) > 230) hPt230->Fill(thisEvent);
-      if (m_jet_pt->at(0) > 240) hPt240->Fill(thisEvent);
-      if (m_jet_pt->at(0) > 250) hPt250->Fill(thisEvent);
+      if(m_debug) cout << "filled hIncl" << endl;
+      if(m_plotEtaSlices) {
+        if (fabs(m_jet_eta->at(0))<1.2) hCentral->Fill(thisEvent);
+        else if (fabs(m_jet_eta->at(0))>=1.2 && fabs(m_jet_eta->at(0))<1.6) hCrack->Fill(thisEvent);
+        else if (fabs(m_jet_eta->at(0))>=1.6 && fabs(m_jet_eta->at(0))<2.8) hEndcap->Fill(thisEvent);
+        if(m_debug) cout << "filled hCentral, hCrack and hEndcap" << endl;
+      }
+      if(m_plotPtSlices) {
+        if (m_jet_pt->at(0) > 200) hPt200->Fill(thisEvent);
+        if (m_jet_pt->at(0) > 210) hPt210->Fill(thisEvent);
+        if (m_jet_pt->at(0) > 220) hPt220->Fill(thisEvent);
+        if (m_jet_pt->at(0) > 230) hPt230->Fill(thisEvent);
+        if (m_jet_pt->at(0) > 240) hPt240->Fill(thisEvent);
+        if (m_jet_pt->at(0) > 250) hPt250->Fill(thisEvent);
+      }
     }
 
 
@@ -1528,22 +1553,30 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
     // fill mjj-aware histograms
     if(isSecondary) {
-      if ( mjj>394 && mjj<1236 ) {
-	hSecIncl_mjjWindow->Fill(thisEvent);
-	//central: leading jet within 1.2
-	if (fabs(m_secJet_eta->at(0))<1.2) hSecCentral_mjjWindow->Fill(thisEvent);
-	//crack: leading jet within 1.2-1.6
-	else if (fabs(m_secJet_eta->at(0))>=1.2 && fabs(m_secJet_eta->at(0))<1.6) hSecCrack_mjjWindow->Fill(thisEvent);
-	//endcap: leading jet within 1.6-2.8
-	else if (fabs(m_secJet_eta->at(0))>=1.6 && fabs(m_secJet_eta->at(0))<2.8) hSecEndcap_mjjWindow->Fill(thisEvent);
+      if(m_plotMjjWindow) {
+        if ( mjj>394 && mjj<1236 ) {
+          hSecIncl_mjjWindow->Fill(thisEvent);
+          if(m_plotEtaSlices) {
+            //central: leading jet within 1.2
+            if (fabs(m_secJet_eta->at(0))<1.2) hSecCentral_mjjWindow->Fill(thisEvent);
+            //crack: leading jet within 1.2-1.6
+            else if (fabs(m_secJet_eta->at(0))>=1.2 && fabs(m_secJet_eta->at(0))<1.6) hSecCrack_mjjWindow->Fill(thisEvent);
+            //endcap: leading jet within 1.6-2.8
+            else if (fabs(m_secJet_eta->at(0))>=1.6 && fabs(m_secJet_eta->at(0))<2.8) hSecEndcap_mjjWindow->Fill(thisEvent);
+          }
+        }
       }
     }
     else {
-      if ( mjj>394 && mjj<1236 ) {
-	hIncl_mjjWindow->Fill(thisEvent);
-	if (fabs(m_jet_eta->at(0))<1.2) hCentral_mjjWindow->Fill(thisEvent);
-	else if (fabs(m_jet_eta->at(0))>=1.2 && fabs(m_jet_eta->at(0))<1.6) hCrack_mjjWindow->Fill(thisEvent);
-	else if (fabs(m_jet_eta->at(0))>=1.6 && fabs(m_jet_eta->at(0))<2.8) hEndcap_mjjWindow->Fill(thisEvent);
+      if(m_plotMjjWindow){
+        if ( mjj>394 && mjj<1236 ) {
+          hIncl_mjjWindow->Fill(thisEvent);
+          if(m_plotEtaSlices) {
+            if (fabs(m_jet_eta->at(0))<1.2) hCentral_mjjWindow->Fill(thisEvent);
+            else if (fabs(m_jet_eta->at(0))>=1.2 && fabs(m_jet_eta->at(0))<1.6) hCrack_mjjWindow->Fill(thisEvent);
+            else if (fabs(m_jet_eta->at(0))>=1.6 && fabs(m_jet_eta->at(0))<2.8) hEndcap_mjjWindow->Fill(thisEvent);
+          }
+        }
       }
     }
 

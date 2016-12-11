@@ -34,62 +34,74 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 	// that way they can be set directly from CINT and python.
 	public:
 
-		// GRL
-		bool m_applyGRL;
-		std::string m_GRLxml;
-		/* std::string m_GRLxml; //! CWK: not sure why this was set to be unmodifiable, means isn't changed by config... */
-    
-    
-		// Event cleaning configuration
-		bool m_applyLArEventCleaning;
-		bool m_invertLArEventCleaning;
-		bool m_applyTLALArEventVetoData;
-		TLALArEventVetoData * m_dataForLArEventVeto; //!
-		std::string m_TLALArEventVetoFiles;
+		std::string m_name;
+		bool m_debug;                
 
-		bool m_doCleaning;
-		bool m_recalculateJetCleaning;
-		bool m_invertJetCleaning;
-
-		//configuration variables
-		bool m_debug;                     
-		bool m_doTrigger;
-		bool m_doTrigger_j110;
-		bool m_useCutflow;
+		// what am I running on
 		bool m_doTruthOnly;
-		std::string m_primaryJetInName;
-		std::string m_primaryJetOutName;
-		bool m_doSecondaryJets;
-		std::string m_secondaryJetInName;
-		std::string m_secondaryJetOutName;
-		bool m_doPileupFromMap;
-		std::string m_pileupMap;
 		bool m_isDijetNtupleTruth;
 		bool m_isDijetNtupleTrig;
 		bool m_isDijetNtupleOffline;
 		bool m_isTLANtupleTruth;
 		bool m_isTLANtupleTrig;
 		bool m_isTLANtupleOffline;
-		float m_YStarCut;
-		float m_YBoostCut;             
-		bool m_doBlind;                
-		bool m_doData;                 
+		bool m_doData;
+
+		// normalisation
+		bool m_useCutflow;
 		bool m_useWeighted;            
-		float m_etaCut;       
-		float m_leadJetPtCut;          
-		float m_subleadJetPtCut;          
 		float m_lumi;                   // Lumi we are scaling to
+		
+		// GRL and pileup
+		bool m_applyGRL;
+		std::string m_GRLxml;
+		bool m_doPileupFromMap;
+		std::string m_pileupMap;
+    
+		// trigger selection
+		bool m_doTrigger;
+		bool m_doTrigger_j110;
+
+		// which jet collections to use
+		std::string m_primaryJetInName;
+		std::string m_primaryJetOutName;
+		bool m_doSecondaryJets;
+		std::string m_secondaryJetInName;
+		std::string m_secondaryJetOutName;
+		
+    		// Event cleaning configuration
+		bool m_applyLArEventCleaning;
+		bool m_invertLArEventCleaning;
+		bool m_applyTLALArEventVetoData;
+		std::string m_TLALArEventVetoFiles;
+		TLALArEventVetoData * m_dataForLArEventVeto; //!
+
+		// jet cleaning
+		bool m_doCleaning;
+		bool m_recalculateJetCleaning;
+		bool m_invertJetCleaning;
+
+		// event selection cuts
+		float m_YStarCut;
+		float m_YBoostCut;
+		float m_etaCut;
+		float m_leadJetPtCut;
+		float m_subleadJetPtCut;
+
+		// which hists to write
+		bool m_plotPtSlices;
+		bool m_plotEtaSlices;
+		bool m_plotMjjWindow;
+
+
 		/*bool m_applySF;
 		TString m_scaleFactorLocation;
 		TString m_scaleFactorHistoName;*/
-    
-		float m_sampleEvents;           //! MC Events in the sample we are processing
-
-
 		// float cutValue;
-		int m_eventCounter;     //!
 
-		std::string m_name;
+		// counters etc
+		float m_sampleEvents;   //! MC Events in the sample we are processing
+		int m_eventCounter;     //!
 		float m_mcEventWeight;  //!
 
 	private:

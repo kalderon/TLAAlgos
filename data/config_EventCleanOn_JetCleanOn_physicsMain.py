@@ -76,14 +76,14 @@ c.setalg("ProcessTLAMiniTree",
            
            
            # event cleaning
-           "m_applyLArEventCleaning"    : False, # veto events which fail LAr event cleaning, from AOD if isDijetNtupleOffline, from tool if ....Trig
+           "m_applyLArEventCleaning"    : True, # veto events which fail LAr event cleaning, from AOD if isDijetNtupleOffline, from tool if ....Trig
            "m_invertLArEventCleaning"   : False, # veto events which pass event cleaning (only if above is true)
            "m_applyTLALArEventVetoData" : True, # run tool
            "m_TLALArEventVetoFiles"   : "$ROOTCOREBIN/data/TLAEventCleaning/event-veto-data/",
            
            # jet cleaning
-           "m_recalculateJetCleaning" : False, # don't take the value from the NTUP but recalculate based on saved variables. (will do this anyway if NTUP values != (0,1) )
            "m_doCleaning"             : True, # veto events which fail jet cleaning
+           "m_recalculateJetCleaning" : False, # don't take the value from the NTUP but recalculate based on saved variables. (will do this anyway if NTUP values != (0,1) )
            "m_invertJetCleaning"      : False, # veto events which pass jet cleaning (only if above is True)
            
            # event selection cuts
@@ -92,8 +92,10 @@ c.setalg("ProcessTLAMiniTree",
            "m_subleadJetPtCut"        : 85,
            "m_YStarCut"               : 0.6,
            
-           # which hists to print - TO DO
-           # ptslices, mjj slices, eta slices, etc
+           # which hists to write
+           "m_plotPtSlices"           : True,
+           "m_plotEtaSlices"          : False,
+           "m_plotMjjWindow"          : False,
            
            } )
 
