@@ -1506,17 +1506,16 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 	if (m_debug) cout << "Pass jet cleaning (but I'm inverting, so skip event) " << endl;
 	continue;
       }
-    }
 
-    cutname = "jet cleaning";
-    if(isSecondary) {
-      m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
-      m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
-    } else {
-      m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
-      m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+      cutname = "jet cleaning";
+      if(isSecondary) {
+        m_h_cutflow_secondary   -> Fill(cutname.c_str(), 1.0);
+        m_h_cutflow_secondary_w -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+      } else {
+        m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+        m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+      }
     }
-
 
     if(m_debug) cout << " Pass All Cut " << endl;
 
