@@ -80,6 +80,7 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_jet_EMFrac(0),
   m_jet_HECFrac(0),
   m_LArError(false),
+  m_LArFlags(-1),
   m_jet_timing(0),
   m_jet_negativeE(0),
   m_jet_clean_passLooseBad(0),
@@ -114,6 +115,7 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   hClean_PassEvt_FailJet(nullptr),
   hClean_FailEvt_PassJet(nullptr),
   hClean_FailEvt_FailJet(nullptr),
+  hClean_FailToolPassEvt(nullptr),
 
   hCentral(nullptr),
   hCrack(nullptr),
@@ -138,6 +140,7 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   hSecClean_PassEvt_FailJet(nullptr),
   hSecClean_FailEvt_PassJet(nullptr),
   hSecClean_FailEvt_FailJet(nullptr),
+  hSecClean_FailToolPassEvt(nullptr),
   hSecCentral(nullptr),
   hSecCrack(nullptr),
   hSecEndcap(nullptr),
@@ -232,6 +235,7 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
      hClean_PassEvt_FailJet = new eventHists((m_primaryJetOutName+"_Clean_PassEvt_FailJet").c_str()   ,       wk());
      hClean_FailEvt_PassJet = new eventHists((m_primaryJetOutName+"_Clean_FailEvt_PassJet").c_str()   ,       wk());
      hClean_FailEvt_FailJet = new eventHists((m_primaryJetOutName+"_Clean_FailEvt_FailJet").c_str()   ,       wk());
+     hClean_FailToolPassEvt = new eventHists((m_primaryJetOutName+"_Clean_FailToolPassEvt").c_str()   ,       wk());
    }
    
 
@@ -268,6 +272,7 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
        hSecClean_PassEvt_FailJet = new eventHists((m_secondaryJetOutName+"_Clean_PassEvt_FailJet").c_str()   ,       wk());
        hSecClean_FailEvt_PassJet = new eventHists((m_secondaryJetOutName+"_Clean_FailEvt_PassJet").c_str()   ,       wk());
        hSecClean_FailEvt_FailJet = new eventHists((m_secondaryJetOutName+"_Clean_FailEvt_FailJet").c_str()   ,       wk());
+       hSecClean_FailToolPassEvt = new eventHists((m_secondaryJetOutName+"_Clean_FailToolPassEvt").c_str()   ,       wk());
      }
 
      if (m_plotEtaSlices) {
@@ -334,6 +339,14 @@ EL::StatusCode ProcessTLAMiniTree :: histInitialize ()
   m_h2_LArError->GetYaxis()->SetBinLabel(3,"MiniNoiseBurst");
   m_h2_LArError->GetYaxis()->SetBinLabel(4,"Other/Both");
   wk()->addOutput(m_h2_LArError);
+
+  m_h2_LArFlags_Tool = new TH2D("h2_LArFlags_Tool", "h2_LArFlags_Tool;LAr Flags;Tool: isLArError", 500, 0, 500, 4, 0, 4);
+  m_h2_LArFlags_Tool->GetYaxis()->SetBinLabel(1,"None");
+  m_h2_LArFlags_Tool->GetYaxis()->SetBinLabel(2,"NoiseBurst");
+  m_h2_LArFlags_Tool->GetYaxis()->SetBinLabel(3,"MiniNoiseBurst");
+  m_h2_LArFlags_Tool->GetYaxis()->SetBinLabel(4,"Other/Both");
+  wk()->addOutput(m_h2_LArFlags_Tool);
+
 
   m_h2_Clean_Evt_Jet = new TH2D("h2_Clean_Evt_Jet", "h2_Clean_Evt_Jet;Pass jet cleaning?;Event Cleaning", 2, 0, 2, 6, 0, 6);
   m_h2_Clean_Evt_Jet->GetYaxis()->SetBinLabel(1,"Pass Evt");
@@ -503,6 +516,9 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
 
     tree->SetBranchStatus  ("LArError",    1);
     tree->SetBranchAddress ("LArError",    &m_LArError);
+
+    tree->SetBranchStatus  ("LArFlags",    1);
+    tree->SetBranchAddress ("LArFlags",    &m_LArFlags);
       
     tree->SetBranchStatus  ("timeStampNSOffset",    1);
     tree->SetBranchAddress ("timeStampNSOffset",    &m_timeStampNSOffset);
@@ -945,6 +961,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 	else                                     LArError_tool = 3;
       }
       m_h2_LArError->Fill(LArError_offline, LArError_tool);
+      m_h2_LArFlags_Tool->Fill(m_LArFlags, LArError_tool);
     }
     
   }
@@ -1558,7 +1575,8 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 				    prescaleWeight,
 				    m_avgIntPerX,
                                     LArError_offline,
-                                    LArError_tool);
+                                    LArError_tool,
+                                    m_LArFlags);
     
     if(m_debug) cout << "done extracting event data to structs" << endl;
   
@@ -1594,6 +1612,13 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
         if(isSecondary) hSecClean_FailJet->Fill(thisEvent);
         else            hClean_FailJet->Fill(thisEvent);
       }
+
+      // ones in the tool - veto gap
+      if(!passEventCleaning && !failToolError) {
+        if(isSecondary) hSecClean_FailToolPassEvt->Fill(thisEvent);
+        else            hClean_FailToolPassEvt->Fill(thisEvent);
+      }
+
     }
 
 

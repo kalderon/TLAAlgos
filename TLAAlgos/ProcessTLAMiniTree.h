@@ -109,13 +109,14 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
 		GoodRunsListSelectionTool*   m_grl;       //!
 
-		Int_t m_runNumber; //!
-		Long64_t m_eventNumber; //!
-		int m_lumiBlock; //!
-		bool m_LArError; //!
+		Int_t     m_runNumber; //!
+		Long64_t  m_eventNumber; //!
+		int       m_lumiBlock; //!
+		bool      m_LArError; //!
+		uint32_t  m_LArFlags; //!
 		uint32_t  m_timeStamp; //!
 		uint32_t  m_timeStampNSOffset; //!
-		int m_NPV; //!
+		int       m_NPV; //!
 
 		float m_avgIntPerX; //!
 		float m_avgIntPerX_fromMap; //!
@@ -182,6 +183,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		double m_eta_freeze;//!*/
 
 		TH2D* m_h2_LArError; //!
+		TH2D* m_h2_LArFlags_Tool; //!
 		TH2D* m_h2_Clean_Evt_Jet; //!
 		TH2D* m_h2_Clean_Evt_Jet_w; //!
 		TH2D* m_h2_jetCleaning; //!
@@ -272,6 +274,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  float           avgIntPerX;
                   int             LArError_offline;
                   int             LArError_tool;
+                  int             LArFlags;
 		  
 		  eventData(unsigned int m_runNumber,
 			    unsigned int m_eventNumber,
@@ -301,7 +304,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 			    float& m_prescaleWeight,
 			    float& m_avgIntPerX,
                             int m_LArError_offline,
-                            int m_LArError_tool){
+                            int m_LArError_tool,
+                            int m_LArFlags){
 		    
 		    runNumber       = m_runNumber;
 		    eventNumber     = m_eventNumber;
@@ -309,6 +313,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    avgIntPerX      = m_avgIntPerX;
                     LArError_offline = m_LArError_offline;
                     LArError_tool   = m_LArError_tool;
+                    LArFlags        = m_LArFlags;
 
 		    /* MHT = m_MHT; // it's not filled in Dijet NTUPs */		    
 		    // calculate MHT
@@ -463,6 +468,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
 		  TH2F*    h2_LArError;
 		  TH2F*    h2_LArError_w;
+		  TH2F*    h2_LArFlags_Tool;
 
 		  eventHists(std::string name, EL::Worker* wk){
 		    
@@ -514,8 +520,8 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h_pt_eta_muon     = book         (wk, name, "pt_eta_muon"    , "pt;eta;muon segments"    , ptbinnum , ptbins, etabinnum, etabins, muonbinnum, muonsegmentbins );
 
                     // cleaning 1D
-		    h_EMFrac_lead     = book         (wk, name, "EMFrac_lead"    , "lead jet EMFrac"    , 150      , 0, 1.5   );
-		    h_EMFrac_sublead  = book         (wk, name, "EMFrac_sublead" , "sublead jet EMFrac" , 150      , 0, 1.5   );
+		    h_EMFrac_lead     = book         (wk, name, "EMFrac_lead"    , "lead jet EMFrac"    , 200      , -2, 2    );
+		    h_EMFrac_sublead  = book         (wk, name, "EMFrac_sublead" , "sublead jet EMFrac" , 200      , -2, 2    );
 		    h_HECFrac_lead    = book         (wk, name, "HECFrac_lead"   , "lead jet HECFrac"   , 150      , 0, 1.5   );
 		    h_HECFrac_sublead = book         (wk, name, "HECFrac_sublead", "sublead jet HECFrac", 150      , 0, 1.5   );
 		    h_timing_lead       = book (wk, name, "timing_lead",       "lead jet timing",        1000, -100, 100 );
@@ -523,17 +529,17 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h_negativeE_lead    = book (wk, name, "negativeE_lead",    "lead jet negativeE",     210, -200, 10 );
 		    h_negativeE_sublead = book (wk, name, "negativeE_sublead", "sublead jet negativeE",  210, -200, 10 );
 
-		    h_LArQuality_lead                            = book (wk, name, "LArQuality_lead", "Lead jet LAr Quality",  100, 0, 5 );
+		    h_LArQuality_lead                            = book (wk, name, "LArQuality_lead", "Lead jet LAr Quality",  200, -2, 8 );
 		    h_AverageLArQF_lead                          = book (wk, name, "AverageLArQF_lead", "Lead jet average LAr QF",  140, 0, 70000 );
-		    h_HECQuality_lead                            = book (wk, name, "HECQuality_lead", "Lead jet HEC Quality",  150, -1, 2 );
+		    h_HECQuality_lead                            = book (wk, name, "HECQuality_lead", "Lead jet HEC Quality",  400, -10, 10 );
 		    h_LeadingClusterPt_lead                      = book (wk, name, "LeadingClusterPt_lead", "Lead jet leading cluster p_{T}",  100, 0, 5000000 );
 		    h_LeadingClusterSecondLambda_lead            = book (wk, name, "LeadingClusterSecondLambda_lead", "Lead jet leading cluster SecondLambda",  100, 0, 5000000 );
 		    h_LeadingClusterCenterLambda_lead            = book (wk, name, "LeadingClusterCenterLambda_lead", "Lead jet leading cluster CenterLambda",  100, 0, 20000 );
 		    h_LeadingClusterSecondR_lead                 = book (wk, name, "LeadingClusterSecondR_lead", "Lead jet leading cluster SecondR",  100, 0, 6000000 );
 
-		    h_LArQuality_sublead                            = book (wk, name, "LArQuality_sublead", "Sublead jet LAr Quality",  100, 0, 5 );
+		    h_LArQuality_sublead                            = book (wk, name, "LArQuality_sublead", "Sublead jet LAr Quality",  200, -2, 8 );
 		    h_AverageLArQF_sublead                          = book (wk, name, "AverageLArQF_sublead", "Sublead jet average LAr QF",  140, 0, 70000 );
-		    h_HECQuality_sublead                            = book (wk, name, "HECQuality_sublead", "Sublead jet HEC Quality",  150, -1, 2 );
+		    h_HECQuality_sublead                            = book (wk, name, "HECQuality_sublead", "Sublead jet HEC Quality",  400, -10, 10 );
 		    h_LeadingClusterPt_sublead                      = book (wk, name, "LeadingClusterPt_sublead", "LeadingClusterPt_sublead;Sublead jet leading cluster p_{T}",  100, 0, 5000000 );
 		    h_LeadingClusterSecondLambda_sublead            = book (wk, name, "LeadingClusterSecondLambda_sublead", "Sublead jet leading cluster SecondLambda",  100, 0, 5000000 );
 		    h_LeadingClusterCenterLambda_sublead            = book (wk, name, "LeadingClusterCenterLambda_sublead", "Sublead jet leading cluster CenterLambda",  100, 0, 20000 );
@@ -567,7 +573,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
                     // cleaning validation
                     h2_LArError = book (wk, name, "h2_LArError", "Offline: isArError;Tool: isLArError", 2, 0, 2, 4, 0, 4 );
                     h2_LArError_w = book (wk, name, "h2_LArError_w", "Offline: isArError;Tool: isLArError", 2, 0, 2, 4, 0, 4 );
-
+                    h2_LArFlags_Tool = book (wk, name, "h2_LArFlags_Tool", "LAr Flags;Tool: isLArError", 500, 0, 500, 4, 0, 4 );
                     /* m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(1,"None"); */
                     /* m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(2,"NoiseBurst"); */
                     /* m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(3,"MiniNoiseBurst"); */
@@ -698,7 +704,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 
                     h2_LArError                                     -> Fill (thisEvent.LArError_offline, thisEvent.LArError_tool);
                     h2_LArError_w                                   -> Fill (thisEvent.LArError_offline, thisEvent.LArError_tool, weight);
-
+                    h2_LArFlags_Tool                                -> Fill (thisEvent.LArFlags, thisEvent.LArError_tool);
 		  }
 
 		};
@@ -714,6 +720,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		eventHists*   hClean_PassEvt_FailJet; //!
 		eventHists*   hClean_FailEvt_PassJet; //!
 		eventHists*   hClean_FailEvt_FailJet; //!
+                eventHists*   hClean_FailToolPassEvt; //!
 
 		eventHists*   hCentral; //!
 		eventHists*   hCrack; //!
@@ -740,6 +747,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		eventHists*   hSecClean_PassEvt_FailJet; //!
 		eventHists*   hSecClean_FailEvt_PassJet; //!
 		eventHists*   hSecClean_FailEvt_FailJet; //!
+                eventHists*   hSecClean_FailToolPassEvt; //!
 
 		eventHists*   hSecCentral; //!
 		eventHists*   hSecCrack; //!
