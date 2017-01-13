@@ -35,9 +35,10 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 	public:
 
 		std::string m_name;
-		bool m_debug;                
+		bool m_debug;
 
 		// what am I running on
+		bool m_is2015;
 		bool m_doTruthOnly;
 		bool m_isDijetNtupleTruth;
 		bool m_isDijetNtupleTrig;
@@ -457,6 +458,9 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		  TH2F*     h2_eta_pt_sublead;
 		  TH2F*     h2_eta_phi_lead;
 		  TH2F*     h2_eta_phi_sublead;
+                  TH2F*     h2_eta_lead_mjj_uniform;
+                  TH2F*     h2_eta_sublead_mjj_uniform;
+                  TH2F*     h2_yStar_mjj_uniform;
 		  TH2F*     h2_avgIntPerX_timing_lead;
 		  TH2F*     h2_avgIntPerX_negativeE_lead;
 		  TH2F*     h2_avgIntPerX_pt_lead;
@@ -503,7 +507,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
                     // kinematics
 		    h_mjj             = book_variable(wk, name, "mjj"            , "mjj"                , mjjbinnum, mjjbins    );
 		    h_yStar           = book         (wk, name, "yStar"          , "yStar"              , 100      , -2,    2    );
-		    h_mjj_uniform     = book         (wk, name, "mjj_uniform"    , "mjj"                , 100      , 0,    5000   );
+		    h_mjj_uniform     = book         (wk, name, "mjj_uniform"    , "mjj"                , 10000    , 0,    10000   );
 		    h_MHT             = book_variable(wk, name, "MHT"            , "MHT"                , ptbinnum , ptbins   );
 		    h_MHTvec          = book_variable(wk, name, "MHTvec"         , "MHTvec"             , ptbinnum , ptbins   );
 		    h_pt_lead         = book_variable(wk, name, "pt_lead"        , "lead jet pt"        , ptbinnum , ptbins   );
@@ -559,6 +563,10 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h2_eta_phi_lead    = book (wk, name, "eta_phi_lead", "lead #eta;lead #phi", 100, -4.5, 4.5, 100, -3.14, 3.14 );
 		    h2_eta_phi_sublead = book (wk, name, "eta_phi_sublead", "sublead #eta;sublead #phi", 100, -4.5, 4.5, 100, -3.14, 3.14 );
 
+		    h2_eta_lead_mjj_uniform    = book (wk, name, "eta_lead_mjj_uniform", "lead #eta;m_{jj}",       60, -3, 3, 3600, 400, 4000 );
+		    h2_eta_sublead_mjj_uniform = book (wk, name, "eta_sublead_mjj_uniform", "sublead #eta;m_{jj}", 60, -3, 3, 3600, 400, 4000 );
+		    h2_yStar_mjj_uniform       = book (wk, name, "yStar_mjj_uniform", "yStar;m_{jj}",              50, -1, 1, 3600, 400, 4000 );
+
 		    h2_avgIntPerX_timing_lead    = book (wk, name, "avgIntPerX_timing_lead", "avgIntPerX;timing_lead", 100, 0, 100, 100, -100, 100 );
 		    h2_avgIntPerX_negativeE_lead = book (wk, name, "avgIntPerX_negativeE_lead", "avgIntPerX;negativeE_lead", 100, 0, 100, 105, -100, 10 );
 
@@ -578,7 +586,6 @@ class ProcessTLAMiniTree : public xAH::Algorithm
                     /* m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(2,"NoiseBurst"); */
                     /* m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(3,"MiniNoiseBurst"); */
                     /* m_h2_LArError_postSelection->GetYaxis()->SetBinLabel(4,"Other/Both"); */
-
 
 		  }
 		  
@@ -671,6 +678,11 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		    h2_eta_pt_sublead     ->Fill(jet1.Eta(), jet2.Pt(), weight);
 		    h2_eta_phi_lead     ->Fill(jet1.Eta(), jet1.Phi(), weight);
 		    h2_eta_phi_sublead     ->Fill(jet2.Eta(), jet2.Phi(), weight);
+
+		    h2_eta_lead_mjj_uniform    -> Fill(jet1.Eta(), jjSystem.M(), weight);
+		    h2_eta_sublead_mjj_uniform -> Fill(jet2.Eta(), jjSystem.M(), weight);
+		    h2_yStar_mjj_uniform       -> Fill(yStar, jjSystem.M(), weight);
+
 		    h2_avgIntPerX_timing_lead -> Fill(thisEvent.avgIntPerX, leadJet.timing, weight); 
 		    h2_avgIntPerX_negativeE_lead -> Fill(thisEvent.avgIntPerX, leadJet.negativeE, weight); 
 
@@ -720,7 +732,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		eventHists*   hClean_PassEvt_FailJet; //!
 		eventHists*   hClean_FailEvt_PassJet; //!
 		eventHists*   hClean_FailEvt_FailJet; //!
-                eventHists*   hClean_FailToolPassEvt; //!
+                eventHists*   hClean_PassToolFailEvt; //!
 
 		eventHists*   hCentral; //!
 		eventHists*   hCrack; //!
@@ -747,7 +759,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		eventHists*   hSecClean_PassEvt_FailJet; //!
 		eventHists*   hSecClean_FailEvt_PassJet; //!
 		eventHists*   hSecClean_FailEvt_FailJet; //!
-                eventHists*   hSecClean_FailToolPassEvt; //!
+                eventHists*   hSecClean_PassToolFailEvt; //!
 
 		eventHists*   hSecCentral; //!
 		eventHists*   hSecCrack; //!

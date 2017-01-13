@@ -35,6 +35,7 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_invertJetCleaning(false),
 
   m_debug(false),
+  m_is2015(false),
   m_doTrigger(false),
   m_doTrigger_j110(false),
   m_isDijetNtupleOffline(false),
@@ -115,7 +116,7 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   hClean_PassEvt_FailJet(nullptr),
   hClean_FailEvt_PassJet(nullptr),
   hClean_FailEvt_FailJet(nullptr),
-  hClean_FailToolPassEvt(nullptr),
+  hClean_PassToolFailEvt(nullptr),
 
   hCentral(nullptr),
   hCrack(nullptr),
@@ -140,7 +141,7 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   hSecClean_PassEvt_FailJet(nullptr),
   hSecClean_FailEvt_PassJet(nullptr),
   hSecClean_FailEvt_FailJet(nullptr),
-  hSecClean_FailToolPassEvt(nullptr),
+  hSecClean_PassToolFailEvt(nullptr),
   hSecCentral(nullptr),
   hSecCrack(nullptr),
   hSecEndcap(nullptr),
@@ -235,7 +236,7 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
      hClean_PassEvt_FailJet = new eventHists((m_primaryJetOutName+"_Clean_PassEvt_FailJet").c_str()   ,       wk());
      hClean_FailEvt_PassJet = new eventHists((m_primaryJetOutName+"_Clean_FailEvt_PassJet").c_str()   ,       wk());
      hClean_FailEvt_FailJet = new eventHists((m_primaryJetOutName+"_Clean_FailEvt_FailJet").c_str()   ,       wk());
-     hClean_FailToolPassEvt = new eventHists((m_primaryJetOutName+"_Clean_FailToolPassEvt").c_str()   ,       wk());
+     hClean_PassToolFailEvt = new eventHists((m_primaryJetOutName+"_Clean_PassToolFailEvt").c_str()   ,       wk());
    }
    
 
@@ -272,7 +273,7 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
        hSecClean_PassEvt_FailJet = new eventHists((m_secondaryJetOutName+"_Clean_PassEvt_FailJet").c_str()   ,       wk());
        hSecClean_FailEvt_PassJet = new eventHists((m_secondaryJetOutName+"_Clean_FailEvt_PassJet").c_str()   ,       wk());
        hSecClean_FailEvt_FailJet = new eventHists((m_secondaryJetOutName+"_Clean_FailEvt_FailJet").c_str()   ,       wk());
-       hSecClean_FailToolPassEvt = new eventHists((m_secondaryJetOutName+"_Clean_FailToolPassEvt").c_str()   ,       wk());
+       hSecClean_PassToolFailEvt = new eventHists((m_secondaryJetOutName+"_Clean_PassToolFailEvt").c_str()   ,       wk());
      }
 
      if (m_plotEtaSlices) {
@@ -405,30 +406,31 @@ EL::StatusCode ProcessTLAMiniTree :: fileExecute ()
   TFile* inputFile = wk()->inputFile();
   cout << inputFile << ", " << inputFile->GetName() << endl;
 
-  // get nEvents values from NTUP and set bin errors appropriately
-  TH1D* NTUP_MetaData = (TH1D*)inputFile->Get("MetaData_EventCount");
-  m_h_cutflow_primary->Fill("NTUP initial", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents initial")));
-  m_h_cutflow_primary->Fill("NTUP selected", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents selected")));
-  m_h_cutflow_primary->SetBinError(1, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents initial"))) );
-  m_h_cutflow_primary->SetBinError(2, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents selected"))) );
-  // weighted
-  m_h_cutflow_primary_w->Fill("NTUP initial", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeights initial")));
-  m_h_cutflow_primary_w->Fill("NTUP selected", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeights selected")));
-  m_h_cutflow_primary->SetBinError(1, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeightsSquared initial"))) );
-  m_h_cutflow_primary->SetBinError(2, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeightsSquared selected"))) );
-
-  // secondary hists
-  m_h_cutflow_secondary->Fill("NTUP initial", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents initial")));
-  m_h_cutflow_secondary->Fill("NTUP selected", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents selected")));
-  m_h_cutflow_secondary->SetBinError(1, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents initial"))) );
-  m_h_cutflow_secondary->SetBinError(2, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents selected"))) );
-  // weighted
-  m_h_cutflow_secondary_w->Fill("NTUP initial", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeights initial")));
-  m_h_cutflow_secondary_w->Fill("NTUP selected", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeights selected")));
-  m_h_cutflow_secondary->SetBinError(1, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeightsSquared initial"))) );
-  m_h_cutflow_secondary->SetBinError(2, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeightsSquared selected"))) );
-
-
+  if(!m_is2015) {
+    // get nEvents values from NTUP and set bin errors appropriately
+    TH1D* NTUP_MetaData = (TH1D*)inputFile->Get("MetaData_EventCount");
+    m_h_cutflow_primary->Fill("NTUP initial", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents initial")));
+    m_h_cutflow_primary->Fill("NTUP selected", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents selected")));
+    m_h_cutflow_primary->SetBinError(1, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents initial"))) );
+    m_h_cutflow_primary->SetBinError(2, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents selected"))) );
+    // weighted
+    m_h_cutflow_primary_w->Fill("NTUP initial", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeights initial")));
+    m_h_cutflow_primary_w->Fill("NTUP selected", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeights selected")));
+    m_h_cutflow_primary->SetBinError(1, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeightsSquared initial"))) );
+    m_h_cutflow_primary->SetBinError(2, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeightsSquared selected"))) );
+    
+    // secondary hists
+    m_h_cutflow_secondary->Fill("NTUP initial", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents initial")));
+    m_h_cutflow_secondary->Fill("NTUP selected", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents selected")));
+    m_h_cutflow_secondary->SetBinError(1, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents initial"))) );
+    m_h_cutflow_secondary->SetBinError(2, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("nEvents selected"))) );
+    // weighted
+    m_h_cutflow_secondary_w->Fill("NTUP initial", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeights initial")));
+    m_h_cutflow_secondary_w->Fill("NTUP selected", NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeights selected")));
+    m_h_cutflow_secondary->SetBinError(1, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeightsSquared initial"))) );
+    m_h_cutflow_secondary->SetBinError(2, sqrt(NTUP_MetaData->GetBinContent(NTUP_MetaData->GetXaxis()->FindBin("sumOfWeightsSquared selected"))) );
+  }
+  
   return EL::StatusCode::SUCCESS;
 }
 
@@ -870,7 +872,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   // event, e.g. read input variables, apply cuts, and fill
   // histograms and trees.  This is where most of your actual analysis
   // code will go.
-  //if(m_debug) Info("execute()", "Processing Event");
+
   ++m_eventCounter;
 
   wk()->tree()->GetEntry (wk()->treeEntry());
@@ -960,6 +962,15 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 	else if (LArErrorType=="MiniNoiseBurst") LArError_tool = 2;
 	else                                     LArError_tool = 3;
       }
+
+      // CWK custom veto - LB 536-544, in 536 bad from timeStamp 1468855115, timeStampNSOffset 310 (last good bin 306, first bad bin 314)
+      if( (m_lumiBlock>=537 && m_lumiBlock<=544) || 
+          (m_lumiBlock==536 && m_timeStamp>1468855115) ||
+          (m_lumiBlock==536 && m_timeStamp==1468855115 && m_timeStampNSOffset>=310000000) ) {
+        failToolError = true;
+        LArError_tool = 3;
+      }
+
       m_h2_LArError->Fill(LArError_offline, LArError_tool);
       m_h2_LArFlags_Tool->Fill(m_LArFlags, LArError_tool);
     }
@@ -1159,10 +1170,15 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       
       // linear fit to 2015 turnons: t = (1.03*p + 36)
       // tried 10% increase but looked a tad worse re not-on-threshold
-      
-      if (m_jet_pt->at(0) < 216) { trig = "HLT_j110"; }
-      else if (m_jet_pt->at(0) < 304) { trig = "HLT_j175"; }
-      else if (m_jet_pt->at(0) < 427) { trig = "HLT_j260"; }
+      // if (m_jet_pt->at(0) < 216) { trig = "HLT_j110"; }
+      // else if (m_jet_pt->at(0) < 304) { trig = "HLT_j175"; }
+      // else if (m_jet_pt->at(0) < 427) { trig = "HLT_j260"; }
+      // else trig = "HLT_j380";
+
+      // this with turnons
+      if (m_jet_pt->at(0) < 220) { trig = "HLT_j110"; }
+      else if (m_jet_pt->at(0) < 300) { trig = "HLT_j175"; }
+      else if (m_jet_pt->at(0) < 420) { trig = "HLT_j260"; }
       else trig = "HLT_j380";
       
       if(m_doTrigger_j110)
@@ -1615,8 +1631,8 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
 
       // ones in the tool - veto gap
       if(!passEventCleaning && !failToolError) {
-        if(isSecondary) hSecClean_FailToolPassEvt->Fill(thisEvent);
-        else            hClean_FailToolPassEvt->Fill(thisEvent);
+        if(isSecondary) hSecClean_PassToolFailEvt->Fill(thisEvent);
+        else            hClean_PassToolFailEvt->Fill(thisEvent);
       }
 
     }
