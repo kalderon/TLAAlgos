@@ -38,11 +38,16 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_is2015(false),
   m_doTrigger(false),
   m_doTrigger_j110(false),
+  m_doTrigger_str(""),
+  m_useTriggerSF(true),
+  m_getTriggerFromMap(false),
+  m_getTriggerFromNTUP(true),
+  m_requireDStriggers(false),
   m_isDijetNtupleOffline(false),
-  m_isDijetNtupleTrig(false),
+  m_isDijetNtupleDS(false),
   m_isDijetNtupleTruth(false),
   m_isTLANtupleTruth(false),
-  m_isTLANtupleTrig(false),
+  m_isTLANtupleDS(false),
   m_isTLANtupleOffline(false),
   m_doTruthOnly(false),
 
@@ -72,6 +77,7 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   m_plotPtSlices(false),
   m_plotEtaSlices(false),
   m_plotMjjWindow(false),
+  m_plotAllSRs(false),
 
   m_jet_pt(0),
   m_jet_eta(0),
@@ -121,6 +127,10 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   hCentral(nullptr),
   hCrack(nullptr),
   hEndcap(nullptr),
+  hIncl_mjjWindow2015(nullptr),
+  hCentral_mjjWindow2015(nullptr),
+  hCrack_mjjWindow2015(nullptr),
+  hEndcap_mjjWindow2015(nullptr),
   hIncl_mjjWindow(nullptr),
   hCentral_mjjWindow(nullptr),
   hCrack_mjjWindow(nullptr),
@@ -149,6 +159,10 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
   hSecCentral_mjjWindow(nullptr),
   hSecCrack_mjjWindow(nullptr),
   hSecEndcap_mjjWindow(nullptr),
+  hSecIncl_mjjWindow2015(nullptr),
+  hSecCentral_mjjWindow2015(nullptr),
+  hSecCrack_mjjWindow2015(nullptr),
+  hSecEndcap_mjjWindow2015(nullptr),
   hSecPt200(nullptr),
   hSecPt210(nullptr),
   hSecPt220(nullptr),
@@ -193,7 +207,7 @@ ProcessTLAMiniTree :: ProcessTLAMiniTree () :
 EL::StatusCode  ProcessTLAMiniTree :: configure ()
 {
 
-  if(m_isDijetNtupleTrig || m_isTLANtupleTrig) {
+  if(m_isDijetNtupleDS || m_isTLANtupleDS) {
     m_doTrigger = false;
     m_doTrigger_j110 = false;
   }
@@ -201,7 +215,7 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
   //histograms that are always there, defaulting to what is in the 'jet' branch
   //this is the distribution we cut on
     
-  if (m_isTLANtupleTrig) {
+  if (m_isTLANtupleDS) {
     hIncl = new eventHists("TriggerJets"  ,       wk());
     hCentral = new eventHists("TriggerJets_0-12"  ,       wk());
     hCrack = new eventHists("TriggerJets_12-16"  ,       wk());
@@ -225,7 +239,7 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
    hEndcap_mjjWindow = new eventHists("OfflineJets_16-28_mjjWindow"  ,       wk());
 
   }
-  else if (m_isDijetNtupleTrig || m_isDijetNtupleOffline) {
+  else if (m_isDijetNtupleDS || m_isDijetNtupleOffline) {
    hIncl    = new eventHists((m_primaryJetOutName+"").c_str()        ,       wk());
    if(m_plotCleaning) {
      hClean_PassEvt = new eventHists((m_primaryJetOutName+"_Clean_PassEvt").c_str()   ,       wk());
@@ -252,6 +266,12 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
        hCrack_mjjWindow   = new eventHists((m_primaryJetOutName+"_12-16_mjjWindow").c_str()  ,       wk());
        hEndcap_mjjWindow  = new eventHists((m_primaryJetOutName+"_16-28_mjjWindow").c_str()  ,       wk());
      }
+     hIncl_mjjWindow2015    = new eventHists((m_primaryJetOutName+"_mjjWindow2015").c_str()        ,       wk());
+     if (m_plotEtaSlices) {
+       hCentral_mjjWindow2015 = new eventHists((m_primaryJetOutName+"_0-12_mjjWindow2015").c_str()   ,       wk());
+       hCrack_mjjWindow2015   = new eventHists((m_primaryJetOutName+"_12-16_mjjWindow2015").c_str()  ,       wk());
+       hEndcap_mjjWindow2015  = new eventHists((m_primaryJetOutName+"_16-28_mjjWindow2015").c_str()  ,       wk());
+     }
    }
    if(m_plotPtSlices) {
      hPt200 = new eventHists((m_primaryJetOutName+"_j0Pt200").c_str()  ,       wk());
@@ -260,6 +280,12 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
      hPt230 = new eventHists((m_primaryJetOutName+"_j0Pt230").c_str()  ,       wk());
      hPt240 = new eventHists((m_primaryJetOutName+"_j0Pt240").c_str()  ,       wk());
      hPt250 = new eventHists((m_primaryJetOutName+"_j0Pt250").c_str()  ,       wk());
+   }
+   if (m_plotAllSRs) {
+     hJ100_yStar03 = new eventHists((m_primaryJetOutName+"_J100_yStar03").c_str()  ,       wk());
+     hJ100_yStar06 = new eventHists((m_primaryJetOutName+"_J100_yStar06").c_str()  ,       wk());
+     hJ75_yStar03  = new eventHists((m_primaryJetOutName+"_J75_yStar03").c_str()   ,       wk());
+     hJ75_yStar06  = new eventHists((m_primaryJetOutName+"_J75_yStar06").c_str()   ,       wk());
    }
 
    if(m_doSecondaryJets) {
@@ -288,6 +314,12 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
          hSecCrack_mjjWindow   = new eventHists((m_secondaryJetOutName+"_12-16_mjjWindow").c_str()  ,       wk());
          hSecEndcap_mjjWindow  = new eventHists((m_secondaryJetOutName+"_16-28_mjjWindow").c_str()  ,       wk());
        }
+       hSecIncl_mjjWindow2015    = new eventHists((m_secondaryJetOutName+"_mjjWindow2015").c_str()        ,       wk());
+       if (m_plotEtaSlices) {
+         hSecCentral_mjjWindow2015 = new eventHists((m_secondaryJetOutName+"_0-12_mjjWindow2015").c_str()   ,       wk());
+         hSecCrack_mjjWindow2015   = new eventHists((m_secondaryJetOutName+"_12-16_mjjWindow2015").c_str()  ,       wk());
+         hSecEndcap_mjjWindow2015  = new eventHists((m_secondaryJetOutName+"_16-28_mjjWindow2015").c_str()  ,       wk());
+       }
      }
      if (m_plotPtSlices) {
        hSecPt200 = new eventHists((m_secondaryJetOutName+"_j0Pt200").c_str()  ,       wk());
@@ -297,13 +329,20 @@ EL::StatusCode  ProcessTLAMiniTree :: configure ()
        hSecPt240 = new eventHists((m_secondaryJetOutName+"_j0Pt240").c_str()  ,       wk());
        hSecPt250 = new eventHists((m_secondaryJetOutName+"_j0Pt250").c_str()  ,       wk());
      }
+     if (m_plotAllSRs) {
+       hSecJ100_yStar03 = new eventHists((m_secondaryJetOutName+"_J100_yStar03").c_str()  ,       wk());
+       hSecJ100_yStar06 = new eventHists((m_secondaryJetOutName+"_J100_yStar06").c_str()  ,       wk());
+       hSecJ75_yStar03  = new eventHists((m_secondaryJetOutName+"_J75_yStar03").c_str()   ,       wk());
+       hSecJ75_yStar06  = new eventHists((m_secondaryJetOutName+"_J75_yStar06").c_str()   ,       wk());
+     }
+
    }
   }
 
   else hIncl = new eventHists("Incl"  ,       wk());
   //histograms that are there for comparisons...for later
   /*if (m_isTLANtupleOffline) hOffline = new eventHists("Offline"  ,       wk());
-  if (m_isTLANtupleTrig) hTrigger = new eventHists("Trigger"  ,       wk());
+  if (m_isTLANtupleDS) hTrigger = new eventHists("Trigger"  ,       wk());
   if (m_isTLANtupleTruth || m_isDijetNtupleTruth) hTruth = new eventHists("Truth"  ,       wk());*/
   
   return EL::StatusCode::SUCCESS;
@@ -531,7 +570,7 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
     tree->SetBranchStatus  ("NPV",    1);
     tree->SetBranchAddress ("NPV",    &m_NPV);
 
-    if(m_doTrigger || m_doTrigger_j110){
+    if((m_doTrigger || m_doTrigger_j110 || m_doTrigger_str!="") && m_getTriggerFromNTUP){
       tree->SetBranchStatus  ("passedTriggers", 1);
       tree->SetBranchAddress ("passedTriggers", &m_passedTriggers);
       
@@ -576,7 +615,7 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
   }
 
   //trigger-level variables
-  else if (m_isTLANtupleTrig) {
+  else if (m_isTLANtupleDS) {
       tree->SetBranchStatus  ("trigJet_pt", 1);
       tree->SetBranchAddress ("trigJet_pt", &m_jet_pt);
       
@@ -650,7 +689,7 @@ EL::StatusCode ProcessTLAMiniTree :: changeInput (bool firstFile)
   }
 
   //truth-level variables
-  else if (m_isDijetNtupleTrig || m_isDijetNtupleOffline) {
+  else if (m_isDijetNtupleDS || m_isDijetNtupleOffline) {
     
       tree->SetBranchStatus  ((m_primaryJetInName+"_pt").c_str(), 1);
       tree->SetBranchAddress ((m_primaryJetInName+"_pt").c_str(), &m_jet_pt);
@@ -828,14 +867,25 @@ EL::StatusCode ProcessTLAMiniTree :: initialize ()
   }
     
 
-  if(m_doPileupFromMap) {
+  if(m_doPileupFromMap || m_getTriggerFromMap) {
     m_pileupMap = gSystem->ExpandPathName( m_pileupMap.c_str() ); // in terms of $ROOTCOREBIN
     std::cout << "I am getting the pileup map from " << m_pileupMap << std::endl;
     TFile* pileupFile = new TFile(m_pileupMap.c_str());
-    m_h2_pileupMap = (TH2F*)pileupFile->Get("h_runNumber_LB_pileup");
-    m_h2_pileupMap->SetDirectory(0);
+
+    if(m_doPileupFromMap) {
+      m_h2_pileupMap = (TH2F*)pileupFile->Get("h_runNumber_LB_pileup");
+      m_h2_pileupMap->SetDirectory(0);
+    }
+    if(m_getTriggerFromMap) {
+      m_h2_J75Map = (TH2F*)pileupFile->Get("h_runNumber_LB_prescale_HLT_j0_perf_ds1_L1J75");
+      m_h2_J75Map->SetDirectory(0);      
+      m_h2_J100Map = (TH2F*)pileupFile->Get("h_runNumber_LB_prescale_HLT_j0_perf_ds1_L1J100");
+      m_h2_J100Map->SetDirectory(0);      
+    }
     pileupFile->Close();
   }
+
+
 
   Info("initialize()", "Succesfully initialized! \n");
 
@@ -964,12 +1014,15 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       }
 
       // CWK custom veto - LB 536-544, in 536 bad from timeStamp 1468855115, timeStampNSOffset 310 (last good bin 306, first bad bin 314)
-      if( (m_lumiBlock>=537 && m_lumiBlock<=544) || 
-          (m_lumiBlock==536 && m_timeStamp>1468855115) ||
-          (m_lumiBlock==536 && m_timeStamp==1468855115 && m_timeStampNSOffset>=310000000) ) {
-        failToolError = true;
-        LArError_tool = 3;
-      }
+      // this should be dealt with in the GRL - use one that is ..._mod
+      // if( m_runNumber == 304008 ) {
+        // if( (m_lumiBlock>=537 && m_lumiBlock<=544) || 
+            // (m_lumiBlock==536 && m_timeStamp>1468855115) ||
+            // (m_lumiBlock==536 && m_timeStamp==1468855115 && m_timeStampNSOffset>=310000000) ) {
+          // failToolError = true;
+          // LArError_tool = 3;
+        // }
+      // }
 
       m_h2_LArError->Fill(LArError_offline, LArError_tool);
       m_h2_LArFlags_Tool->Fill(m_LArFlags, LArError_tool);
@@ -981,14 +1034,14 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   if (m_applyLArEventCleaning) {
     if (m_invertLArEventCleaning) {
       if( ( (m_isTLANtupleOffline || m_isDijetNtupleOffline) && !failLArError) || 
-	  ( (m_isTLANtupleTrig || m_isDijetNtupleTrig) && !failToolError) ) {
+	  ( (m_isTLANtupleDS || m_isDijetNtupleDS) && !failToolError) ) {
 	if(m_debug) cout << " Pass LAr event cleaning" << endl;
 	return EL::StatusCode::SUCCESS;
       }
     }
     else {
       if( ( (m_isTLANtupleOffline || m_isDijetNtupleOffline) && failLArError) || 
-	  ( (m_isTLANtupleTrig || m_isDijetNtupleTrig) && failToolError) ) {
+	  ( (m_isTLANtupleDS || m_isDijetNtupleDS) && failToolError) ) {
 	if(m_debug) cout << " Fail LAr event cleaning" << endl;
         passEventCleaning = false;
 	return EL::StatusCode::SUCCESS;
@@ -997,7 +1050,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
   }
   else { // I still want to set the bool for downstream
     if( ( (m_isTLANtupleOffline || m_isDijetNtupleOffline) && failLArError) || 
-        ( (m_isTLANtupleTrig || m_isDijetNtupleTrig) && failToolError) ) {
+        ( (m_isTLANtupleDS || m_isDijetNtupleDS) && failToolError) ) {
       passEventCleaning = false;
     }
   }
@@ -1133,11 +1186,30 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     
     if(m_debug) cout << jet_pt->size() << " jets in collection" << endl;
 
+    // get trigger decision from pileup map
+    if(m_getTriggerFromMap) {
+      int runNumberBin = m_h2_J100Map->GetYaxis()->FindBin(to_string(m_runNumber).c_str());
+      int lumiBlockBin = m_h2_J100Map->GetXaxis()->FindBin(m_lumiBlock);
+      double prescale_J75 = m_h2_J75Map->GetBinContent(lumiBlockBin, runNumberBin);
+      double prescale_J100 = m_h2_J100Map->GetBinContent(lumiBlockBin, runNumberBin);
 
+      // m_h2_avgIntPerX_map_AOD->Fill(m_avgIntPerX_fromMap, m_avgIntPerX_fromAOD);
+      if(prescale_J75 > 0) {
+        m_passedTriggers->push_back("HLT_j0_perf_ds1_L1J75");
+        m_triggerPrescales->push_back(prescale_J75);
+      }
+      if(prescale_J100 > 0) {
+        m_passedTriggers->push_back("HLT_j0_perf_ds1_L1J100");
+        m_triggerPrescales->push_back(prescale_J100);
+      }
+      if(m_debug) cout << "I have got triggers from map" << endl;
+    }
+
+
+    if(m_debug) cout << "m_doTrigger? " << m_doTrigger << endl;
     // select on relevant triggers (want to base trigger choice on relevant jet collection)
     // (this way it doesn't matter whether I run together or separately)
-
-    if(m_doTrigger || m_doTrigger_j110){
+    if(m_doTrigger || m_doTrigger_j110 || m_doTrigger_str!=""){
       if(m_debug) Info("execute()", "Doing Trigger ");
       
       bool m_dumpTrig = false ;
@@ -1176,20 +1248,31 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       // else trig = "HLT_j380";
 
       // this with turnons
+      // if (m_jet_pt->at(0) < 220) { trig = "HLT_j110"; }
+      // else if (m_jet_pt->at(0) < 300) { trig = "HLT_j175"; }
+      // else if (m_jet_pt->at(0) < 420) { trig = "HLT_j260"; }
+      // else trig = "HLT_j380";
+
+      // turnons as of 24.03
       if (m_jet_pt->at(0) < 220) { trig = "HLT_j110"; }
       else if (m_jet_pt->at(0) < 300) { trig = "HLT_j175"; }
-      else if (m_jet_pt->at(0) < 420) { trig = "HLT_j260"; }
+      else if (m_jet_pt->at(0) < 430) { trig = "HLT_j260"; }
       else trig = "HLT_j380";
       
       if(m_doTrigger_j110)
 	trig = "HLT_j110";
+
+      if(m_doTrigger_str != "")
+        trig = m_doTrigger_str;
       
       std::vector<string>::iterator trigIt = std::find(m_passedTriggers->begin(), m_passedTriggers->end(), trig);
       if (trigIt == m_passedTriggers->end()) {
 	continue;
       }
       else {
-	prescaleWeight = m_triggerPrescales->at(std::distance(m_passedTriggers->begin(), trigIt));
+        if (m_useTriggerSF) {
+          prescaleWeight = m_triggerPrescales->at(std::distance(m_passedTriggers->begin(), trigIt));
+        }
 	//std::cout << "trig: " << trig << ", distance from front of vector" << (std::distance(m_passedTriggers->begin(), trigIt)) << std::endl;
 	//std::cout << "prescale: " << prescaleWeight << std::endl;
       }//end do trigger with prescales
@@ -1214,7 +1297,7 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
       }
       
     }// end of do trigger
-    
+
 
     // get event weight 
     float eventWeight = m_weight;
@@ -1638,6 +1721,41 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     }
 
 
+
+    bool passedJ75 = true;
+    bool passedJ100 = true;
+    double prescaleWeightJ75 = 1.0;
+    double prescaleWeightJ100 = 1.0;
+    if(m_plotAllSRs) {
+      
+      if(m_requireDStriggers) {
+        passedJ75 = false;
+        passedJ100 = false;
+        
+        std::string trigJ75 = "HLT_j0_perf_ds1_L1J75";
+        std::string trigJ100 = "HLT_j0_perf_ds1_L1J100";
+        std::vector<string>::iterator trigItJ75 = std::find(m_passedTriggers->begin(), m_passedTriggers->end(), trigJ75);
+        std::vector<string>::iterator trigItJ100 = std::find(m_passedTriggers->begin(), m_passedTriggers->end(), trigJ100);
+        
+        // std::cout << "\npassed triggers:" << std::endl;
+        // for(unsigned int i=0; i<m_passedTriggers->size(); i++) {
+          // std::cout << i << " " << m_passedTriggers->at(i) << ", " << m_triggerPrescales->at(i) << std::endl;
+        // }
+        
+        // Hmmmmm not sure what to do about prescale weights - check that they're always 1???
+        
+        if (trigItJ75 != m_passedTriggers->end()) {
+          passedJ75 = true;
+          prescaleWeightJ75 = m_triggerPrescales->at(std::distance(m_passedTriggers->begin(), trigItJ75));
+        }
+        if (trigItJ100 != m_passedTriggers->end()) {
+          passedJ100 = true;
+          prescaleWeightJ100 = m_triggerPrescales->at(std::distance(m_passedTriggers->begin(), trigItJ100));
+        }
+      }
+    }
+
+
     // fill mjj-agnostic histograms
     if(isSecondary) {
       hSecIncl->Fill(thisEvent);
@@ -1659,6 +1777,68 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
         if (m_secJet_pt->at(0) > 240) hSecPt240->Fill(thisEvent);
         if (m_secJet_pt->at(0) > 250) hSecPt250->Fill(thisEvent);
       }
+      
+      if(m_plotAllSRs) {
+        cutname = "doingAllSRs";
+        m_h_cutflow_secondary     -> Fill(cutname.c_str(), 1.0);
+        m_h_cutflow_secondary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+
+        if (passedJ75) {
+          cutname = "passed HLT_j0_perf_ds1_L1J75";
+          m_h_cutflow_secondary     -> Fill(cutname.c_str(), 1.0);
+          m_h_cutflow_secondary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+          cutname = "passed HLT_j0_perf_ds1_L1J75 with prescale"; // NEED TO CHECK THIS IS THE SAME ELSE HIST IS WRONG
+          m_h_cutflow_secondary     -> Fill(cutname.c_str(), 1.0);
+          m_h_cutflow_secondary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ75));
+          
+          if (m_secJet_pt->at(0) > 185) {
+            cutname = "L1J75 lead jet pT > 185";
+            m_h_cutflow_secondary     -> Fill(cutname.c_str(), 1.0);
+            m_h_cutflow_secondary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ75));
+
+            if(fabs(yStar) < 0.3){
+              cutname = "L1J75 yStar < 0.3";
+              m_h_cutflow_secondary     -> Fill(cutname.c_str(), 1.0);
+              m_h_cutflow_secondary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ75));
+              hSecJ75_yStar03->Fill(thisEvent);
+            }
+            if(fabs(yStar) < 0.6){
+              cutname = "L1J75 yStar < 0.6";
+              m_h_cutflow_secondary     -> Fill(cutname.c_str(), 1.0);
+              m_h_cutflow_secondary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ75));
+              hSecJ75_yStar06->Fill(thisEvent);
+            }
+          }
+        }
+
+        if (passedJ100) {
+          cutname = "passed HLT_j0_perf_ds1_L1J100";
+          m_h_cutflow_secondary     -> Fill(cutname.c_str(), 1.0);
+          m_h_cutflow_secondary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+          cutname = "passed HLT_j0_perf_ds1_L1J100 with prescale"; // NEED TO CHECK THIS IS THE SAME ELSE HIST IS WRONG
+          m_h_cutflow_secondary     -> Fill(cutname.c_str(), 1.0);
+          m_h_cutflow_secondary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ100));
+          
+          if (m_secJet_pt->at(0) > 220) {
+            cutname = "L1J100 lead jet pT > 220";
+            m_h_cutflow_secondary     -> Fill(cutname.c_str(), 1.0);
+            m_h_cutflow_secondary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ100));
+
+            if(fabs(yStar) < 0.3){
+              cutname = "L1J100 yStar < 0.3";
+              m_h_cutflow_secondary     -> Fill(cutname.c_str(), 1.0);
+              m_h_cutflow_secondary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ100));
+              hSecJ100_yStar03->Fill(thisEvent);
+            }
+            if(fabs(yStar) < 0.6){
+              cutname = "L1J100 yStar < 0.6";
+              m_h_cutflow_secondary     -> Fill(cutname.c_str(), 1.0);
+              m_h_cutflow_secondary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ100));
+              hSecJ100_yStar06->Fill(thisEvent);
+            }
+          }
+        }
+      }
     }
     
     else {
@@ -1678,12 +1858,76 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
         if (m_jet_pt->at(0) > 240) hPt240->Fill(thisEvent);
         if (m_jet_pt->at(0) > 250) hPt250->Fill(thisEvent);
       }
+
+      if(m_plotAllSRs) {
+        cutname = "doingAllSRs";
+        m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+        m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+        
+        
+        if (passedJ75) {
+          cutname = "passed HLT_j0_perf_ds1_L1J75";
+          m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+          m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+          cutname = "passed HLT_j0_perf_ds1_L1J75 with prescale"; // NEED TO CHECK THIS IS THE SAME ELSE HIST IS WRONG
+          m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+          m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ75));
+          
+          if (m_secJet_pt->at(0) > 185) {
+            cutname = "L1J75 lead jet pT > 185";
+            m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+            m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ75));
+
+            if(fabs(yStar) < 0.3){
+              cutname = "L1J75 yStar < 0.3";
+              m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+              m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ75));
+              hJ75_yStar03->Fill(thisEvent);
+            }
+            if(fabs(yStar) < 0.6){
+              cutname = "L1J75 yStar < 0.6";
+              m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+              m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ75));
+              hJ75_yStar06->Fill(thisEvent);
+            }
+          }
+        }
+
+        if (passedJ100) {
+          cutname = "passed HLT_j0_perf_ds1_L1J100";
+          m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+          m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight));
+          cutname = "passed HLT_j0_perf_ds1_L1J100 with prescale"; // NEED TO CHECK THIS IS THE SAME ELSE HIST IS WRONG
+          m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+          m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ100));
+          
+          if (m_secJet_pt->at(0) > 220) {
+            cutname = "L1J100 lead jet pT > 220";
+            m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+            m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ100));
+
+            if(fabs(yStar) < 0.3){
+              cutname = "L1J100 yStar < 0.3";
+              m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+              m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ100));
+              hJ100_yStar03->Fill(thisEvent);
+            }
+            if(fabs(yStar) < 0.6){
+              cutname = "L1J100 yStar < 0.6";
+              m_h_cutflow_primary     -> Fill(cutname.c_str(), 1.0);
+              m_h_cutflow_primary_w   -> Fill(cutname.c_str(), static_cast<double>(eventWeight*prescaleWeight*prescaleWeightJ100));
+              hJ100_yStar06->Fill(thisEvent);
+            }
+          }
+        }
+      }
+
     }
 
 
     // mjj isn't in the new ntuples, calculate it here
     float mjj = 0;
-    if(m_isDijetNtupleOffline || m_isDijetNtupleTrig || m_isTLANtupleTruth) {
+    if(m_isDijetNtupleOffline || m_isDijetNtupleDS || m_isTLANtupleTruth) {
       if(m_debug) cout << "calculating mjj" << endl;
       mjj = (thisEvent.jets.at(0).vec() + thisEvent.jets.at(1).vec()).M();
     }
@@ -1695,13 +1939,18 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     if(isSecondary) {
       if(m_plotMjjWindow) {
         if ( mjj>394 && mjj<1236 ) {
+          hSecIncl_mjjWindow2015->Fill(thisEvent);
+          if(m_plotEtaSlices) {
+            if (fabs(m_secJet_eta->at(0))<1.2) hSecCentral_mjjWindow2015->Fill(thisEvent);
+            else if (fabs(m_secJet_eta->at(0))>=1.2 && fabs(m_secJet_eta->at(0))<1.6) hSecCrack_mjjWindow2015->Fill(thisEvent);
+            else if (fabs(m_secJet_eta->at(0))>=1.6 && fabs(m_secJet_eta->at(0))<2.8) hSecEndcap_mjjWindow2015->Fill(thisEvent);
+          }
+        }
+        if ( mjj>531 && mjj<2079 ) {
           hSecIncl_mjjWindow->Fill(thisEvent);
           if(m_plotEtaSlices) {
-            //central: leading jet within 1.2
             if (fabs(m_secJet_eta->at(0))<1.2) hSecCentral_mjjWindow->Fill(thisEvent);
-            //crack: leading jet within 1.2-1.6
             else if (fabs(m_secJet_eta->at(0))>=1.2 && fabs(m_secJet_eta->at(0))<1.6) hSecCrack_mjjWindow->Fill(thisEvent);
-            //endcap: leading jet within 1.6-2.8
             else if (fabs(m_secJet_eta->at(0))>=1.6 && fabs(m_secJet_eta->at(0))<2.8) hSecEndcap_mjjWindow->Fill(thisEvent);
           }
         }
@@ -1710,13 +1959,22 @@ EL::StatusCode ProcessTLAMiniTree :: execute ()
     else {
       if(m_plotMjjWindow){
         if ( mjj>394 && mjj<1236 ) {
-          hIncl_mjjWindow->Fill(thisEvent);
+          hIncl_mjjWindow2015->Fill(thisEvent);
           if(m_plotEtaSlices) {
-            if (fabs(m_jet_eta->at(0))<1.2) hCentral_mjjWindow->Fill(thisEvent);
-            else if (fabs(m_jet_eta->at(0))>=1.2 && fabs(m_jet_eta->at(0))<1.6) hCrack_mjjWindow->Fill(thisEvent);
-            else if (fabs(m_jet_eta->at(0))>=1.6 && fabs(m_jet_eta->at(0))<2.8) hEndcap_mjjWindow->Fill(thisEvent);
+            if (fabs(m_jet_eta->at(0))<1.2) hCentral_mjjWindow2015->Fill(thisEvent);
+            else if (fabs(m_jet_eta->at(0))>=1.2 && fabs(m_jet_eta->at(0))<1.6) hCrack_mjjWindow2015->Fill(thisEvent);
+            else if (fabs(m_jet_eta->at(0))>=1.6 && fabs(m_jet_eta->at(0))<2.8) hEndcap_mjjWindow2015->Fill(thisEvent);
           }
         }
+        if ( mjj>531 && mjj<2079 ) {
+          hIncl_mjjWindow->Fill(thisEvent);
+          if(m_plotEtaSlices) {
+            if (fabs(m_secJet_eta->at(0))<1.2) hCentral_mjjWindow->Fill(thisEvent);
+            else if (fabs(m_secJet_eta->at(0))>=1.2 && fabs(m_secJet_eta->at(0))<1.6) hCrack_mjjWindow->Fill(thisEvent);
+            else if (fabs(m_secJet_eta->at(0))>=1.6 && fabs(m_secJet_eta->at(0))<2.8) hEndcap_mjjWindow->Fill(thisEvent);
+          }
+        }
+
       }
     }
 

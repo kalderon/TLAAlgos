@@ -41,10 +41,10 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		bool m_is2015;
 		bool m_doTruthOnly;
 		bool m_isDijetNtupleTruth;
-		bool m_isDijetNtupleTrig;
+		bool m_isDijetNtupleDS;
 		bool m_isDijetNtupleOffline;
 		bool m_isTLANtupleTruth;
-		bool m_isTLANtupleTrig;
+		bool m_isTLANtupleDS;
 		bool m_isTLANtupleOffline;
 		bool m_doData;
 
@@ -62,6 +62,11 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		// trigger selection
 		bool m_doTrigger;          // this selects according to an OR of single jet triggers
 		bool m_doTrigger_j110;     // this selects according to j110 only (overwrites above)
+                bool m_useTriggerSF;       // apply scale factors? Default true
+                std::string m_doTrigger_str;        // this requires the trigger given in the string (default "" does nothing)
+                bool m_getTriggerFromMap;   // get the trigger decision base on the runNumber and lumiBlock from the pileup map
+                bool m_getTriggerFromNTUP;  // for (most) DS it isn't there -> turn off or it will crash
+                bool m_requireDStriggers;   // require one of the HLT_DS_perf chains, in selection and plotAllSRs
 
 		// which jet collections to use
 		std::string m_primaryJetInName;     // name in NTUP
@@ -94,6 +99,7 @@ class ProcessTLAMiniTree : public xAH::Algorithm
                 bool m_plotPtSlices;
 		bool m_plotEtaSlices;
 		bool m_plotMjjWindow;
+		bool m_plotAllSRs;
 
 
 		/*bool m_applySF;
@@ -151,8 +157,9 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		vector<float>* m_jet_LeadingClusterCenterLambda; //!
 		vector<float>* m_jet_LeadingClusterSecondR; //!
 
-		vector<string>* m_passedTriggers; //!
-		vector<float>* m_triggerPrescales; //!
+                // these used to have //! but I want to modify them with my map
+		vector<string>* m_passedTriggers; 
+		vector<float>* m_triggerPrescales; 
 
 		vector<float>* m_secJet_pt; //!
 		vector<float>* m_secJet_eta; //!
@@ -190,6 +197,9 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		TH2D* m_h2_jetCleaning; //!
 		TH2D* m_h2_avgIntPerX_map_AOD; //!
 		TH2F* m_h2_pileupMap; //!
+                // could make this a vector and generic
+                TH2F* m_h2_J75Map; //!
+                TH2F* m_h2_J100Map; //!
 		
 		TH1D* m_h_cutflow_primary; //!
 		TH1D* m_h_cutflow_secondary; //!
@@ -741,6 +751,10 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		eventHists*   hCentral_mjjWindow; //!
 		eventHists*   hCrack_mjjWindow; //!
 		eventHists*   hEndcap_mjjWindow; //!
+		eventHists*   hIncl_mjjWindow2015; //!
+		eventHists*   hCentral_mjjWindow2015; //!
+		eventHists*   hCrack_mjjWindow2015; //!
+		eventHists*   hEndcap_mjjWindow2015; //!
 		//        eventHists*   hTrigger; //!
 		//        eventHists*   hTruth; //!
 		eventHists*   hPt200; //!
@@ -749,6 +763,11 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		eventHists*   hPt230; //!
 		eventHists*   hPt240; //!
 		eventHists*   hPt250; //!
+                eventHists*   hJ100_yStar03; //!
+                eventHists*   hJ100_yStar06; //!
+                eventHists*   hJ75_yStar03; //!
+                eventHists*   hJ75_yStar06; //!
+
 
 		eventHists*   hSecIncl; //!
 		eventHists*   hSecClean_PassEvt; //!
@@ -768,12 +787,20 @@ class ProcessTLAMiniTree : public xAH::Algorithm
 		eventHists*   hSecCentral_mjjWindow; //!
 		eventHists*   hSecCrack_mjjWindow; //!
 		eventHists*   hSecEndcap_mjjWindow; //!
+		eventHists*   hSecIncl_mjjWindow2015; //!
+		eventHists*   hSecCentral_mjjWindow2015; //!
+		eventHists*   hSecCrack_mjjWindow2015; //!
+		eventHists*   hSecEndcap_mjjWindow2015; //!
 		eventHists*   hSecPt200; //!
 		eventHists*   hSecPt210; //!
 		eventHists*   hSecPt220; //!
 		eventHists*   hSecPt230; //!
 		eventHists*   hSecPt240; //!
 		eventHists*   hSecPt250; //!
+                eventHists*   hSecJ100_yStar03; //!
+                eventHists*   hSecJ100_yStar06; //!
+                eventHists*   hSecJ75_yStar03; //!
+                eventHists*   hSecJ75_yStar06; //!
 
 		
 		// variables that don't get filled at submission time should be

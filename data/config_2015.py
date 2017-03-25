@@ -38,10 +38,10 @@ c.setalg("ProcessTLAMiniTree",
            "m_debug"                  : False,
            
            # what am I running on
-           "m_is2015"                   : True,
+           "m_is2015"                 : True,
            "m_doTruthOnly"            : doTruthOnly,
            "m_isDijetNtupleOffline"   : False,
-           "m_isDijetNtupleTrig"      : True,
+           "m_isDijetNtupleDS"        : True,
            "m_doData"                 : (not args.is_MC),
            
            # normalisation
@@ -83,10 +83,10 @@ c.setalg("ProcessTLAMiniTree",
            "m_YStarCut"               : 0.6,
            
            # which hists to write
-           "m_plotCleaning"           : True,
+           "m_plotCleaning"           : False,
            "m_plotPtSlices"           : False,
            "m_plotEtaSlices"          : False,
-           "m_plotMjjWindow"          : False,
+           "m_plotMjjWindow"          : True,
 
            } )
 

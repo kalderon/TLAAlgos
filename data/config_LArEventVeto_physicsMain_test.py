@@ -43,7 +43,7 @@ c.setalg("ProcessTLAMiniTree", { "m_name"                   : "TLAAlgo",
                                  "m_doTrigger_j110"         : False, # this selects according to j110 only
                                  "m_doTruthOnly"            : doTruthOnly,
                                  "m_isDijetNtupleOffline"   : True,
-                                 "m_isDijetNtupleTrig"      : False,
+                                 "m_isDijetNtupleDS"        : False,
                                  "m_useCutflow"             : False, # get normalisation from cutflow
                                  "m_useWeighted"            : True,  # get normalisation from weighted cutflow
 

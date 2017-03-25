@@ -44,7 +44,7 @@ c.setalg("ProcessTLAMiniTree",
            # what am I running on
            "m_doTruthOnly"            : doTruthOnly,
            "m_isDijetNtupleOffline"   : True,
-           "m_isDijetNtupleTrig"      : False,
+           "m_isDijetNtupleDS"        : False,
            "m_doData"                 : (not args.is_MC),
            
            # normalisation

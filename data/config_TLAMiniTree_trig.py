@@ -36,7 +36,7 @@ c.setalg("ProcessTLAMiniTree", { "m_name"                   : "TLAAlgo",
                                  "m_doTrigger"              : False,
                                  "m_doTruthOnly"            : doTruthOnly,
                                  "m_useCutflow"             : False,
-                                 "m_isTLANtupleTrig"        : True,
+                                 "m_isTLANtupleDS"          : True,
                                  "m_useWeighted"            : False,
                                  "m_doCleaning"             : True, 
                                  "m_etaCut"                 : 2.8, # only applied if not Truth only? FIXME
