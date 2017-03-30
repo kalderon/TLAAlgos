@@ -45,8 +45,8 @@ c.setalg("ProcessTLAMiniTree",
            
            # what am I running on
            "m_doTruthOnly"            : doTruthOnly,
-           "m_isDijetNtupleOffline"   : False,
-           "m_isDijetNtupleDS"        : True,
+           "m_isDijetNtupleOffline"   : True,
+           "m_isDijetNtupleDS"        : False,
            "m_doData"                 : (not args.is_MC),
            
            # normalisation
@@ -61,25 +61,25 @@ c.setalg("ProcessTLAMiniTree",
            "m_pileupMap"              : PUmap,
            
            # trigger selection
-           "m_doTrigger"              : False, # this selects according to an OR of single jet triggers
+           "m_doTrigger"              : True, # this selects according to an OR of single jet triggers
            "m_doTrigger_j110"         : False, # this selects according to j110 only (overwrites above)
-           "m_doTrigger_str"          : "HLT_j0_perf_ds1_L1J100",    # require the trigger given
+           "m_doTrigger_str"          : "",    # require the trigger given
            "m_useTriggerSF"           : False, # get trigger scale factors 
-           "m_getTriggerFromMap"      : True,  # get the trigger decision base on the runNumber and lumiBlock from the pileup map
-           "m_getTriggerFromNTUP"     : False, # for (most) DS it isn't there -> turn off or it will crash
+           "m_getTriggerFromMap"      : False,  # get the trigger decision base on the runNumber and lumiBlock from the pileup map
+           "m_getTriggerFromNTUP"     : True, # for (most) DS it isn't there -> turn off or it will crash
 
            # which jet collections to use
            "m_primaryJetInName"       : "jet",
-           "m_primaryJetOutName"      : "TriggerJets", # subdirectory name in histogram file
+           "m_primaryJetOutName"      : "OfflineJets", # subdirectory name in histogram file
            "m_doSecondaryJets"        : True,
-           "m_secondaryJetInName"     : "uncalibJet",
-           "m_secondaryJetOutName"    : "UncalibTriggerJets",
+           "m_secondaryJetInName"     : "trigJet",
+           "m_secondaryJetOutName"    : "TriggerJets",
            
            # event cleaning
            "m_applyLArEventCleaning"    : True, # veto events which fail LAr event cleaning, from AOD if isDijetNtupleOffline, from tool if ....Trig
            "m_invertLArEventCleaning"   : False, # veto events which pass event cleaning (only if above is true)
            "m_applyTLALArEventVetoData" : True, # run tool
-           "m_TLALArEventVetoFiles"   : "$ROOTCOREBIN/data/TLAEventCleaning/event-veto-info-merge/", # with new period F, old rest
+           "m_TLALArEventVetoFiles"     : "$ROOTCOREBIN/data/TLAEventCleaning/event-veto-info-merge/", # with new period F, old rest
            
            # jet cleaning
            "m_doCleaning"             : True, # veto events which fail jet cleaning
@@ -99,7 +99,7 @@ c.setalg("ProcessTLAMiniTree",
            "m_plotMjjWindow"          : False,
 
            "m_plotAllSRs"             : True, # y* < 0.3, 0.6 for J75 & J100 - need trigger
-           "m_requireDStriggers"      : True,
+           "m_requireDStriggers"      : False,
 
            } )
 

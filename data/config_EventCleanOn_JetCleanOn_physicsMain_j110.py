@@ -9,9 +9,7 @@ c = xAH_config()
 
 # final 2016 w/ toroid off runs included circulated 31.10 / 01.11
 GRL = "$ROOTCOREBIN/data/TLAAlgos/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns_ignore_TOROID_STATUS.xml"
-# PUmap = "$ROOTCOREBIN/data/TLAAlgos/PRW/pileup_map_None_297730-311481_OflLumi-13TeV-005.root"
-GRL = "$ROOTCOREBIN/data/TLAAlgos/data16_13TeV.periodAllYear_DetStatus-v83-pro20-15_DQDefects-00-02-04_PHYS_StandardGRL_All_Good_25ns_ignore_TOROID_STATUS_mod.xml"
-PUmap = "$ROOTCOREBIN/data/TLAAlgos/PRW/pileup_map_None_297730-311481_OflLumi-13TeV-008_mod.root"
+PUmap = "$ROOTCOREBIN/data/TLAAlgos/PRW/pileup_map_None_297730-311481_OflLumi-13TeV-005.root"
 
 #
 #  Data Config
@@ -45,8 +43,8 @@ c.setalg("ProcessTLAMiniTree",
            
            # what am I running on
            "m_doTruthOnly"            : doTruthOnly,
-           "m_isDijetNtupleOffline"   : False,
-           "m_isDijetNtupleDS"        : True,
+           "m_isDijetNtupleOffline"   : True,
+           "m_isDijetNtupleDS"        : False,
            "m_doData"                 : (not args.is_MC),
            
            # normalisation
@@ -61,25 +59,23 @@ c.setalg("ProcessTLAMiniTree",
            "m_pileupMap"              : PUmap,
            
            # trigger selection
-           "m_doTrigger"              : False, # this selects according to an OR of single jet triggers
-           "m_doTrigger_j110"         : False, # this selects according to j110 only (overwrites above)
-           "m_doTrigger_str"          : "HLT_j0_perf_ds1_L1J100",    # require the trigger given
-           "m_useTriggerSF"           : False, # get trigger scale factors 
-           "m_getTriggerFromMap"      : True,  # get the trigger decision base on the runNumber and lumiBlock from the pileup map
-           "m_getTriggerFromNTUP"     : False, # for (most) DS it isn't there -> turn off or it will crash
-
+           "m_doTrigger"              : True, # this selects according to an OR of single jet triggers
+           "m_doTrigger_j110"         : True, # this selects according to j110 only (overwrites above)
+           "m_useTriggerSF"           : False,
+           
            # which jet collections to use
            "m_primaryJetInName"       : "jet",
-           "m_primaryJetOutName"      : "TriggerJets", # subdirectory name in histogram file
+           "m_primaryJetOutName"      : "OfflineJets", # subdirectory name in histogram file
            "m_doSecondaryJets"        : True,
-           "m_secondaryJetInName"     : "uncalibJet",
-           "m_secondaryJetOutName"    : "UncalibTriggerJets",
+           "m_secondaryJetInName"     : "trigJet",
+           "m_secondaryJetOutName"    : "TriggerJets",
+           
            
            # event cleaning
            "m_applyLArEventCleaning"    : True, # veto events which fail LAr event cleaning, from AOD if isDijetNtupleOffline, from tool if ....Trig
            "m_invertLArEventCleaning"   : False, # veto events which pass event cleaning (only if above is true)
            "m_applyTLALArEventVetoData" : True, # run tool
-           "m_TLALArEventVetoFiles"   : "$ROOTCOREBIN/data/TLAEventCleaning/event-veto-info-merge/", # with new period F, old rest
+           "m_TLALArEventVetoFiles"   : "$ROOTCOREBIN/data/TLAEventCleaning/event-veto-data/",
            
            # jet cleaning
            "m_doCleaning"             : True, # veto events which fail jet cleaning
@@ -88,18 +84,14 @@ c.setalg("ProcessTLAMiniTree",
 
            # event selection cuts
            "m_etaCut"                 : 2.8, # only applied if not Truth only? FIXME
-           "m_leadJetPtCut"           : 185, # 185 for J75, 220 for J100
-           # "m_leadJetPtCut"           : 220, # 185 for J75
+           "m_leadJetPtCut"           : 220, # was 150, can cull bonus selections
            "m_subleadJetPtCut"        : 85,
            "m_YStarCut"               : 0.6,
            
            # which hists to write
            "m_plotPtSlices"           : False,
            "m_plotEtaSlices"          : False,
-           "m_plotMjjWindow"          : False,
-
-           "m_plotAllSRs"             : True, # y* < 0.3, 0.6 for J75 & J100 - need trigger
-           "m_requireDStriggers"      : True,
-
+           "m_plotMjjWindow"          : True,
+           
            } )
 

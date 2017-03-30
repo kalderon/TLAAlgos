@@ -64,7 +64,7 @@ c.setalg("ProcessTLAMiniTree",
            "m_doTrigger"              : True, # this selects according to an OR of single jet triggers
            "m_doTrigger_j110"         : False, # this selects according to j110 only (overwrites above)
            "m_doTrigger_str"          : "",    # require the trigger given
-           "m_useTriggerSF"           : False, # get trigger scale factors 
+           "m_useTriggerSF"           : True, # get trigger scale factors 
            "m_getTriggerFromMap"      : False,  # get the trigger decision base on the runNumber and lumiBlock from the pileup map
            "m_getTriggerFromNTUP"     : True, # for (most) DS it isn't there -> turn off or it will crash
 
@@ -78,8 +78,8 @@ c.setalg("ProcessTLAMiniTree",
            # event cleaning
            "m_applyLArEventCleaning"    : True, # veto events which fail LAr event cleaning, from AOD if isDijetNtupleOffline, from tool if ....Trig
            "m_invertLArEventCleaning"   : False, # veto events which pass event cleaning (only if above is true)
-           "m_applyTLALArEventVetoData" : False, # run tool
-           "m_TLALArEventVetoFiles"     : "$ROOTCOREBIN/data/TLAEventCleaning/event-veto-data/", # old run, misses most - need to run new one on everything
+           "m_applyTLALArEventVetoData" : True, # run tool
+           "m_TLALArEventVetoFiles"     : "$ROOTCOREBIN/data/TLAEventCleaning/event-veto-info-merge/", # with new period F, old rest
            
            # jet cleaning
            "m_doCleaning"             : True, # veto events which fail jet cleaning
